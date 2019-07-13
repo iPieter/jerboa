@@ -4,14 +4,16 @@
       <message v-for="message in messages" :msg="message"></message>
     </div>
     <div class="input-group mb-3 type_msg">
-      <input
-        type="text"
+      <textarea
         class="form-control col-auto"
         id="inlineFormInput"
         placeholder="Message"
         autofocus
-        @keydown.enter="send"
+        @keydown.enter.exact.prevent
+        @keyup.enter.exact="send"
+        @keydown.enter.shift.exact="newline"
         v-model="message"
+        v-bind:rows="rows"
       />
       <div class="input-group-append">
         <button class="btn btn-primary btn-sm" type="button" v-on:click="send">Send</button>
@@ -39,7 +41,8 @@ export default {
       ip: "127.0.0.1:15674",
       socket: {},
       user_id: "",
-      error: ""
+      error: "",
+      rows: 1
     };
   },
   components: { Message },
@@ -73,6 +76,12 @@ export default {
 
         _this.socket.on("msg", _this.on_message);
         _this.socket.on("error", _this.on_error);
+      })
+      .catch(function(error) {
+        console.log(error);
+        if (error.response.status == "401") {
+          _this.$router.push({ name: "login" });
+        }
       });
   },
   mounted() {},
@@ -103,6 +112,10 @@ export default {
       console.log(msg);
       this.error = msg;
     },
+    newline() {
+      this.value = this.value + "\n";
+      this.rows++;
+    },
     send() {
       if (this.message) {
         var msg = {
@@ -117,6 +130,7 @@ export default {
 
         //this.messages.push(msg);
         this.message = "";
+        this.rows = 1;
       }
     }
   }
@@ -142,5 +156,8 @@ export default {
 
 .type_msg {
   flex-grow: 0; /* default 0 */
+}
+textarea {
+  resize: none;
 }
 </style>

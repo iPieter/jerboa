@@ -22,7 +22,7 @@ app = Flask(__name__)
 CORS(app)
 app.config["SECRET_KEY"] = "top secret!"
 socketio = SocketIO(app)
-jws = JWS(app.config["SECRET_KEY"], expires_in=3600)
+jws = JWS(app.config["SECRET_KEY"], expires_in=24 * 3600)
 
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth("Bearer")
@@ -113,7 +113,9 @@ def messages():
     channel = request.args.get("channel")
 
     result = []
-    for row in c.execute("""select * from messages"""):
+    for row in c.execute(
+        """select * from messages where channel==:channel""", {"channel": channel}
+    ):
 
         obj = {}
         names = list(map(lambda x: x[0], c.description))
@@ -128,6 +130,24 @@ def messages():
 @multi_auth.login_required
 def index():
     return "Hello, %s!" % g.user
+
+
+@app.route("/channels/count")
+@multi_auth.login_required
+def count_channels():
+    result = []
+    for row in c.execute(
+        """
+    select channel, count(*) from messages group by channel
+        """
+    ):
+
+        obj = {}
+        names = list(map(lambda x: x[0], c.description))
+        for pair in zip(names, row):
+            obj[pair[0]] = pair[1]
+        result.append(obj)
+    return json.dumps(result)
 
 
 @app.route("/users")

@@ -15,7 +15,7 @@ const router = new VueRouter({
   routes: [
     { path: "/", component: ChannelView, props: true, name: "chat" },
     { path: "/admin", component: AdminView, props: true },
-    { path: "/login", component: LoginView, props: true }
+    { path: "/login", component: LoginView, props: true, name: "login" }
   ]
 });
 

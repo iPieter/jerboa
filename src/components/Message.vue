@@ -1,5 +1,5 @@
 <template>
-  <div class="message-container pt-1">
+  <div class="message-container pt-2">
     <img
       class="avatar"
       src="https://ca.slack-edge.com/T7738P6P3-U76USER16-330ec1edea98-72"
@@ -11,24 +11,26 @@
         <span class="font-weight-light text-muted ml-2">{{msg.sent_time}}</span>
       </div>
 
-      <div
-        class="content mt-1"
-        v-html="msg.message.replace(':the-solution:', this.emoji())"
-        v-bind:style="incremental ? 'margin-left: 31pt' : ''"
-      ></div>
+      <div class="content mt-0" v-bind:style="incremental ? 'margin-left: 31pt' : ''">
+        <vue-markdown>{{this.msg.message}}</vue-markdown>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
 import Vue from "vue";
+import VueMarkdown from "vue-markdown";
+Vue.use(VueMarkdown);
 
 export default {
   name: "message",
   data() {
     return {};
   },
-  components: {},
+  components: {
+    VueMarkdown
+  },
   props: {
     incremental: {
       type: Boolean
@@ -38,16 +40,16 @@ export default {
     }
   },
   methods: {
-    mounted() {},
-    emoji: () => "🍷"
+    mounted() {}
   }
 };
 </script>
 
 <style lang="scss">
 .message-container {
+  border-top: 1px solid #eff0f1;
   display: inline-flex;
-  margin-bottom: 4pt;
+  margin-bottom: -4pt;
   line-height: 1;
   .avatar {
     height: 26pt;
@@ -69,6 +71,22 @@ export default {
     .content,
     .header {
       display: block;
+    }
+
+    img {
+      margin-top: 10px;
+      max-width: 90%;
+      background: #fff;
+      padding: 0.5rem;
+      box-shadow: 0 0.2rem 1.2rem rgba(0, 0, 0, 0.1);
+    }
+
+    pre {
+      padding-left: 4px;
+      margin-left: 5px;
+      margin-top: 10px;
+      border-left: 4px solid #3498db;
+      border-radius: 2px;
     }
   }
 }
