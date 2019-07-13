@@ -1,0 +1,58 @@
+{
+  "name": "chatapp",
+  "description": "FigChat - A bit late, but the best chat app you've ever seen.",
+  "version": "1.0.0",
+  "author": "Pieter Delobelle <pieter.delobelle@gmail.com>",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "bootstrap-vue": "^2.0.0-rc.11",
+    "moment": "^2.22.2",
+    "node-sass": "^4.12.0",
+    "sass-loader": "^7.1.0",
+    "vue": "^2.5.16",
+    "vue-highcharts": "0.0.10",
+    "vue-router": "^3.0.2",
+    "webpack": "^4.33.0"
+  },
+  "devDependencies": {
+    "@vue/cli-plugin-babel": "^3.0.0-rc.3",
+    "@vue/cli-plugin-eslint": "^3.0.0-rc.3",
+    "@vue/cli-service": "^3.0.0-rc.3",
+    "vue-template-compiler": "^2.5.16"
+  },
+  "babel": {
+    "presets": [
+      "@vue/app"
+    ]
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "plugin:vue/essential",
+      "eslint:recommended"
+    ],
+    "rules": {},
+    "parserOptions": {
+      "parser": "babel-eslint"
+    }
+  },
+  "postcss": {
+    "plugins": {
+      "autoprefixer": {}
+    }
+  },
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not ie <= 8"
+  ]
+}
