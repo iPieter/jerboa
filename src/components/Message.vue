@@ -8,11 +8,32 @@
     <div class="message">
       <div class="header" v-if="!incremental">
         <span class="font-weight-bold">{{msg.sender}}</span>
-        <span class="font-weight-light text-muted ml-2">{{msg.sent_time}}</span>
+        <span class="font-weight-light text-muted ml-2">{{time}}</span>
       </div>
 
       <div class="content mt-0" v-bind:style="incremental ? 'margin-left: 31pt' : ''">
-        <vue-markdown>{{this.msg.message}}</vue-markdown>
+        <vue-markdown v-if="msg.message_type =='TEXT_MESSAGE'">{{this.msg.message}}</vue-markdown>
+        <div v-else>
+          <vue-markdown>{{msg.message.message}}</vue-markdown>
+          <div class="card-deck">
+            <div class="card mb-4" v-for="file in msg.message.files" style="max-width: 18rem;">
+              <!--<img src="..." class="card-img-top" alt="..." />-->
+              <div class="card-body">
+                <h5 class="card-title">{{file.user}} shared a file</h5>
+                <p class="card-text">{{file.full_name}}</p>
+                <p class="card-text">{{file.size}} bytes</p>
+                <a
+                  v-bind:href="'http://localhost:9000/files?f='+file.file"
+                  class="btn btn-primary"
+                >Download</a>
+              </div>
+              <div class="card-footer">
+                <small class="text-muted">{{file.type}}</small>
+              </div>
+            </div>
+            <div class="file-tile">{{file}}</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -21,7 +42,11 @@
 <script>
 import Vue from "vue";
 import VueMarkdown from "vue-markdown";
+import moment from "moment";
+
 Vue.use(VueMarkdown);
+
+moment.locale("nl-be");
 
 export default {
   name: "message",
@@ -41,6 +66,11 @@ export default {
   },
   methods: {
     mounted() {}
+  },
+  computed: {
+    time: function() {
+      return moment(this.msg.sent_time).format("LLL");
+    }
   }
 };
 </script>
@@ -86,6 +116,14 @@ export default {
       margin-left: 5px;
       margin-top: 10px;
       border-left: 4px solid #3498db;
+      border-radius: 2px;
+    }
+
+    blockquote {
+      padding-left: 4px;
+      margin-left: 5px;
+      margin-top: 10px;
+      border-left: 4px solid #bdc3c7;
       border-radius: 2px;
     }
   }

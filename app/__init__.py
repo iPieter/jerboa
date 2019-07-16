@@ -5,6 +5,7 @@ import pandas as pd
 import json
 import sqlite3
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
+from werkzeug import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash, safe_str_cmp
 import pika
 from itsdangerous import TimedJSONWebSignatureSerializer as JWS
@@ -13,7 +14,7 @@ import secrets
 from flask_socketio import SocketIO
 from flask_socketio import send, emit, join_room
 
-conn = sqlite3.connect("data.db", check_same_thread=False)
+conn = sqlite3.connect("data/data.db", check_same_thread=False)
 
 c = conn.cursor()
 from flask_socketio import SocketIO
@@ -67,13 +68,14 @@ def handle_message(message):
         print(msg_parsed)
         emit("msg", msg_parsed, room="1")
         c.execute(
-            """INSERT INTO messages (sender, channel, message, sent_time)
-        VALUES(?, ?, ?, ?)""",
+            """INSERT INTO messages (sender, channel, message, sent_time, message_type)
+        VALUES(?, ?, ?, ?, ?)""",
             (
                 msg_parsed["sender"],
                 msg_parsed["channel"],
-                msg_parsed["message"],
+                json.dumps(msg_parsed["message"]),
                 msg_parsed["sent_time"],
+                msg_parsed["message_type"],
             ),
         )
         conn.commit()
@@ -120,7 +122,13 @@ def messages():
         obj = {}
         names = list(map(lambda x: x[0], c.description))
         for pair in zip(names, row):
-            obj[pair[0]] = pair[1]
+            if pair[0] == "message":
+                try:
+                    obj[pair[0]] = json.loads(pair[1])
+                except:
+                    obj[pair[0]] = pair[1]
+            else:
+                obj[pair[0]] = pair[1]
         result.append(obj)
 
     return json.dumps(result)
@@ -135,25 +143,80 @@ def index():
 @app.route("/channels/count")
 @multi_auth.login_required
 def count_channels():
-    result = []
-    for row in c.execute(
+
+    result = sql_to_dict(
         """
     select channel, count(*) from messages group by channel
-        """
-    ):
+    """
+    )
 
-        obj = {}
-        names = list(map(lambda x: x[0], c.description))
-        for pair in zip(names, row):
-            obj[pair[0]] = pair[1]
-        result.append(obj)
     return json.dumps(result)
+
+
+@app.route("/files", methods=["POST"])
+@multi_auth.login_required
+def upload_files():
+    if request.method == "POST":
+        print(request.files)
+        files = []
+        for filename in request.files:
+            f = request.files[filename]
+            print(f.__dict__)
+            identifier = secrets.token_urlsafe(64)
+            f.save("data/" + identifier + "_" + secure_filename(f.filename))
+            data = {
+                "file": identifier,
+                "user": g.user,
+                "type": "text/csv",
+                "size": 1,
+                "full_name": secure_filename(f.filename),
+            }
+
+            c.execute(
+                """INSERT INTO files (file, user_id, type, size, full_name)
+        VALUES(:file, :user, :type, :size, :full_name)""",
+                data,
+            )
+            conn.commit()
+            files.append(data)
+
+        return json.dumps(files), 200
+
+
+@app.route("/files", methods=["GET"])
+@multi_auth.login_required
+def get_file():
+    file_identifier = request.args.get("f")
+
+    print(file_identifier)
+
+    results = sql_to_dict(
+        """select * from files where file == :f""", {"f": file_identifier}
+    )
+
+    if len(results) != 1:
+        return "File could not be uniquely identified.", 500
+
+    file_path = "data/" + results[0]["file"] + "_" + results[0]["full_name"]
+    print(file_path)
+    with open(file_path, mode="rb") as fp:
+        f = fp.read()
+        return Response(
+            f,
+            mimetype="text/csv",
+            headers={
+                "Content-disposition": "attachment; filename={}".format(
+                    results[0]["full_name"]
+                )
+            },
+        )
+    return "Error", 500
 
 
 @app.route("/users")
 @multi_auth.login_required
 def get_users():
-    return users.keys()
+    return json.dumps(users.keys())
 
 
 @app.route("/login", methods=["get"])
@@ -188,6 +251,19 @@ def login():
 @app.route("/test")
 def test():
     return "Hello"
+
+
+def sql_to_dict(query, values={}):
+    result = []
+    for row in c.execute(query, values):
+
+        obj = {}
+        names = list(map(lambda x: x[0], c.description))
+        for pair in zip(names, row):
+            obj[pair[0]] = pair[1]
+        result.append(obj)
+
+    return result
 
 
 def run():

@@ -36,3 +36,38 @@ CREATE TABLE `messages` (
 	`sent_time`	NUMERIC
 );
 ```
+
+```sql
+CREATE TABLE `files` (
+	`id`	INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
+	`file`	TEXT,
+	`user_id`	INTEGER,
+	`type`	TEXT,
+	`size`	INTEGER,
+	`full_name`	TEXT
+);
+```
+
+## Message types
+
+```json
+{
+  "message_type": "TEXT_MESSAGE",
+  "sender": "a json web token or other server-issued token",
+  "channel": "channel identifier",
+  "message": "...",
+  "sent_time": "date time",
+  "signature": "na"
+}
+```
+
+With `TEXT_MESSAGE`, the message is a simple string that can optionally be formatted in markdown. Other message types might have other contents in this field.
+
+### FILES_MESSAGE
+
+```json
+{
+  "message": "the actual message",
+  "files": ["abc123", "cde456"]
+}
+```
