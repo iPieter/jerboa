@@ -20,13 +20,17 @@
           Files
           <input type="file" id="files" ref="files" multiple v-on:change="handleFilesUpload()" />
         </label>
-        <b-dropdown right text dropup variant="outline-secondary">
+        <b-dropdown right text dropup variant="outline">
+          <template slot="button-content" v-if="files.length > 0">({{files.length}})</template>
           <b-dropdown-item v-on:click="addImage()" href="#">Upload image</b-dropdown-item>
           <b-dropdown-item v-on:click="addFiles()" href="#">Upload file</b-dropdown-item>
           <b-dropdown-divider v-if="files.length > 0" />
           <b-dropdown-item v-for="(file, key) in files">
             {{ file.name }}
-            <span class="text-muted ml-1" v-on:click="removeFile( key )">x</span>
+            <span
+              class="text-muted ml-1 float-right"
+              v-on:click="removeFile( key )"
+            >x</span>
           </b-dropdown-item>
         </b-dropdown>
       </div>
@@ -278,6 +282,7 @@ export default {
           _this.message = "";
           _this.rows = 1;
           _this.files = [];
+          this.image = false;
         })
         .catch(function(response) {
           console.log("FAILURE!!");
@@ -334,7 +339,10 @@ textarea {
   resize: none;
 }
 
-.btn-outline-secondary {
+.btn-outline {
+  border-top: 1px solid #ced4da;
+  border-bottom: 1px solid #ced4da;
   background: #fff;
+  color: #ced4da;
 }
 </style>

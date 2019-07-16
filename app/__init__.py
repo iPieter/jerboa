@@ -13,6 +13,7 @@ from itsdangerous import SignatureExpired
 import secrets
 from flask_socketio import SocketIO
 from flask_socketio import send, emit, join_room
+import magic
 
 conn = sqlite3.connect("data/data.db", check_same_thread=False)
 
@@ -161,14 +162,16 @@ def upload_files():
         files = []
         for filename in request.files:
             f = request.files[filename]
-            print(f.__dict__)
             identifier = secrets.token_urlsafe(64)
-            f.save("data/" + identifier + "_" + secure_filename(f.filename))
+            path = os.path.join("data", identifier + "_" + secure_filename(f.filename))
+            f.save(path)
+            size = os.path.getsize(path)
+
             data = {
                 "file": identifier,
                 "user": g.user,
-                "type": "text/csv",
-                "size": 1,
+                "type": magic.from_file(path, mime=True),
+                "size": size,
                 "full_name": secure_filename(f.filename),
             }
 
@@ -211,6 +214,19 @@ def get_file():
             },
         )
     return "Error", 500
+
+
+@app.route("/files/count")
+@multi_auth.login_required
+def count_filex():
+
+    result = sql_to_dict(
+        """
+    select type, count(*), sum(size) from files group by type
+    """
+    )
+
+    return json.dumps(result)
 
 
 @app.route("/users")

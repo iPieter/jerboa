@@ -2,6 +2,7 @@
   <div class="container">
     <h1>Admin dashboard</h1>
     <b-table striped hover :items="channels"></b-table>
+    <b-table striped hover :items="files"></b-table>
   </div>
 </template>
 
@@ -17,7 +18,8 @@ export default {
   name: "admin",
   data() {
     return {
-      channels: {}
+      channels: {},
+      files: {}
     };
   },
   components: {},
@@ -37,14 +39,22 @@ export default {
     axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
     console.log(axios.defaults.headers.common["Authorization"]);
     axios
-      .get("http://localhost:9000/channels/count", {
-        params: {
-          channel: "1"
-        }
-      })
+      .get("http://localhost:9000/channels/count", {})
       .then(function(response) {
         console.log(response);
         _this.channels = response.data;
+      })
+      .catch(function(error) {
+        console.log(error);
+        if (error.response.status == "401") {
+          _this.$router.push({ name: "login" });
+        }
+      });
+    axios
+      .get("http://localhost:9000/files/count", {})
+      .then(function(response) {
+        console.log(response);
+        _this.files = response.data;
       })
       .catch(function(error) {
         console.log(error);
