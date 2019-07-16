@@ -159,7 +159,8 @@ export default {
 
     img {
       margin-top: 10px;
-      max-width: 90%;
+      max-width: 75%;
+      max-height: 85vh;
       background: #fff;
       padding: 0.5rem;
       box-shadow: 0 0.2rem 1.2rem rgba(0, 0, 0, 0.1);

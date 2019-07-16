@@ -14,6 +14,7 @@
         @keydown.enter.shift.exact="newline"
         v-model="message"
         v-bind:rows="rows"
+        v-on:paste="handlePaste"
       />
       <div class="input-group-append">
         <label hidden>
@@ -50,6 +51,7 @@
 import Vue from "vue";
 import Message from "./Message";
 import axios from "axios";
+//import paste from "../paste";
 
 export default {
   name: "about",
@@ -309,6 +311,14 @@ export default {
       */
     removeFile(key) {
       this.files.splice(key, 1);
+    },
+    handlePaste(data) {
+      this.image = true;
+      console.log("paste event");
+      console.log(data);
+      console.log(data.clipboardData.types);
+      console.log(data.clipboardData.files[0]);
+      this.files.push(data.clipboardData.files[0]);
     }
   }
 };
