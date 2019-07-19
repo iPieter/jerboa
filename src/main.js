@@ -2,6 +2,7 @@ import Vue from "vue";
 import App from "./App.vue";
 import ChannelView from "./components/ChannelView";
 import LoginView from "./components/LoginView";
+import SignupView from "./components/SignupView";
 import AdminView from "./components/AdminView";
 import VueRouter from "vue-router";
 
@@ -15,7 +16,8 @@ const router = new VueRouter({
   routes: [
     { path: "/", component: ChannelView, props: true, name: "chat" },
     { path: "/admin", component: AdminView, props: true },
-    { path: "/login", component: LoginView, props: true, name: "login" }
+    { path: "/login", component: LoginView, props: true, name: "login" },
+    { path: "/signup", component: SignupView, props: true, name: "signup" }
   ]
 });
 

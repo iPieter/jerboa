@@ -12,9 +12,13 @@
       </div>
 
       <div class="content mt-0" v-bind:style="incremental ? 'margin-left: 31pt' : ''">
-        <vue-markdown v-if="msg.message_type =='TEXT_MESSAGE'">{{this.msg.message}}</vue-markdown>
+        <vue-markdown
+          :emoji="true"
+          :postrender="postMessageRender"
+          v-if="msg.message_type =='TEXT_MESSAGE'"
+        >{{this.msg.message}}</vue-markdown>
         <div v-else>
-          <vue-markdown>{{msg.message.message}}</vue-markdown>
+          <vue-markdown :emoji="false" :postrender="postMessageRender">{{msg.message.message}}</vue-markdown>
           <div class="card-deck">
             <div class="card mb-4" v-for="file in msg.message.files" style="max-width: 20rem;">
               <!--<img src="..." class="card-img-top" alt="..." />-->
@@ -46,9 +50,9 @@
 import Vue from "vue";
 import VueMarkdown from "vue-markdown";
 import moment from "moment";
+import Emoji from "emoji-mart-vue";
 
 Vue.use(VueMarkdown);
-
 moment.locale("nl-be");
 
 export default {
@@ -69,6 +73,16 @@ export default {
   },
   methods: {
     mounted() {},
+    postMessageRender(htmlData) {
+      var re = /(:\S+(:{2}\S+)?:)/g;
+
+      htmlData = htmlData.replace(
+        new RegExp(re),
+        "<img class='emoji' src='http://localhost:9000/emoji?e=$1'/>"
+      );
+
+      return htmlData;
+    },
     formatBytes(bytes) {
       if (bytes == 0) {
         return "0 B";
@@ -164,6 +178,16 @@ export default {
       background: #fff;
       padding: 0.5rem;
       box-shadow: 0 0.2rem 1.2rem rgba(0, 0, 0, 0.1);
+    }
+
+    .emoji {
+      display: inline;
+      width: 1.1em;
+      padding: 0;
+      background: transparent;
+      margin: 0;
+      box-shadow: unset;
+      margin-top: -0.5ex;
     }
 
     pre {

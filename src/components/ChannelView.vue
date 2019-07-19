@@ -43,6 +43,7 @@
       class="text-muted font-weight-light"
     >connected: {{this.connected}} | queue: {{this.queue}} | {{this.image}}</div>
     <div class="text-danger">{{this.error}}</div>
+    <picker @select="addEmoji" />
   </div>
 </template>
 
@@ -51,10 +52,12 @@
 import Vue from "vue";
 import Message from "./Message";
 import axios from "axios";
+import { Picker } from "emoji-mart-vue";
+
 //import paste from "../paste";
 
 export default {
-  name: "about",
+  name: "channel",
   data() {
     return {
       id: "",
@@ -70,7 +73,7 @@ export default {
       image: false
     };
   },
-  components: { Message },
+  components: { Message, Picker },
   created() {
     if (this.queue != null) {
       localStorage.queue = this.queue;
@@ -107,8 +110,12 @@ export default {
         _this.socket.on("error", _this.on_error);
       })
       .catch(function(error) {
-        console.log(error);
-        if (error.response.status == "401") {
+        console.log(error.response);
+        if (
+          error.response.status == "401" ||
+          error.response == "Signature expired" ||
+          error.response == "Invalid signature"
+        ) {
           _this.$router.push({ name: "login" });
         }
       });
@@ -144,6 +151,9 @@ export default {
     newline() {
       this.value = this.value + "\n";
       this.rows++;
+    },
+    addEmoji(value) {
+      this.message = this.message + " " + value.colons;
     },
     send() {
       if (this.message) {
@@ -339,6 +349,7 @@ export default {
 .messages {
   display: grid;
   overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 .type_msg {

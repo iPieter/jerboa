@@ -10,7 +10,8 @@ CREATE TABLE `users` (
 	`username`	TEXT NOT NULL UNIQUE,
 	`password`	TEXT NOT NULL,
 	`display_name`	TEXT,
-	`profile_image`	TEXT DEFAULT 'default.png'
+	`profile_image`	TEXT DEFAULT 'default.png',
+	`state`	TEXT
 );
 ```
 

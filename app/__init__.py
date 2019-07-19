@@ -24,21 +24,11 @@ app = Flask(__name__)
 CORS(app)
 app.config["SECRET_KEY"] = "top secret!"
 socketio = SocketIO(app)
-jws = JWS(app.config["SECRET_KEY"], expires_in=24 * 3600)
+jws = JWS(app.config["SECRET_KEY"], expires_in=7 * 24 * 3600)
 
 basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth("Bearer")
 multi_auth = MultiAuth(basic_auth, token_auth)
-
-
-users = {
-    "abc": {"name": "Bob", "password": generate_password_hash("hello")},
-    "cdf": {"name": "Josh", "password": generate_password_hash("bye")},
-}
-
-for user in users.keys():
-    token = jws.dumps({"user": user, "token": 1})
-    print("*** token for {}: {}\n".format(user, token))
 
 
 @socketio.on("connect")
@@ -65,21 +55,30 @@ def handle_message(message):
         print("parsed:")
         print(metadata)
         msg_parsed.pop("sender")
-        msg_parsed["sender"] = users[metadata["user"]]["name"]
-        print(msg_parsed)
-        emit("msg", msg_parsed, room="1")
-        c.execute(
-            """INSERT INTO messages (sender, channel, message, sent_time, message_type)
-        VALUES(?, ?, ?, ?, ?)""",
-            (
-                msg_parsed["sender"],
-                msg_parsed["channel"],
-                json.dumps(msg_parsed["message"]),
-                msg_parsed["sent_time"],
-                msg_parsed["message_type"],
-            ),
+        user = sql_to_dict(
+            """
+            select display_name from users where username = :username limit 1
+            """,
+            {"username": metadata["user"]},
         )
-        conn.commit()
+        if user:
+            msg_parsed["sender"] = user[0]["display_name"]
+            print(msg_parsed)
+            emit("msg", msg_parsed, room="1")
+            c.execute(
+                """INSERT INTO messages (sender, channel, message, sent_time, message_type)
+            VALUES(?, ?, ?, ?, ?)""",
+                (
+                    msg_parsed["sender"],
+                    msg_parsed["channel"],
+                    json.dumps(msg_parsed["message"]),
+                    msg_parsed["sent_time"],
+                    msg_parsed["message_type"],
+                ),
+            )
+            conn.commit()
+        else:
+            emit("error", "Invalid signature")
     except SignatureExpired as e:
         emit("error", "Signature expired")
         print(e)
@@ -90,8 +89,14 @@ def handle_message(message):
 @basic_auth.verify_password
 def verify_password(username, password):
     g.user = None
-    if username in users:
-        if check_password_hash(users.get(username)["password"], password):
+    user = sql_to_dict(
+        """
+    select display_name, password from users where username = :username limit 1
+    """,
+        {"username": username},
+    )
+    if user:
+        if check_password_hash(user[0]["password"], password):
             g.user = username
             return True
     return False
@@ -105,8 +110,17 @@ def verify_token(token):
     except:  # noqa: E722
         return False
     if "user" in data:
-        g.user = users[data["user"]]["name"]
-        return True
+        user = sql_to_dict(
+            """
+            select display_name from users where username = :username limit 1
+            """,
+            {"username": data["user"]},
+        )
+        print("token requested")
+        print(user)
+        if user:
+            g.user = data["user"]
+            return True
     return False
 
 
@@ -125,6 +139,8 @@ def messages():
         for pair in zip(names, row):
             if pair[0] == "message":
                 try:
+                    # this is needed to un-escape the json data
+                    # in the future, this could be done a bit better perhaps?
                     obj[pair[0]] = json.loads(pair[1])
                 except:
                     obj[pair[0]] = pair[1]
@@ -218,7 +234,7 @@ def get_file():
 
 @app.route("/files/count")
 @multi_auth.login_required
-def count_filex():
+def count_files():
 
     result = sql_to_dict(
         """
@@ -229,10 +245,64 @@ def count_filex():
     return json.dumps(result)
 
 
+@app.route("/emoji")
+def get_emoji():
+    file_identifier = request.args.get("e")
+
+    print(file_identifier)
+
+    file_path = "its-suffocating-to-be-surrounded-by-happiness-and-not-be-able-to-feel-it-closeup.png"
+    print(file_path)
+    with open(file_path, mode="rb") as fp:
+        f = fp.read()
+        return Response(
+            f,
+            mimetype="image/png",
+            headers={
+                "Content-disposition": "attachment; filename={}".format(file_identifier)
+            },
+        )
+    return "Error", 500
+
+
 @app.route("/users")
 @multi_auth.login_required
 def get_users():
-    return json.dumps(users.keys())
+    result = sql_to_dict(
+        """
+        select display_name, username, profile_image from users
+        """
+    )
+
+    return json.dumps(result)
+
+
+@app.route("/signup", methods=["POST"])
+def signup():
+
+    required = ["email", "password", "name"]
+
+    for var in required:
+        if var not in request.form:
+            return "Key required: {}".format(var), 400
+
+    print("Request: {}".format(request.form["email"]))
+    c.execute(
+        """INSERT INTO users (username, password, display_name, state)
+        VALUES(?, ?, ?, ?)""",
+        (
+            request.form["email"],
+            generate_password_hash(request.form["password"]),
+            request.form["name"],
+            "REQUESTED",
+        ),
+    )
+    conn.commit()
+
+    return {
+        "token": jws.dumps({"user": request.form["email"], "token": 1}).decode("ascii"),
+        "queue": "non-valid-queue",
+    }
 
 
 @app.route("/login", methods=["get"])
@@ -262,11 +332,6 @@ def login():
         "token": jws.dumps({"user": g.user, "token": 1}).decode("ascii"),
         "queue": "non-valid-queue",
     }
-
-
-@app.route("/test")
-def test():
-    return "Hello"
 
 
 def sql_to_dict(query, values={}):
