@@ -53,6 +53,8 @@
 import Vue from "vue";
 import axios from "axios";
 
+axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
+
 export default {
   name: "login",
   data() {
@@ -76,7 +78,7 @@ export default {
       axios({
         method: "get",
         headers: { "X-Requested-With": "application/x-www-form-urlencoded" },
-        url: "http://127.0.0.1:9000/login",
+        url: "login",
         auth: {
           username: _this.email,
           password: _this.password

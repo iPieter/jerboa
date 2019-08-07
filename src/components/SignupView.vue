@@ -98,10 +98,12 @@ export default {
       bodyFormData.set("name", _this.name);
       bodyFormData.set("password", _this.password);
 
+      axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
+
       axios({
         method: "post",
         headers: { "Content-Type": "multipart/form-data" },
-        url: "http://localhost:9000/signup",
+        url: "signup",
         data: bodyFormData
       })
         .then(function(response) {

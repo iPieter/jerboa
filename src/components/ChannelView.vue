@@ -35,15 +35,29 @@
           </b-dropdown-item>
         </b-dropdown>
       </div>
+      <div class="input-group-append" v-if="custom_emojis.length > 0">
+        <b-button variant="outline" v-on:click="emoji = !emoji">🙃</b-button>
+        <picker
+          class="emoji-picker"
+          @select="addEmoji"
+          v-bind:style="emoji? '':'display: none'"
+          :custom="custom_emojis"
+          exclude="{flags}"
+          title="Pick your emoji…"
+          emoji="upside_down_face"
+        />
+      </div>
       <div class="input-group-append">
         <button class="btn btn-primary btn-sm" type="button" v-on:click="send">Send</button>
       </div>
     </div>
-    <div
-      class="text-muted font-weight-light"
-    >connected: {{this.connected}} | queue: {{this.queue}} | {{this.image}}</div>
+    <div class="text-muted font-weight-light">
+      connected:
+      <span v-if="connected">Connected</span>
+      <router-link v-else to="login">Not connected or logged in</router-link>
+      | queue: {{this.queue}} | {{this.image}}
+    </div>
     <div class="text-danger">{{this.error}}</div>
-    <picker @select="addEmoji" />
   </div>
 </template>
 
@@ -70,11 +84,14 @@ export default {
       error: "",
       rows: 1,
       files: [],
-      image: false
+      image: false,
+      emoji: false,
+      custom_emojis: []
     };
   },
   components: { Message, Picker },
   created() {
+    console.log("base url: " + process.env.VUE_APP_SERVER_BASE);
     if (this.queue != null) {
       localStorage.queue = this.queue;
     } else {
@@ -87,10 +104,11 @@ export default {
     }
     let _this = this;
 
+    axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
     axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
     console.log(axios.defaults.headers.common["Authorization"]);
     axios
-      .get("http://localhost:9000/messages", {
+      .get("messages", {
         params: {
           channel: "1"
         }
@@ -102,15 +120,25 @@ export default {
           var objDiv = document.getElementById("messages");
           objDiv.scrollTop = objDiv.scrollHeight;
         });
-        _this.socket = io("http://localhost:9000", { origins: "*" });
+        _this.socket = io(process.env.VUE_APP_SERVER_BASE, { origins: "*" });
         _this.socket.on("connect", _this.on_connect);
         _this.socket.on("disconnect", _this.on_connection_lost);
 
         _this.socket.on("msg", _this.on_message);
         _this.socket.on("error", _this.on_error);
+
+        //this could be somewhere else, but since sqlite doesn't really allow async...
+        axios
+          .get("emojis/list")
+          .then(function(response) {
+            console.log(response.data);
+            _this.custom_emojis = response.data;
+          })
+          .catch(function(error) {
+            console.log(error);
+          });
       })
       .catch(function(error) {
-        console.log(error.response);
         if (
           error.response.status == "401" ||
           error.response == "Signature expired" ||
@@ -177,6 +205,7 @@ export default {
           //this.messages.push(msg);
           this.message = "";
           this.rows = 1;
+          this.emoji = false;
         }
       }
     },
@@ -216,7 +245,7 @@ export default {
 
       let _this = this;
       axios
-        .post("http://localhost:9000/files", formData, {
+        .post("files", formData, {
           headers: {
             "Content-Type": "multipart/form-data"
           }
@@ -266,7 +295,7 @@ export default {
 
       let _this = this;
       axios
-        .post("http://localhost:9000/files", formData, {
+        .post("files", formData, {
           headers: {
             "Content-Type": "multipart/form-data"
           }
@@ -277,7 +306,10 @@ export default {
           var text = _this.message;
 
           for (var i = 0; i < response.data.length; i++) {
-            let url = "http://localhost:9000/files?f=" + response.data[i].file;
+            let url =
+              process.env.VUE_APP_SERVER_BASE +
+              "files?f=" +
+              response.data[i].file;
             text += "\n ![" + url + "](" + url + ")";
           }
           let msg = {
@@ -347,7 +379,8 @@ export default {
 }
 
 .messages {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   overflow-y: scroll;
   overflow-x: hidden;
 }
@@ -365,5 +398,14 @@ textarea {
   border-bottom: 1px solid #ced4da;
   background: #fff;
   color: #ced4da;
+}
+
+.emoji-picker {
+  position: absolute;
+  will-change: transform;
+  bottom: 0px;
+  right: 0px;
+  -webkit-transform: translate3d(0px, -50px, 0px);
+  transform: translate3d(px, -374px, 0px);
 }
 </style>

@@ -8,7 +8,8 @@
     <div class="message">
       <div class="header" v-if="!incremental">
         <span class="font-weight-bold">{{msg.sender}}</span>
-        <span class="font-weight-light text-muted ml-2">{{time}}</span>
+        <span class="font-weight-light text-muted ml-2 d-sm-none">{{smalltime}}</span>
+        <span class="font-weight-light text-muted ml-2 d-none d-sm-inline">{{time}}</span>
       </div>
 
       <div class="content mt-0" v-bind:style="incremental ? 'margin-left: 31pt' : ''">
@@ -26,7 +27,7 @@
                 <h5 class="card-title">{{file.user}} shared a file</h5>
                 <p class="card-text">{{file.full_name}}</p>
                 <a
-                  v-bind:href="'http://localhost:9000/files?f='+file.file"
+                  v-bind:href="process.env.VUE_APP_SERVER_BASE + 'files?f='+file.file"
                   class="btn btn-primary mx-auto"
                 >
                   Download
@@ -74,11 +75,13 @@ export default {
   methods: {
     mounted() {},
     postMessageRender(htmlData) {
-      var re = /(:\S+(:{2}\S+)?:)/g;
+      var re = /:([A-z0-9\-]+(:{2}\S+)?):/g;
 
       htmlData = htmlData.replace(
         new RegExp(re),
-        "<img class='emoji' src='http://localhost:9000/emoji?e=$1'/>"
+        "<img class='emoji' src='" +
+          process.env.VUE_APP_SERVER_BASE +
+          "emoji/$1'/ alt=':$1:'>"
       );
 
       return htmlData;
@@ -138,6 +141,10 @@ export default {
   computed: {
     time: function() {
       return moment(this.msg.sent_time).format("LLL");
+    },
+
+    smalltime: function() {
+      return moment(this.msg.sent_time).format("hh:mm");
     }
   }
 };
@@ -182,7 +189,7 @@ export default {
 
     .emoji {
       display: inline;
-      width: 1.1em;
+      width: 1.3em;
       padding: 0;
       background: transparent;
       margin: 0;

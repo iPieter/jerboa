@@ -14,6 +14,9 @@ import secrets
 from flask_socketio import SocketIO
 from flask_socketio import send, emit, join_room
 import magic
+import urllib.request
+import datetime
+
 
 conn = sqlite3.connect("data/data.db", check_same_thread=False)
 
@@ -245,24 +248,92 @@ def count_files():
     return json.dumps(result)
 
 
-@app.route("/emoji")
-def get_emoji():
-    file_identifier = request.args.get("e")
+@app.route("/emojis/list", methods=["POST"])
+@multi_auth.login_required
+def upload_slack_emojis():
+
+    print(request.files)
+    for filename in request.files:
+        f = request.files[filename]
+        emoji = json.load(f)["emoji"]
+        for e in emoji:
+            print(e)
+            if not emoji[e].startswith("alias:"):
+                urllib.request.urlretrieve(emoji[e], "emojis/{}".format(e))
+                data = {
+                    "name": e,
+                    "file": e,
+                    "user": g.user,
+                    "added": datetime.datetime.now(),
+                }
+
+                c.execute(
+                    """INSERT INTO emojis (name, file, user, added)
+            VALUES(:name, :file, :user, :added)""",
+                    data,
+                )
+
+        conn.commit()
+
+    return "ok", 200
+
+
+@app.route("/emojis/list", methods=["GET"])
+@multi_auth.login_required
+def get_emoji_list():
+
+    emojis = []
+    for row in c.execute("SELECT * FROM emojis"):
+
+        obj = {}
+        names = list(map(lambda x: x[0], c.description))
+        for pair in zip(names, row):
+            obj[pair[0]] = pair[1]
+
+        emojis.append(
+            {
+                "name": obj["name"],
+                "text": "",
+                "short_names": [obj["name"]],
+                "emoticons": [],
+                "keywords": ["custom"],
+                "imageUrl": "http://localhost:9000/emoji/{}".format(obj["file"]),
+            }
+        )
+
+    print(emojis)
+    return json.dumps(emojis)
+
+
+@app.route("/emoji/<file_identifier>", methods=["GET"])
+def get_emoji(file_identifier):
+    if file_identifier == "alias":
+        emoji = request.args.get("e")[1:-1]
+        print("stripped emoji: {}".format(emoji))
+        file_identifier = next(
+            c.execute(
+                """select file from emojis where name == :emoji""", {"emoji": emoji}
+            )
+        )[0]
 
     print(file_identifier)
 
-    file_path = "its-suffocating-to-be-surrounded-by-happiness-and-not-be-able-to-feel-it-closeup.png"
+    file_path = "emojis/{}".format(file_identifier)
     print(file_path)
-    with open(file_path, mode="rb") as fp:
-        f = fp.read()
-        return Response(
-            f,
-            mimetype="image/png",
-            headers={
-                "Content-disposition": "attachment; filename={}".format(file_identifier)
-            },
-        )
-    return "Error", 500
+    try:
+        with open(file_path, mode="rb") as fp:
+            f = fp.read()
+            return Response(
+                f,
+                mimetype="image/png",
+                headers={
+                    "Content-disposition": "attachment; filename={}".format(
+                        file_identifier
+                    )
+                },
+            )
+    except FileNotFoundError as e:
+        return "Error", 500
 
 
 @app.route("/users")
