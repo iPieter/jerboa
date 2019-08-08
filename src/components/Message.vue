@@ -26,10 +26,7 @@
               <div class="card-body">
                 <h5 class="card-title">{{file.user}} shared a file</h5>
                 <p class="card-text">{{file.full_name}}</p>
-                <a
-                  v-bind:href="process.env.VUE_APP_SERVER_BASE + 'files?f='+file.file"
-                  class="btn btn-primary mx-auto"
-                >
+                <a v-bind:href="base + 'files?f='+file.file" class="btn btn-primary mx-auto">
                   Download
                   <br />
                   ({{formatBytes(file.size)}})
@@ -59,7 +56,9 @@ moment.locale("nl-be");
 export default {
   name: "message",
   data() {
-    return {};
+    return {
+      base: "/"
+    };
   },
   components: {
     VueMarkdown
@@ -72,8 +71,10 @@ export default {
       type: Object
     }
   },
+  mounted() {
+    this.base = process.env.VUE_APP_SERVER_BASE;
+  },
   methods: {
-    mounted() {},
     postMessageRender(htmlData) {
       var re = /:([A-z0-9\-]+(:{2}\S+)?):/g;
 
@@ -153,16 +154,16 @@ export default {
 <style lang="scss">
 .message-container {
   border-top: 1px solid #eff0f1;
-  display: inline-flex;
   margin-bottom: -4pt;
   line-height: 1;
+
   .avatar {
     height: 26pt;
     line-height: 26pt;
     width: 26pt;
     position: relative;
     display: inline-block;
-    vertical-align: unset;
+    vertical-align: top;
     margin-right: 5pt;
     border-radius: 3pt;
   }

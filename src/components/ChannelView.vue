@@ -1,9 +1,6 @@
 <template>
   <div class="container container-chat">
-    <div id="messages" class="messages">
-      <message v-for="message in messages" :msg="message"></message>
-    </div>
-    <div class="input-group mb-3 type_msg">
+    <div class="container input-group mb-3 type_msg px-0">
       <textarea
         class="form-control col-auto"
         id="inlineFormInput"
@@ -51,13 +48,10 @@
         <button class="btn btn-primary btn-sm" type="button" v-on:click="send">Send</button>
       </div>
     </div>
-    <div class="text-muted font-weight-light">
-      connected:
-      <span v-if="connected">Connected</span>
-      <router-link v-else to="login">Not connected or logged in</router-link>
-      | queue: {{this.queue}} | {{this.image}}
+    <div id="messages" class="messages">
+      <span class="text-muted">load more...</span>
+      <message v-for="message in messages" :msg="message"></message>
     </div>
-    <div class="text-danger">{{this.error}}</div>
   </div>
 </template>
 
@@ -78,7 +72,6 @@ export default {
       message: "",
       messages: [],
       connected: false,
-      ip: "127.0.0.1:15674",
       socket: {},
       user_id: "",
       error: "",
@@ -86,7 +79,8 @@ export default {
       files: [],
       image: false,
       emoji: false,
-      custom_emojis: []
+      custom_emojis: [],
+      offset: 0
     };
   },
   components: { Message, Picker },
@@ -110,12 +104,13 @@ export default {
     axios
       .get("messages", {
         params: {
-          channel: "1"
+          channel: "1",
+          offset: 0
         }
       })
       .then(function(response) {
         console.log(response);
-        _this.messages = response.data;
+        _this.messages = response.data.reverse();
         Vue.nextTick(function() {
           var objDiv = document.getElementById("messages");
           objDiv.scrollTop = objDiv.scrollHeight;
@@ -184,7 +179,7 @@ export default {
       this.message = this.message + " " + value.colons;
     },
     send() {
-      if (this.message) {
+      if (this.message || this.files.length != 0) {
         var msg;
         if (this.image && this.files.length != 0) {
           this.submitImages();
@@ -368,26 +363,23 @@ export default {
 
 <style lang="scss">
 .container-chat {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
   height: 100vh;
+  padding-bottom: 54px; //Exactly above message bar
 }
-
-.message {
-  flex-grow: 0;
-}
-
 .messages {
-  display: flex;
-  flex-direction: column;
-  overflow-y: scroll;
-  overflow-x: hidden;
+  height: 100%;
+  max-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .type_msg {
   flex-grow: 0; /* default 0 */
   display: inline-flex;
+  position: absolute;
+  bottom: 0;
 }
 textarea {
   resize: none;
@@ -407,5 +399,10 @@ textarea {
   right: 0px;
   -webkit-transform: translate3d(0px, -50px, 0px);
   transform: translate3d(px, -374px, 0px);
+}
+
+html,
+body {
+  height: 100%;
 }
 </style>

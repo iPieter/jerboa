@@ -134,7 +134,13 @@ def messages():
 
     result = []
     for row in c.execute(
-        """select * from messages where channel==:channel""", {"channel": channel}
+        """select * from messages 
+        where channel==:channel 
+        order by id desc
+        limit 10 
+        offset :offset
+        """,
+        {"channel": channel, "offset": 0},
     ):
 
         obj = {}
