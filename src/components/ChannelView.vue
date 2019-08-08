@@ -433,4 +433,26 @@ html,
 body {
   height: 100%;
 }
+
+@media screen and (prefers-color-scheme: dark) {
+  body {
+    background-color: rgb(52, 50, 49) !important;
+    color: #bdc3c7;
+  }
+
+  .form-control {
+    background-color: rgb(52, 50, 49);
+    border-color: rgb(32, 31, 31);
+  }
+
+  .btn-outline {
+    border-top: 1px solid rgb(32, 31, 31);
+    border-bottom: 1px solid rgb(32, 31, 31);
+    background-color: rgb(52, 50, 49);
+  }
+
+  .message-container {
+    border-top-color: rgb(32, 31, 31);
+  }
+}
 </style>

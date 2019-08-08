@@ -221,7 +221,6 @@ def upload_files():
 
 
 @app.route("/files", methods=["GET"])
-@multi_auth.login_required
 def get_file():
     file_identifier = request.args.get("f")
 
@@ -232,7 +231,7 @@ def get_file():
     )
 
     if len(results) != 1:
-        return "File could not be uniquely identified.", 500
+        return "File could not be uniquely identified.", 404
 
     file_path = "data/" + results[0]["file"] + "_" + results[0]["full_name"]
     print(file_path)
