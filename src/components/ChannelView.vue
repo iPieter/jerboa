@@ -49,8 +49,10 @@
       </div>
     </div>
     <div id="messages" class="messages">
-      <span class="text-muted">load more...</span>
-      <message v-for="message in messages" :msg="message"></message>
+      <div class="text-muted mx-auto p-2" style="width: 200px;">
+        <a href="#" v-on:click="loadMessages()">load more...</a>
+      </div>
+      <message v-for="message in messages" :msg="message" v-if="rst"></message>
     </div>
   </div>
 </template>
@@ -80,7 +82,8 @@ export default {
       image: false,
       emoji: false,
       custom_emojis: [],
-      offset: 0
+      initial_msg_id: 0,
+      rst: true
     };
   },
   components: { Message, Picker },
@@ -105,12 +108,14 @@ export default {
       .get("messages", {
         params: {
           channel: "1",
-          offset: 0
+          initial_msg_id: _this.initial_msg_id
         }
       })
       .then(function(response) {
         console.log(response);
         _this.messages = response.data.reverse();
+        _this.initial_msg_id = response.data[0].id;
+
         Vue.nextTick(function() {
           var objDiv = document.getElementById("messages");
           objDiv.scrollTop = objDiv.scrollHeight;
@@ -356,6 +361,29 @@ export default {
       console.log(data.clipboardData.types);
       console.log(data.clipboardData.files[0]);
       this.files.push(data.clipboardData.files[0]);
+    },
+    loadMessages() {
+      var _this = this;
+      axios
+        .get("messages", {
+          params: {
+            channel: "1",
+            initial_msg_id: _this.initial_msg_id
+          }
+        })
+        .then(function(response) {
+          response.data.forEach(m => {
+            _this.messages.unshift(m);
+            console.log(m);
+          });
+          _this.initial_msg_id = _this.messages[0].id;
+          _this.rst = false;
+          Vue.nextTick(function() {
+            _this.rst = true;
+            var objDiv = document.getElementById("messages");
+            objDiv.scrollTop = objDiv.scrollHeight;
+          });
+        });
     }
   }
 };

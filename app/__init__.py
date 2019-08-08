@@ -131,17 +131,26 @@ def verify_token(token):
 @multi_auth.login_required
 def messages():
     channel = request.args.get("channel")
+    initial_msg_id = request.args.get("initial_msg_id")
 
-    result = []
-    for row in c.execute(
-        """select * from messages 
+    print(initial_msg_id)
+
+    if int(initial_msg_id) == 0:
+        query = """select * from messages 
         where channel==:channel 
         order by id desc
+        limit 30 
+        """
+    else:
+        query = """select * from messages 
+        where channel==:channel 
+        and id < :initial_msg_id
+        order by id desc
         limit 10 
-        offset :offset
-        """,
-        {"channel": channel, "offset": 0},
-    ):
+        """
+
+    result = []
+    for row in c.execute(query, {"channel": channel, "initial_msg_id": initial_msg_id}):
 
         obj = {}
         names = list(map(lambda x: x[0], c.description))

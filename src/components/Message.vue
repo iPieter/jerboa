@@ -17,7 +17,7 @@
           :emoji="true"
           :postrender="postMessageRender"
           v-if="msg.message_type =='TEXT_MESSAGE'"
-        >{{this.msg.message}}</vue-markdown>
+        >{{msg.message}}</vue-markdown>
         <div v-else>
           <vue-markdown :emoji="false" :postrender="postMessageRender">{{msg.message.message}}</vue-markdown>
           <div class="card-deck">
