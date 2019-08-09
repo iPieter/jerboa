@@ -43,7 +43,10 @@
         <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         <span class="sr-only">Loading...</span>
       </button>
-      <p class="mt-5 mb-3 text-muted">random plaats voor random tekst</p>
+      <p class="mt-5 mb-3 text-muted">
+        You can make an account
+        <router-link to="signup">here</router-link>!
+      </p>
     </form>
   </div>
 </template>

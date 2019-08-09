@@ -94,8 +94,12 @@ def verify_password(username, password):
     g.user = None
     user = sql_to_dict(
         """
-    select display_name, password from users where username = :username limit 1
-    """,
+        select display_name, password 
+        from users 
+        where username = :username
+        and (state = 'USER' or state = 'ADMIN' )
+        limit 1
+        """,
         {"username": username},
     )
     if user:
@@ -115,7 +119,11 @@ def verify_token(token):
     if "user" in data:
         user = sql_to_dict(
             """
-            select display_name from users where username = :username limit 1
+            select display_name, password 
+            from users 
+            where username = :username
+            and (state = 'USER' or state = 'ADMIN' )
+            limit 1
             """,
             {"username": data["user"]},
         )
@@ -355,11 +363,35 @@ def get_emoji(file_identifier):
 def get_users():
     result = sql_to_dict(
         """
-        select display_name, username, profile_image from users
+        select display_name, username, profile_image, state from users
         """
     )
 
     return json.dumps(result)
+
+
+@app.route("/users/status", methods=["POST"])
+@multi_auth.login_required
+def set_status():
+
+    required = ["username", "status"]
+
+    for var in required:
+        if var not in request.form:
+            return "Key required: {}".format(var), 400
+
+    c.execute(
+        """
+        update users
+        set state = :status
+        where username == :username
+        """,
+        {"username": request.form["username"], "status": request.form["status"]},
+    )
+
+    conn.commit()
+
+    return "ok", 200
 
 
 @app.route("/signup", methods=["POST"])
