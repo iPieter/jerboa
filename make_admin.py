@@ -1,12 +1,15 @@
-import sqlite3
 
-conn = sqlite3.connect("data/data.db", check_same_thread=False)
+import psycopg2
+
+conn = psycopg2.connect(user="postgres",
+                        password="mysecretpassword", host="localhost")
 
 c = conn.cursor()
 
 print("The following users will be promoted to ADMIN status, do you wish to proceed?")
 
-for row in c.execute("select username, state from users"):
+c.execute("select username, state from users")
+for row in c.fetchall():
     print(" - {} ({})".format(row[0], row[1]))
 
 if input("[Y]es/[n]o: ").lower() == "y":
