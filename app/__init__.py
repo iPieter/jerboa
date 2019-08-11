@@ -2,8 +2,7 @@ import os
 from flask import Flask, g, request, abort, Response, jsonify
 from flask_cors import CORS
 import pandas as pd
-import json
-import sqlite3
+import simplejson as json
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash, safe_str_cmp
@@ -16,17 +15,21 @@ from flask_socketio import send, emit, join_room
 import magic
 import urllib.request
 import datetime
+import psycopg2
 
+assert "db_pass" in os.environ
+assert "flask_secret" in os.environ
 
-conn = sqlite3.connect("data/data.db", check_same_thread=False)
+conn = psycopg2.connect(user="postgres",
+                        password=os.environ["db_pass"], host="127.0.0.1")
 
 c = conn.cursor()
 from flask_socketio import SocketIO
 
 app = Flask(__name__)
 CORS(app)
-app.config["SECRET_KEY"] = "top secret!"
-socketio = SocketIO(app)
+app.config["SECRET_KEY"] = os.environ["flask_secret"]
+socketio = SocketIO(app, cors_allowed_origins="https://chat.ipieter.be", logger=True)
 jws = JWS(app.config["SECRET_KEY"], expires_in=7 * 24 * 3600)
 
 basic_auth = HTTPBasicAuth()
@@ -34,33 +37,33 @@ token_auth = HTTPTokenAuth("Bearer")
 multi_auth = MultiAuth(basic_auth, token_auth)
 
 
-@socketio.on("connect")
+@socketio.on("connect", namespace="/api/")
 def test_connect():
     print("connected")
     join_room("1")
 
 
-@socketio.on("disconnect")
+@socketio.on("disconnect", namespace="/api/")
 def test_disconnect():
     print("Client disconnected")
 
 
-@socketio.on("msg")
+@socketio.on("msg", namespace="/api/")
 def handle_message(message):
-    print("received message: " + message)
-    print(request.sid)
-    # emit("msg", message, room=request.sid)
-    msg_parsed = json.loads(message)
-    print(msg_parsed["sender"])
-
     try:
+        print("received message: " + message)
+        print(request.sid)
+        # emit("msg", message, room=request.sid)
+        msg_parsed = json.loads(message)
+        print(msg_parsed["sender"])
+
         metadata = jws.loads(msg_parsed["sender"])
         print("parsed:")
         print(metadata)
         msg_parsed.pop("sender")
         user = sql_to_dict(
             """
-            select display_name from users where username = :username limit 1
+            select display_name, id from users where username = %(username)s limit 1
             """,
             {"username": metadata["user"]},
         )
@@ -70,12 +73,12 @@ def handle_message(message):
             emit("msg", msg_parsed, room="1")
             c.execute(
                 """INSERT INTO messages (sender, channel, message, sent_time, message_type)
-            VALUES(?, ?, ?, ?, ?)""",
+            VALUES(%s, %s, %s, %s, %s)""",
                 (
-                    msg_parsed["sender"],
+                    int(user[0]["id"]),
                     msg_parsed["channel"],
                     json.dumps(msg_parsed["message"]),
-                    msg_parsed["sent_time"],
+                    0.0,
                     msg_parsed["message_type"],
                 ),
             )
@@ -86,6 +89,7 @@ def handle_message(message):
         emit("error", "Signature expired")
         print(e)
     except Exception as e:
+        emit("error", "bad message")
         print(e)
 
 
@@ -96,7 +100,7 @@ def verify_password(username, password):
         """
         select display_name, password 
         from users 
-        where username = :username
+        where username = %(username)s
         and (state = 'USER' or state = 'ADMIN' )
         limit 1
         """,
@@ -121,7 +125,7 @@ def verify_token(token):
             """
             select display_name, password 
             from users 
-            where username = :username
+            where username = %(username)s
             and (state = 'USER' or state = 'ADMIN' )
             limit 1
             """,
@@ -145,20 +149,21 @@ def messages():
 
     if int(initial_msg_id) == 0:
         query = """select * from messages 
-        where channel==:channel 
+        where channel=%(channel)s 
         order by id desc
         limit 30 
         """
     else:
         query = """select * from messages 
-        where channel==:channel 
-        and id < :initial_msg_id
+        where channel=%(channel)s 
+        and id < %(initial_msg_id)s
         order by id desc
         limit 10 
         """
 
     result = []
-    for row in c.execute(query, {"channel": channel, "initial_msg_id": initial_msg_id}):
+    c.execute(query, {"channel": channel, "initial_msg_id": initial_msg_id})
+    for row in c.fetchall():
 
         obj = {}
         names = list(map(lambda x: x[0], c.description))
@@ -166,7 +171,7 @@ def messages():
             if pair[0] == "message":
                 try:
                     # this is needed to un-escape the json data
-                    # in the future, this could be done a bit better perhaps?
+                    # in the future, this could be done a bit better perhaps%s
                     obj[pair[0]] = json.loads(pair[1])
                 except:
                     obj[pair[0]] = pair[1]
@@ -174,6 +179,7 @@ def messages():
                 obj[pair[0]] = pair[1]
         result.append(obj)
 
+    print(result)
     return json.dumps(result)
 
 
@@ -219,7 +225,7 @@ def upload_files():
 
             c.execute(
                 """INSERT INTO files (file, user_id, type, size, full_name)
-        VALUES(:file, :user, :type, :size, :full_name)""",
+        VALUES(%(file)s, %(user)s, %(type)s, %(size)s, %(full_name)s)""",
                 data,
             )
             conn.commit()
@@ -235,7 +241,7 @@ def get_file():
     print(file_identifier)
 
     results = sql_to_dict(
-        """select * from files where file == :f""", {"f": file_identifier}
+        """select * from files where file == %(f)s""", {"f": file_identifier}
     )
 
     if len(results) != 1:
@@ -291,7 +297,7 @@ def upload_slack_emojis():
 
                 c.execute(
                     """INSERT INTO emojis (name, file, user, added)
-            VALUES(:name, :file, :user, :added)""",
+            VALUES(%(name)s, %(file)s, %(user)s, %(added)s)""",
                     data,
                 )
 
@@ -305,7 +311,8 @@ def upload_slack_emojis():
 def get_emoji_list():
 
     emojis = []
-    for row in c.execute("SELECT * FROM emojis"):
+    c.execute("SELECT * FROM emojis")
+    for row in c.fetchall():
 
         obj = {}
         names = list(map(lambda x: x[0], c.description))
@@ -332,11 +339,10 @@ def get_emoji(file_identifier):
     if file_identifier == "alias":
         emoji = request.args.get("e")[1:-1]
         print("stripped emoji: {}".format(emoji))
-        file_identifier = next(
-            c.execute(
+        c.execute(
                 """select file from emojis where name == :emoji""", {"emoji": emoji}
             )
-        )[0]
+        file_identifier = c.fetchone() 
 
     print(file_identifier)
 
@@ -384,7 +390,7 @@ def set_status():
         """
         update users
         set state = :status
-        where username == :username
+        where username == %(username)s
         """,
         {"username": request.form["username"], "status": request.form["status"]},
     )
@@ -406,7 +412,7 @@ def signup():
     print("Request: {}".format(request.form["email"]))
     c.execute(
         """INSERT INTO users (username, password, display_name, state)
-        VALUES(?, ?, ?, ?)""",
+        VALUES(%s, %s, %s, %s)""",
         (
             request.form["email"],
             generate_password_hash(request.form["password"]),
@@ -453,7 +459,8 @@ def login():
 
 def sql_to_dict(query, values={}):
     result = []
-    for row in c.execute(query, values):
+    c.execute(query, values)
+    for row in c.fetchall():
 
         obj = {}
         names = list(map(lambda x: x[0], c.description))
@@ -465,4 +472,4 @@ def sql_to_dict(query, values={}):
 
 
 def run():
-    socketio.run(app, port=9000)
+    socketio.run(app, host="0.0.0.0", port=9000, log_output=True)
