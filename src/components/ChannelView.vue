@@ -114,6 +114,7 @@ export default {
       .then(function(response) {
         console.log(response);
         _this.messages = response.data.reverse();
+          if (response.data.length > 0)
         _this.initial_msg_id = response.data[0].id;
 
         Vue.nextTick(function() {
@@ -139,11 +140,13 @@ export default {
           });
       })
       .catch(function(error) {
+          console.log(error);
         if (
+          error.response && (
           error.response.status == "401" ||
           error.response == "Signature expired" ||
           error.response == "Invalid signature"
-        ) {
+        )) {
           _this.$router.push({ name: "login" });
         }
       });
