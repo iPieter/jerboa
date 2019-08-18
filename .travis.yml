@@ -1,0 +1,10 @@
+language: python
+python:
+    - '3.6'
+before_install:
+    - docker pull postgres
+    - pip install pipenv
+    - pipenv install
+script:
+    - bash run_tests.sh
+
