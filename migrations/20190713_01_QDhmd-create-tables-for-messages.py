@@ -34,7 +34,7 @@ steps = [
     step("""
             CREATE TABLE messages (
                 id    SERIAL,
-                sender    INTEGER,
+                sender    INTEGER NOT NULL,
                 channel   TEXT,
                 message   TEXT,
                 message_type   TEXT,
