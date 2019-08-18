@@ -83,7 +83,8 @@ export default {
       emoji: false,
       custom_emojis: [],
       initial_msg_id: 0,
-      rst: true
+      rst: true,
+      visible: false
     };
   },
   components: { Message, Picker },
@@ -128,16 +129,6 @@ export default {
         _this.socket.on("msg", _this.on_message);
         _this.socket.on("error", _this.on_error);
 
-        //this could be somewhere else, but since sqlite doesn't really allow async...
-        axios
-          .get("emojis/list")
-          .then(function(response) {
-            console.log(response.data);
-            _this.custom_emojis = response.data;
-          })
-          .catch(function(error) {
-            console.log(error);
-          });
       })
       .catch(function(error) {
           console.log(error);
@@ -150,8 +141,26 @@ export default {
           _this.$router.push({ name: "login" });
         }
       });
+        //this could be somewhere else, but since sqlite doesn't really allow async...
+        axios
+          .get("emojis/list")
+          .then(function(response) {
+            _this.custom_emojis = response.data;
+          })
+          .catch(function(error) {
+            console.log(error);
+          });
   },
-  mounted() {},
+  mounted() {
+    if (Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
+    document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) {
+            document.title = "Jerboa";
+        }
+    }, false);
+  },
   props: {
     token: {
       type: String
@@ -168,12 +177,17 @@ export default {
       this.connected = false;
     },
     on_message(msg) {
-      console.log(msg);
       this.messages.push(msg);
       Vue.nextTick(function() {
         var objDiv = document.getElementById("messages");
         objDiv.scrollTop = objDiv.scrollHeight;
       });
+      if (document.hidden) {
+        document.title = "Jerboa - new messages";
+        if (Notification.permission == "granted") {
+            var not = new Notification("A new message is available");
+        }
+      }
     },
     on_error(msg) {
       console.log(msg);
