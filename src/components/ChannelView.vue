@@ -121,7 +121,7 @@ export default {
           var objDiv = document.getElementById("messages");
           objDiv.scrollTop = objDiv.scrollHeight;
         });
-        _this.socket = io(process.env.VUE_APP_SERVER_BASE, { origins: "*" });
+        _this.socket = io(process.env.VUE_APP_SERVER_BASE_WS, { origins: "*" });
         _this.socket.on("connect", _this.on_connect);
         _this.socket.on("disconnect", _this.on_connection_lost);
 
