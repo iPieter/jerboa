@@ -1,8 +1,8 @@
 import os
-import app
+from app import server
 
 if __name__ == "__main__":
-    app.run()
+    server.run()
 
 # To Run:
 # python run.py
