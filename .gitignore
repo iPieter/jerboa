@@ -280,6 +280,8 @@ yarn-error.log
 
 *.db
 
+*.swp
+
 Vue.config.js
 
 data/
