@@ -95,7 +95,7 @@ def verify_token(token):
         print("token requested")
         user = database.get_user(data["user"])
         print(user)
-        if user:
+        if user and user["state"] != "REQUESTED":
             g.user = data["user"]
             return True
     return False
