@@ -1,4 +1,4 @@
-# FigChat 2.0
+# Jerboa https://travis-ci.org/iPieter/chat.svg?branch=master
 
 A bit late, but the best chat app you've ever seen.
 
