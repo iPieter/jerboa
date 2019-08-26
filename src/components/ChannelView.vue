@@ -1,14 +1,29 @@
 <template>
   <div class="container container-chat">
     <div class="container input-group mb-3 type_msg px-0">
+      <div v-if="showEmojiHelper" class="col-12 emoji-predictor">
+          <div v-for="(emoji, index) in emojiPredictions" 
+              class="emoji-prediction "
+              v-bind:class="{'emoji-selected': index === currentSelectedEmoji}">
+            {{ emoji.name }}
+            <img :src="base_url + emoji.imageUrl">
+          </div>
+      </div>
       <textarea
         class="form-control col-auto"
         id="inlineFormInput"
         placeholder="Message"
         autofocus
+        @keydown.tab.exact="handleTab"
+        @keydown.tab.shift.exact="handleReverseTab"
+        @keydown.right="handleTab"
+        @keydown.left="handleReverseTab"
+        @keydown.escape.exact="showEmojiHelper = false"
+        @keydown.tab.exact.prevent
         @keydown.enter.exact.prevent
-        @keyup.enter.exact="send"
+        @keyup.enter.exact="handleEnter"
         @keydown.enter.shift.exact="newline"
+        @keypress="updateEmojiShower"
         v-model="message"
         v-bind:rows="rows"
         v-on:paste="handlePaste"
@@ -39,7 +54,6 @@
           @select="addEmoji"
           v-bind:style="emoji? '':'display: none'"
           :custom="custom_emojis"
-          exclude="{flags}"
           title="Pick your emoji…"
           emoji="upside_down_face"
         />
@@ -63,6 +77,8 @@ import Vue from "vue";
 import Message from "./Message";
 import axios from "axios";
 import { Picker } from "emoji-mart-vue";
+import VueFuse from 'vue-fuse'
+Vue.use(VueFuse)
 
 //import paste from "../paste";
 
@@ -84,7 +100,11 @@ export default {
       custom_emojis: [],
       initial_msg_id: 0,
       rst: true,
-      visible: false
+      visible: false,
+      showEmojiHelper : false,
+      emojiPredictions : [],
+      currentSelectedEmoji : 0,
+      base_url : process.env.VUE_APP_SERVER_BASE
     };
   },
   components: { Message, Picker },
@@ -146,6 +166,7 @@ export default {
           .get("emojis/list")
           .then(function(response) {
             _this.custom_emojis = response.data;
+            console.log(response.data);
           })
           .catch(function(error) {
             console.log(error);
@@ -236,6 +257,64 @@ export default {
       this.$refs.files.click();
       this.image = true;
     },
+    handleTab(event) {
+        if (this.showEmojiHelper) {
+            event.preventDefault();
+            this.currentSelectedEmoji = (this.currentSelectedEmoji + 1) % 
+                this.emojiPredictions.length;
+        }
+         
+    },
+    handleReverseTab(event) {
+        if (this.showEmojiHelper) {
+            event.preventDefault();
+            this.currentSelectedEmoji--;
+            if (this.currentSelectedEmoji < 0)
+                this.currentSelectedEmoji = this.emojiPredictions.length -1;
+        }
+         
+    },
+    handleEnter(event) {
+        if (this.showEmojiHelper) {
+            var name = this.emojiPredictions[this.currentSelectedEmoji].name;
+            var textarea = document.getElementById("inlineFormInput");
+            var lastColon = this.message.lastIndexOf(":", textarea.selectionStart);
+            if (lastColon >= 0) {
+                this.message = this.message.substring(0, lastColon) + ":" + name + ":" + " ";
+                this.showEmojiHelper = false;
+                this.currentSelectedEmoji = 0;
+            }
+
+        } else {
+            this.send();
+        } 
+    },
+    updateEmojiShower(event) {
+        var textarea = document.getElementById("inlineFormInput");
+
+        //if (textarea.selectionStart != textarea.selectionEnd)
+        //    return;
+
+        var lastColon = this.message.lastIndexOf(":", textarea.selectionStart);
+        if (lastColon >= 0) {
+            var lastWord = this.message.substring(lastColon, textarea.selectionStart + 1);
+            lastWord += event.key;
+            this.showEmojiHelper = !(/\s/g.test(lastWord));
+            if (this.showEmojiHelper) {
+                var searchOptions = {
+                    keys : ["name"],
+                    threshold : 0.2
+                };
+                this.$search(lastWord.substring(1), this.custom_emojis, { keys:["name"]})
+                .then(result => {
+                    this.emojiPredictions = result.slice(0, Math.min(result.length, 10));
+                })
+                .catch(err => {
+                    console.log(err);    
+                });
+            }
+        }
+    }, 
 
     /*
         Submits files to the server
@@ -444,6 +523,31 @@ textarea {
   right: 0px;
   -webkit-transform: translate3d(0px, -50px, 0px);
   transform: translate3d(px, -374px, 0px);
+}
+
+.emoji-predictor {
+    border-top: 1px solid #ced4da;
+    border-left: 1px solid #ced4da;
+    border-right: 1px solid #ced4da;
+    border-radius: 5px;
+    padding: 3px;
+    background: #f9f9f9;
+    z-index: 99999;
+}
+
+.emoji-prediction {
+    display: inline-block;
+    padding: 3px;
+}
+.emoji-prediction img {
+    width : 32px;
+    margin-right: 10px;
+}
+.emoji-selected {
+    border-radius : 50px ;
+    background: #007bff;
+    color: white;
+    font-weight: bold;
 }
 
 html,
