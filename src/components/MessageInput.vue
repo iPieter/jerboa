@@ -113,6 +113,7 @@ export default {
                     this.currentSelectedEmoji = 0;
                 }
             } else {
+                console.log(this.message);
                 this.send(this.message);
                 this.message = "";
                 this.rows = 1;
