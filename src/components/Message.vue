@@ -1,5 +1,5 @@
 <template>
-    <div class="message-container pt-2">
+    <div class="message-container pt-2" @mouseover="hovered = true" @mouseleave="hovered = false">
         <img
             class="avatar"
             src="https://ca.slack-edge.com/T7738P6P3-U76USER16-330ec1edea98-72"
@@ -7,10 +7,16 @@
         />
         <div class="message">
             <div class="header" v-if="!incremental">
-                <span class="font-weight-bold">{{ msg.sender }}</span>
+                <span class="font-weight-bold">{{ messages[messages.length - 1].sender }}</span>
                 <span class="font-weight-light text-muted ml-2 d-sm-none">{{ smalltime }}</span>
                 <span class="font-weight-light text-muted ml-2 d-none d-sm-inline">{{ time }}</span>
-                <span><img src="icons/edit24.png" class="icon" @click="editMode = true"/></span>
+                <span
+                    ><img
+                        src="icons/edit24.png"
+                        class="icon"
+                        v-if="hovered"
+                        @click="editMode = true"
+                /></span>
             </div>
 
             <message-input
@@ -18,25 +24,30 @@
                 :send="handleSend"
                 :paste="handlePaste"
                 :escape="() => (editMode = false)"
-                :messageProp="msg.message"
+                :messageProp="messages[messages.length - 1].message"
                 :emojis="emojis"
             ></message-input>
             <div v-else class="content mt-0" v-bind:style="incremental ? 'margin-left: 31pt' : ''">
                 <vue-markdown
                     :emoji="true"
                     :postrender="postMessageRender"
-                    v-if="msg.message_type == 'TEXT_MESSAGE'"
+                    v-if="
+                        messages[messages.length - 1].message_type == 'TEXT_MESSAGE' ||
+                            messages[messages.length - 1].message_type == 'TEXT_MESSAGE_UPDATE'
+                    "
                     class="content-msg"
-                    >{{ msg.message }}</vue-markdown
-                >
+                    :source="messages[messages.length - 1].message"
+                ></vue-markdown>
+                <span class="font-weight-light text-muted" v-if="edited"><i>(edited)</i></span>
                 <div v-else>
                     <vue-markdown :emoji="false" :postrender="postMessageRender">{{
-                        msg.message.message
+                        messages[messages.length - 1].message.message
                     }}</vue-markdown>
                     <div class="card-deck">
                         <div
                             class="card mb-4"
-                            v-for="file in msg.message.files"
+                            v-for="(file, index) in messages[messages.length - 1].message.files"
+                            :key="index"
                             style="max-width: 20rem;"
                         >
                             <!--<img src="..." class="card-img-top" alt="..." />-->
@@ -79,7 +90,10 @@ export default {
     data() {
         return {
             base: "/",
-            editMode: false
+            editMode: false,
+            edited: false,
+            messages: [],
+            hovered: false
         };
     },
     components: {
@@ -87,24 +101,66 @@ export default {
         MessageInput
     },
     props: {
+        id: {
+            type: Number,
+            required: true
+        },
         incremental: {
             type: Boolean
         },
-        msg: {
-            type: Object
+        messagesProp: {
+            type: Array,
+            required: true
         },
         emojis: {
             type: Array
+        },
+        socket: {
+            required: true
+        },
+        token: {
+            required: true
         }
     },
-    mounted() {
+    beforeMount() {
         this.base = process.env.VUE_APP_SERVER_BASE;
+        this.messages.splice(0, this.messages.length);
+        this.messagesProp.forEach(m => this.messages.push(m));
+        this.edited = this.messages.length > 1;
+    },
+    watch: {
+        messagesProp: {
+            handler() {
+                this.edited = true;
+                this.messages.splice(0, this.messages.length);
+                this.messagesProp.forEach(m => this.messages.push(m));
+            },
+            deep: true,
+            immediate: true
+        }
     },
     methods: {
         toggleEdit() {
             this.editMode = true;
         },
-        handleSend() {},
+        updateMessage(msg) {
+            this.edited = true;
+            this.messages.push(msg);
+        },
+        handleSend(content) {
+            var msg = {
+                message_type: "TEXT_MESSAGE_UPDATE",
+                sender: this.token,
+                channel: "1",
+                message: content,
+                sent_time: new Date(),
+                signature: "na",
+                previous_message: this.id
+            };
+
+            this.editMode = false;
+            this.socket.emit("msg", JSON.stringify(msg));
+        },
         handlePaste() {},
         postMessageRender(htmlData) {
             var re = /:([A-z0-9\-]+(:{2}\S+)?):/g;
@@ -172,11 +228,15 @@ export default {
     },
     computed: {
         time: function() {
-            return moment(this.msg.sent_time).format("LLL");
+            return moment(
+                new Date(this.messages[this.messages.length - 1].sent_time * 1000)
+            ).format("LLL");
         },
 
         smalltime: function() {
-            return moment(this.msg.sent_time).format("hh:mm");
+            return moment(
+                new Date(this.messages[this.messages.length - 1].sent_time * 1000)
+            ).format("hh:mm");
         }
     }
 };
