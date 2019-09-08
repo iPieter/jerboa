@@ -64,6 +64,7 @@
                 :socket="socket"
                 :token="token"
                 :id="message.id"
+                :incremental="message.incremental"
             ></message>
         </div>
     </div>
@@ -184,11 +185,6 @@ export default {
     },
     methods: {
         getMessages() {
-            /*
-            return this.messages.sort((a, b) => {
-                return a.sent_time - b.sent_time;
-            });
-            */
             return this.messages;
         },
         on_connect() {
@@ -206,9 +202,22 @@ export default {
                 }
                 prevMsg[0].messages.push(msg);
             } else {
+                var incremental = false;
+                if (this.messages.length > 0) {
+                    var previousMessage = this.messages[this.messages.length - 1];
+                    var lastMessage = previousMessage.messages[previousMessage.messages.length - 1];
+                    if (
+                        msg["sender"] === lastMessage["sender"] &&
+                        msg["sent_time"] - lastMessage["sent_time"] < 60
+                    ) {
+                        incremental = true;
+                    }
+                }
                 var newMessage = {
                     messages: [msg],
-                    id: msg.id
+                    id: msg.id,
+                    previousMessageDate: new Date(),
+                    incremental: incremental
                 };
                 this.messages.push(newMessage);
                 Vue.nextTick(function() {
@@ -219,7 +228,10 @@ export default {
             if (document.hidden) {
                 document.title = "Jerboa - new messages";
                 if (Notification.permission == "granted") {
-                    var not = new Notification("A new message is available");
+                    // TODO: insert channel name
+                    var not = new Notification(msg.sender + "", {
+                        body: msg.message
+                    });
                 }
             }
         },
@@ -236,8 +248,10 @@ export default {
             if (message || this.files.length != 0) {
                 var msg;
                 if (this.image && this.files.length != 0) {
+                    console.log("sending img");
                     this.submitImages();
                 } else if (this.files.length != 0) {
+                    console.log("sending file");
                     this.submitFiles();
                 } else {
                     msg = {
@@ -310,6 +324,7 @@ export default {
                         sent_time: new Date(),
                         signature: "na"
                     };
+                    console.log(msg);
                     _this.socket.emit("msg", JSON.stringify(msg));
 
                     //this.messages.push(msg);
@@ -322,25 +337,15 @@ export default {
                 });
         },
         submitImages() {
-            /*
-          Initialize the form data
-        */
             let formData = new FormData();
-
-            /*
-          Iteate over any file sent over appending the files
-          to the form data.
-        */
             for (var i = 0; i < this.files.length; i++) {
                 let file = this.files[i];
 
                 formData.append("files[" + i + "]", file);
             }
 
-            /*
-          Make the request to the POST /select-files URL
-        */
-
+            var text = this.$refs.msgInput.getMessage();
+            console.log(text);
             let _this = this;
             axios
                 .post("files", formData, {
@@ -351,8 +356,7 @@ export default {
                 .then(function(response) {
                     console.log("SUCCESS!!");
                     console.log(response.data);
-                    var text = _this.$refs.msgInput.getMessage();
-
+                    console.log(text);
                     for (var i = 0; i < response.data.length; i++) {
                         let url =
                             process.env.VUE_APP_SERVER_BASE + "files?f=" + response.data[i].file;
@@ -372,7 +376,7 @@ export default {
                     _this.$refs.msgInput.resetMessage();
                     _this.rows = 1;
                     _this.files = [];
-                    this.image = false;
+                    _this.image = false;
                 })
                 .catch(function(response) {
                     console.log("FAILURE!!");
@@ -406,12 +410,17 @@ export default {
             console.log(data);
             console.log(data.clipboardData.types);
             console.log(data.clipboardData.files[0]);
-            this.files.push(data.clipboardData.files[0]);
+            if (data.clipboardData.files.length > 0) {
+                this.files.push(data.clipboardData.files[0]);
+            }
         },
-        handleKeyUp() {
-            var lastID = this.messages[this.messages.length - 1].id;
-            var el = this.$refs["msg_" + lastID][0];
-            if (el) el.toggleEdit();
+        handleKeyUp(event) {
+            if (this.$refs.msgInput.getMessage().length == 0) {
+                var lastID = this.messages[this.messages.length - 1].id;
+                var el = this.$refs["msg_" + lastID][0];
+                if (el) el.toggleEdit();
+                event.preventDefault();
+            }
         },
         loadMessages() {
             var _this = this;
