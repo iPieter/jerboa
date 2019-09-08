@@ -58,16 +58,29 @@ def handle_message(message):
         print("parsed:")
         print(metadata)
 
-        if database.insert_message(
+        previous_message = None
+        if "previous_message" in msg_parsed:
+            previous_message = msg_parsed["previous_message"]
+
+        row = database.insert_message(
             metadata["user"],
             msg_parsed["channel"],
             json.dumps(msg_parsed["message"]),
             msg_parsed["message_type"],
             int(datetime.now().timestamp()),
-        ):
-            user = database.get_user(metadata["user"])
-            msg_parsed["sender"] = user["display_name"]
-            emit("msg", msg_parsed, room="1")
+            previous_message,
+        )
+
+        if row is not None:
+            msg = {}
+            msg["id"] = row["id"]
+            msg["sender"] = row["?column?"]
+            msg["message_type"] = row["message_type"]
+            msg["message"] = json.loads(row["message"])
+            msg["sent_time"] = int(row["sent_time"])
+            msg["previous_message"] = row["previous_message"]
+            print(msg)
+            emit("msg", msg, room="1")
         else:
             emit("error", "Wrong message")
     except SignatureExpired as e:
@@ -117,12 +130,13 @@ def messages():
     result = []
     for i, row in enumerate(database.get_messages(channel, initial_msg_id)):
         msg = {}
-        msg["id"] = initial_msg_id + i
+        msg["id"] = row["id"]
         msg["sender"] = row["display_name"]
         msg["message_type"] = row["message_type"]
         msg["message"] = json.loads(row["message"])
-        msg["sent_time"] = datetime.fromtimestamp(row["sent_time"]).isoformat()
-        print(msg)
+        msg["sent_time"] = row["sent_time"]
+        msg["previous_message"] = row["previous_message"]
+        print(row)
         result.append(msg)
 
     print(result)
@@ -314,7 +328,7 @@ def set_picture():
     print("update {} to picture {}".format(g.user, request.form["file_identifier"]))
 
     database.set_user_picture(g.user, request.form["file_identifier"])
-    
+
     return "ok", 200
 
 

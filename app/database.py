@@ -73,13 +73,18 @@ class Database:
         )
         self.conn.commit()
 
-    def insert_message(self, username, channel, message, message_type, sent_time):
-        self.cursor.execute(
+    def insert_message(
+        self, username, channel, message, message_type, sent_time, previous_message=None
+    ):
+        result = self.sql_to_dict(
             """
-            INSERT INTO messages(sender, channel, message, sent_time, message_type)
-            SELECT id, %(channel)s, %(message)s, %(sent_time)s, %(message_type)s
+            INSERT INTO messages(sender, channel, message, sent_time, message_type,
+            previous_message)
+            SELECT id, %(channel)s, %(message)s, %(sent_time)s, %(message_type)s,
+            %(previous_message)s
             FROM users
-            WHERE username=%(username)s;
+            WHERE username=%(username)s
+            RETURNING *, %(username)s;
         """,
             {
                 "username": username,
@@ -87,15 +92,15 @@ class Database:
                 "message": message,
                 "sent_time": sent_time,
                 "message_type": message_type,
+                "previous_message": previous_message,
             },
         )
-        result = self.cursor.rowcount
         self.conn.commit()
 
-        return result == 1
+        return result[0]
 
     def get_messages(self, channel, message_id=0):
-        query = """SELECT * from messages 
+        query = """SELECT messages.*, display_name from messages 
                    INNER JOIN users ON messages.sender = users.id 
                    WHERE channel=%(channel)s 
                    AND messages.id > %(msg_id)s

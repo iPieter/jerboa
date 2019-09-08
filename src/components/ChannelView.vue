@@ -55,12 +55,15 @@
                 <a href="#" v-on:click="loadMessages()">load more...</a>
             </div>
             <message
-                v-for="(message, index) in messages"
-                :msg="message"
+                v-for="(message, index) in getMessages()"
+                :messagesProp="message.messages"
                 v-if="rst"
                 :key="index"
-                :ref="`msg_${index}`"
+                :ref="`msg_${message.id}`"
                 :emojis="custom_emojis"
+                :socket="socket"
+                :token="token"
+                :id="message.id"
             ></message>
         </div>
     </div>
@@ -69,6 +72,7 @@
 <script>
 import Vue from "vue";
 import Message from "./Message";
+var MessageClass = Vue.extend(Message);
 import MessageInput from "./MessageInput";
 import axios from "axios";
 import { Picker } from "emoji-mart-vue";
@@ -120,7 +124,7 @@ export default {
             })
             .then(function(response) {
                 console.log(response);
-                _this.messages = response.data.reverse();
+                response.data.reverse().forEach(m => _this.on_message(m));
                 if (response.data.length > 0) _this.initial_msg_id = response.data[0].id;
 
                 Vue.nextTick(function() {
@@ -179,6 +183,14 @@ export default {
         }
     },
     methods: {
+        getMessages() {
+            /*
+            return this.messages.sort((a, b) => {
+                return a.sent_time - b.sent_time;
+            });
+            */
+            return this.messages;
+        },
         on_connect() {
             this.connected = true;
         },
@@ -186,11 +198,24 @@ export default {
             this.connected = false;
         },
         on_message(msg) {
-            this.messages.push(msg);
-            Vue.nextTick(function() {
-                var objDiv = document.getElementById("messages");
-                objDiv.scrollTop = objDiv.scrollHeight;
-            });
+            if (msg["message_type"] == "TEXT_MESSAGE_UPDATE") {
+                var prevMsg = this.messages.filter(m => m.id === msg["previous_message"]);
+                if (prevMsg.length == 0) {
+                    console.log("Warning, previous message not found");
+                    return;
+                }
+                prevMsg[0].messages.push(msg);
+            } else {
+                var newMessage = {
+                    messages: [msg],
+                    id: msg.id
+                };
+                this.messages.push(newMessage);
+                Vue.nextTick(function() {
+                    var objDiv = document.getElementById("messages");
+                    objDiv.scrollTop = objDiv.scrollHeight;
+                });
+            }
             if (document.hidden) {
                 document.title = "Jerboa - new messages";
                 if (Notification.permission == "granted") {
@@ -384,8 +409,8 @@ export default {
             this.files.push(data.clipboardData.files[0]);
         },
         handleKeyUp() {
-            var el = this.$refs["msg_" + (this.messages.length - 1)][0];
-            console.log(el);
+            var lastID = this.messages[this.messages.length - 1].id;
+            var el = this.$refs["msg_" + lastID][0];
             if (el) el.toggleEdit();
         },
         loadMessages() {
@@ -399,8 +424,7 @@ export default {
                 })
                 .then(function(response) {
                     response.data.forEach(m => {
-                        _this.messages.unshift(m);
-                        console.log(m);
+                        _this.on_message(m);
                     });
                     _this.initial_msg_id = _this.messages[0].id;
                     _this.rst = false;
