@@ -28,20 +28,23 @@
                 :emojis="emojis"
             ></message-input>
             <div v-else class="content mt-0" v-bind:style="incremental ? 'margin-left: 31pt' : ''">
-                <vue-markdown
-                    :emoji="true"
-                    :postrender="postMessageRender"
+                <div
                     v-if="
                         messages[messages.length - 1].message_type == 'TEXT_MESSAGE' ||
                             messages[messages.length - 1].message_type == 'TEXT_MESSAGE_UPDATE'
                     "
-                    class="content-msg"
-                    :source="messages[messages.length - 1].message"
-                ></vue-markdown>
-                <span class="font-weight-light text-muted" v-if="edited"><i>(edited)</i></span>
+                >
+                    <vue-markdown
+                        :emoji="true"
+                        :postrender="postMessageRender"
+                        class="content-msg"
+                        :source="messages[messages.length - 1].message"
+                    ></vue-markdown>
+                    <span class="font-weight-light text-muted" v-if="edited"><i>(edited)</i></span>
+                </div>
                 <div v-else>
                     <vue-markdown :emoji="false" :postrender="postMessageRender">{{
-                        messages[messages.length - 1].message.message
+                        messages[messages.length - 1].message
                     }}</vue-markdown>
                     <div class="card-deck">
                         <div
@@ -127,6 +130,8 @@ export default {
         this.messages.splice(0, this.messages.length);
         this.messagesProp.forEach(m => this.messages.push(m));
         this.edited = this.messages.length > 1;
+
+        console.log(this.messages);
     },
     watch: {
         messagesProp: {

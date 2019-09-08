@@ -84,8 +84,8 @@ export default {
             this.showEmojiHelper = false;
             if (this.escape) this.escape();
         },
-        handleKeyUp() {
-            if (this.keyup) this.keyup();
+        handleKeyUp(event) {
+            if (this.keyup) this.keyup(event);
         },
         handleTab(event) {
             if (this.showEmojiHelper) {

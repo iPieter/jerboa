@@ -62,6 +62,14 @@ def handle_message(message):
         if "previous_message" in msg_parsed:
             previous_message = msg_parsed["previous_message"]
 
+        user = database.get_user(metadata["user"])
+
+        if msg_parsed["message_type"] == "TEXT_MESSAGE_UPDATE":
+            previous_message_row = database.get_message(msg_parsed["previous_message"])
+            if previous_message_row is None or previous_message_row["sender"] != user["id"]:
+                print("Attempt to edit other users message!")
+                raise Exception("invalid edit attempt")
+
         row = database.insert_message(metadata["user"], msg_parsed["channel"],
             json.dumps(msg_parsed["message"]), msg_parsed["message_type"],
             int(datetime.now().timestamp()),previous_message)
@@ -69,7 +77,7 @@ def handle_message(message):
         if row is not None:
             msg = {}
             msg["id"] = row["id"] 
-            msg["sender"] = row["?column?"]
+            msg["sender"] = user["display_name"]
             msg["message_type"] = row["message_type"]
             msg["message"] = json.loads(row["message"])
             msg["sent_time"] = int(row["sent_time"])

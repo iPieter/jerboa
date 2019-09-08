@@ -61,11 +61,10 @@ class Database():
         result = self.sql_to_dict("""
             INSERT INTO messages(sender, channel, message, sent_time, message_type,
             previous_message)
-            SELECT id, %(channel)s, %(message)s, %(sent_time)s, %(message_type)s,
-            %(previous_message)s
+            SELECT id, %(channel)s, %(message)s, %(sent_time)s, %(message_type)s, %(previous_message)s
             FROM users
             WHERE username=%(username)s
-            RETURNING *, %(username)s;
+            RETURNING *
         """, {"username" : username, "channel" : channel, 
             "message": message, "sent_time" :sent_time, 
             "message_type": message_type, "previous_message": previous_message})
@@ -82,6 +81,12 @@ class Database():
                    LIMIT 30 
                 """
         return self.sql_to_dict(query, {"channel" : channel, "msg_id" : message_id})
+
+    def get_message(self, msg_id):
+        result = self.sql_to_dict("""
+            SELECT * FROM messages 
+            WHERE id=%(msg_id)s""", {"msg_id": msg_id})
+        return result[0] if len(result) == 1 else None
 
     def get_channel_count(self):
         return self.sql_to_dict("""
