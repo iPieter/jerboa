@@ -47,7 +47,9 @@
                 />
             </div>
             <div class="input-group-append">
-                <button class="btn btn-primary btn-sm" type="button" v-on:click="send">Send</button>
+                <button class="btn btn-primary btn-sm" type="button" v-on:click="handleSend">
+                    Send
+                </button>
             </div>
         </div>
         <div id="messages" class="messages">
@@ -100,7 +102,6 @@ export default {
     },
     components: { Message, Picker, MessageInput },
     created() {
-        console.log("base url: " + process.env.VUE_APP_SERVER_BASE);
         if (this.queue != null) {
             localStorage.queue = this.queue;
         } else {
@@ -244,14 +245,16 @@ export default {
             var newMessage = this.$refs.msgInput.getMessage() + " " + value.colons;
             this.$refs.msgInput.setMessage(newMessage);
         },
+        handleSend() {
+            this.send(this.$refs.msgInput.getMessage());
+            this.$refs.msgInput.resetMessage();
+        },
         send(message) {
             if (message || this.files.length != 0) {
                 var msg;
                 if (this.image && this.files.length != 0) {
-                    console.log("sending img");
                     this.submitImages();
                 } else if (this.files.length != 0) {
-                    console.log("sending file");
                     this.submitFiles();
                 } else {
                     msg = {
@@ -324,7 +327,6 @@ export default {
                         sent_time: new Date(),
                         signature: "na"
                     };
-                    console.log(msg);
                     _this.socket.emit("msg", JSON.stringify(msg));
 
                     //this.messages.push(msg);
@@ -345,7 +347,6 @@ export default {
             }
 
             var text = this.$refs.msgInput.getMessage();
-            console.log(text);
             let _this = this;
             axios
                 .post("files", formData, {
@@ -354,9 +355,6 @@ export default {
                     }
                 })
                 .then(function(response) {
-                    console.log("SUCCESS!!");
-                    console.log(response.data);
-                    console.log(text);
                     for (var i = 0; i < response.data.length; i++) {
                         let url =
                             process.env.VUE_APP_SERVER_BASE + "files?f=" + response.data[i].file;
@@ -406,10 +404,6 @@ export default {
         },
         handlePaste(data) {
             this.image = true;
-            console.log("paste event");
-            console.log(data);
-            console.log(data.clipboardData.types);
-            console.log(data.clipboardData.files[0]);
             if (data.clipboardData.files.length > 0) {
                 this.files.push(data.clipboardData.files[0]);
             }

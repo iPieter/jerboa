@@ -130,8 +130,6 @@ export default {
         this.messages.splice(0, this.messages.length);
         this.messagesProp.forEach(m => this.messages.push(m));
         this.edited = this.messages.length > 1;
-
-        console.log(this.messages);
     },
     watch: {
         messagesProp: {
