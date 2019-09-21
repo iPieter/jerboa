@@ -24,7 +24,8 @@
     "vue-highcharts": "0.0.10",
     "vue-markdown": "^2.2.4",
     "vue-router": "^3.0.2",
-    "webpack": "^4.33.0"
+    "webpack": "^4.33.0",
+    "katex": "^0.11.1"
   },
   "devDependencies": {
     "@vue/cli-plugin-babel": "^3.0.0-rc.3",

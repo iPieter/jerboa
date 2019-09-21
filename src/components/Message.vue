@@ -1,5 +1,9 @@
 <template>
-  <div class="message-container pt-2" @mouseover="hovered = true" @mouseleave="hovered = false">
+  <div
+    :class="incremental ? 'message-container-inc pt-2' : 'message-container pt-2'"
+    @mouseover="hovered = true"
+    @mouseleave="hovered = false"
+  >
     <img
       class="avatar"
       src="https://ca.slack-edge.com/T7738P6P3-U76USER16-330ec1edea98-72"
@@ -243,9 +247,8 @@ export default {
 </script>
 
 <style lang="scss">
-.message-container {
-  border-top: 1px solid #eff0f1;
-  margin-bottom: -4pt;
+.message-container,
+.message-container-inc {
   line-height: 1;
 
   .avatar {
@@ -262,6 +265,10 @@ export default {
   .message {
     display: inline-block;
     width: 95%;
+
+    p {
+      margin-bottom: 0.8ex;
+    }
 
     .content {
       line-height: 1.5;
@@ -328,5 +335,14 @@ export default {
       border-radius: 2px;
     }
   }
+}
+
+.message-container {
+  border-top: 1px solid #eff0f1;
+  margin-bottom: -4pt;
+}
+
+.message-container-inc {
+  margin-top: -10px;
 }
 </style>
