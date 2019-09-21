@@ -10,9 +10,6 @@
         <span class="font-weight-bold">{{ messages[messages.length - 1].sender }}</span>
         <span class="font-weight-light text-muted ml-2 d-sm-none">{{ smalltime }}</span>
         <span class="font-weight-light text-muted ml-2 d-none d-sm-inline">{{ time }}</span>
-        <span>
-          <img src="icons/edit24.png" class="icon" v-if="hovered" @click="editMode = true" />
-        </span>
       </div>
 
       <message-input
@@ -38,6 +35,9 @@
           ></vue-markdown>
           <span class="font-weight-light text-muted" v-if="edited">
             <i>(edited)</i>
+          </span>
+          <span>
+            <img src="icons/edit24.svg" class="icon" v-if="hovered" @click="editMode = true" />
           </span>
         </div>
         <div v-else>
@@ -248,11 +248,6 @@ export default {
   margin-bottom: -4pt;
   line-height: 1;
 
-  .icon {
-    width: 16px;
-    margin-left: 5px;
-  }
-
   .avatar {
     height: 26pt;
     line-height: 26pt;
@@ -298,9 +293,18 @@ export default {
       box-shadow: 0 0.2rem 1.2rem rgba(0, 0, 0, 0.1);
     }
 
+    .content .icon {
+      width: 16px;
+      margin-left: 5px;
+      margin-top: 0;
+      background: transparent;
+      padding: 0;
+      box-shadow: none;
+    }
+
     .content .emoji {
-      display: inline;
-      width: 2.5em;
+      display: inline-block;
+      width: 1.5em;
       padding: 0;
       background: transparent;
       margin: 0;
