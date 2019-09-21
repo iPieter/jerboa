@@ -28,7 +28,13 @@
         <tr role="row" class v-for="user in users">
           <td role="cell" aria-colindex="1" class>{{user.display_name}}</td>
           <td role="cell" aria-colindex="2" class>{{user.username}}</td>
-          <td role="cell" aria-colindex="3" class>{{user.profile_image}}</td>
+          <td role="cell" aria-colindex="3" class>
+            <img
+              :src="base + 'files?f=' + user.profile_image"
+              class="rounded img-thumbnail"
+              width="40px"
+            />
+          </td>
           <td role="cell" aria-colindex="4" class>{{user.state}}</td>
           <td>
             <b-button-group>
@@ -78,7 +84,8 @@ export default {
       channels: [],
       files: [],
       users: [],
-      file: ""
+      file: "",
+      base: process.env.VUE_APP_SERVER_BASE
     };
   },
   components: {},

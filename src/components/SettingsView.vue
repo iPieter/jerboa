@@ -1,65 +1,179 @@
 <template>
   <div class="container">
-    <h1>Settings</h1>
-    <h2>Statistics</h2>
-    <b-table striped hover :items="channels"></b-table>
-    <b-table striped hover :items="files"></b-table>
-    <table
-      aria-busy="false"
-      aria-colcount="4"
-      class="table b-table table-striped table-hover"
-      id="__BVID__8"
-    >
-      <!---->
-      <!---->
-      <thead role="rowgroup" class>
-        <!---->
-        <tr role="row">
-          <th role="columnheader" scope="col" aria-colindex="1" class>Display Name</th>
-          <th role="columnheader" scope="col" aria-colindex="2" class>Username</th>
-          <th role="columnheader" scope="col" aria-colindex="3" class>Profile Image</th>
-          <th role="columnheader" scope="col" aria-colindex="4" class>Current status</th>
-          <th role="columnheader" scope="col" aria-colindex="4" class>Actions</th>
-        </tr>
-      </thead>
-      <!---->
-      <tbody role="rowgroup" class>
-        <!---->
-        <tr role="row" class v-for="user in users">
-          <td role="cell" aria-colindex="1" class>{{user.display_name}}</td>
-          <td role="cell" aria-colindex="2" class>{{user.username}}</td>
-          <td role="cell" aria-colindex="3" class>{{user.profile_image}}</td>
-          <td role="cell" aria-colindex="4" class>{{user.state}}</td>
-          <td>
-            <b-button-group>
-              <b-button
-                variant="success"
-                v-if="user.state != 'USER' & user.state != 'ADMIN'"
-                v-on:click="changeStatus(user.username, 'USER')"
-              >Activate</b-button>
+    <div class="py-5 text-center">
+      <img class="d-block mx-auto mb-4" src="icon.png" alt width="72" height="72" />
+      <h1>Profile and settings</h1>
+      <cite class="lead">
+        Historically, privacy was almost implicit, because it was hard to find and gather information. But in the digital world, whether it's digital cameras or satellites or just what you click on, we need to have more explicit rules - not just for governments but for private companies.
+        <br />— Bill Gates
+      </cite>
+    </div>
 
-              <b-button
-                variant="danger"
-                v-on:click="changeStatus(user.username, 'DISABLED')"
-                v-if="user.state != 'DISABLED'"
-              >Disable</b-button>
-            </b-button-group>
-          </td>
-        </tr>
-        <!---->
-        <!---->
-      </tbody>
-    </table>
-    <h2>Emojis</h2>
-    <!-- Styled -->
-    <b-form-file
-      v-model="file"
-      :state="Boolean(file)"
-      placeholder="Choose a file..."
-      drop-placeholder="Drop file here..."
-    ></b-form-file>
+    <div class="row">
+      <div class="col-md-4 order-md-2 mb-4">
+        <h4 class="d-flex justify-content-between align-items-center mb-3">
+          <span class="text-muted">Logged in sessions</span>
+          <span class="badge badge-secondary badge-pill">3</span>
+        </h4>
+        <ul class="list-group mb-3">
+          <li class="list-group-item d-flex justify-content-between lh-condensed">
+            <div>
+              <h6 class="my-0">Safari</h6>
+              <small class="text-muted">Last seen 2h ago</small>
+            </div>
+            <a href class>Log out</a>
+          </li>
+          <li class="list-group-item d-flex justify-content-between bg-light">
+            <div class="text-success">
+              <h6 class="my-0">Firefox</h6>
+              <small>This device</small>
+            </div>
+          </li>
+          <li class="list-group-item d-flex justify-content-between lh-condensed">
+            <div>
+              <h6 class="my-0">Safari for iOS</h6>
+              <small class="text-muted">currently online</small>
+            </div>
+            <a href class>Log out</a>
+          </li>
+        </ul>
+      </div>
+      <div class="col-md-8 order-md-1">
+        <h4 class="mb-3">Profile information</h4>
+        <form class="needs-validation" novalidate>
+          <div class="row">
+            <div class="col-md-2 mb-3">
+              <label for="firstName">Title</label>
+              <input type="text" class="form-control" id="firstName" placeholder value />
+            </div>
+            <div class="col-md-5 mb-3">
+              <label for="firstName">First name</label>
+              <input type="text" class="form-control" id="firstName" placeholder value required />
+              <div class="invalid-feedback">Valid first name is required.</div>
+            </div>
+            <div class="col-md-5 mb-3">
+              <label for="lastName">Last name</label>
+              <input type="text" class="form-control" id="lastName" placeholder value required />
+              <div class="invalid-feedback">Valid last name is required.</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="username">Username</label>
+            <div class="input-group">
+              <div class="input-group-prepend">
+                <span class="input-group-text">@</span>
+              </div>
+              <input type="text" class="form-control" id="username" placeholder="Username" required />
+              <div class="invalid-feedback" style="width: 100%;">Your username is required.</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="email">
+              Email
+              <span class="text-muted">(Optional)</span>
+            </label>
+            <input type="email" class="form-control" id="email" placeholder="you@example.com" />
+            <div
+              class="invalid-feedback"
+            >Please enter a valid email address if you want email notifications.</div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-5 mb-3">
+              <label for="country">Language</label>
+              <select class="custom-select d-block w-100" id="language" required>
+                <option value>English</option>
+              </select>
+              <div class="invalid-feedback">Please select a valid language.</div>
+            </div>
+            <div class="col-md-7 mb-3">
+              <label for="state">Time zone</label>
+              <select class="custom-select d-block w-100" id="timezone" required>
+                <option value>Set the time zone automagically</option>
+                <option>(UTC+01:00) Brussels, Copenhagen, Madrid, Paris</option>
+              </select>
+              <div class="invalid-feedback">Please provide a time zone.</div>
+            </div>
+          </div>
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="email-notifications" />
+            <label
+              class="custom-control-label"
+              for="email-notifications"
+            >Forward unread messages to my email address</label>
+          </div>
+          <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" id="show-online" />
+            <label
+              class="custom-control-label"
+              for="show-online"
+            >Show an online indicator based on my active devices</label>
+          </div>
+          <button
+            class="mt-4 btn btn-outline-primary btn-lg btn-block"
+            type="submit"
+          >Update my profile</button>
+        </form>
+        <form>
+          <hr class="mb-4" />
+
+          <h4 class="mb-3">Password</h4>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="password">Password</label>
+              <input type="password" class="form-control" id="password" placeholder required />
+              <div class="invalid-feedback">A password is kind of required when changing a password</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="password-confirm">Retype password</label>
+              <input
+                type="password"
+                class="form-control"
+                id="password-confirm"
+                placeholder
+                required
+              />
+              <div class="invalid-feedback">Both passwords don't match</div>
+            </div>
+          </div>
+
+          <button
+            class="mt-4 btn btn-outline-primary btn-lg btn-block"
+            type="submit"
+          >Update password</button>
+        </form>
+        <div>
+          <hr class="mb-4" />
+
+          <h4 class="mb-3">Profile picture</h4>
+
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label for="file">Password</label>
+              <b-form-file
+                v-model="file"
+                :state="Boolean(file)"
+                id="file"
+                placeholder="Choose a file..."
+                drop-placeholder="Drop file here..."
+              ></b-form-file>
+              <div class="invalid-feedback">Something's wrong with this file...</div>
+            </div>
+          </div>
+
+          <button
+            class="mt-4 btn btn-outline-primary btn-lg btn-block"
+            type="submit"
+            v-on:click="uploadProfile"
+          >Update profile picture</button>
+        </div>
+      </div>
+    </div>
+
     <div class="mt-3">Selected file: {{ file ? file.name : '' }}</div>
-    <button type="submit" class="btn btn-primary" v-on:click="uploadEmojiList">Submit</button>
   </div>
 </template>
 
@@ -75,9 +189,6 @@ export default {
   name: "settings",
   data() {
     return {
-      channels: [],
-      files: [],
-      users: [],
       file: ""
     };
   },
@@ -98,61 +209,16 @@ export default {
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
     axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
     console.log(axios.defaults.headers.common["Authorization"]);
-    axios
-      .get("channels/count", {})
-      .then(function(response) {
-        console.log(response);
-        _this.channels = response.data;
-      })
-      .catch(this.handleError);
-    axios
-      .get("files/count", {})
-      .then(function(response) {
-        console.log(response);
-        _this.files = response.data;
-      })
-      .catch(this.handleError);
-    this.loadUsers();
   },
   props: {},
   methods: {
-    loadUsers() {
-      let _this = this;
-
-      axios
-        .get("users", {})
-        .then(function(response) {
-          console.log(response);
-          _this.users = response.data;
-        })
-        .catch(this.handleError);
-    },
     handleError(error) {
       console.log(error);
       if (error.response.status == "401") {
         _this.$router.push({ name: "login" });
       }
     },
-    changeStatus(username, status) {
-      var bodyFormData = new FormData();
-      bodyFormData.set("username", username);
-      bodyFormData.set("status", status);
-
-      var _this = this;
-
-      axios({
-        method: "post",
-        headers: { "Content-Type": "multipart/form-data" },
-        url: "users/status",
-        data: bodyFormData
-      })
-        .then(function(response) {
-          console.log(response);
-          _this.loadUsers();
-        })
-        .catch(this.handleError);
-    },
-    uploadEmojiList() {
+    uploadProfile() {
       let formData = new FormData();
 
       /*
@@ -160,7 +226,7 @@ export default {
           to the form data.
         */
 
-      formData.append("file", this.file);
+      formData.append("files[0]", this.file);
 
       /*
           Make the request to the POST /select-files URL
@@ -168,21 +234,38 @@ export default {
 
       let _this = this;
       axios
-        .post("emojis/list", formData, {
+        .post("files", formData, {
           headers: {
             "Content-Type": "multipart/form-data"
           }
         })
         .then(function(response) {
-          console.log("SUCCESS!!");
           console.log(response.data);
+          var text = _this.message;
+
+          let profile_url = response.data[0].file;
+
+          //_this.socket.emit("msg", JSON.stringify(msg));
+
+          var bodyFormData = new FormData();
+          bodyFormData.set("file_identifier", profile_url);
+
+          axios({
+            method: "post",
+            headers: { "Content-Type": "multipart/form-data" },
+            url: "users/picture",
+            data: bodyFormData
+          })
+            .then(function(response) {
+              console.log(response);
+              _this.loadUsers();
+            })
+            .catch(_this.handleError);
 
           //this.messages.push(msg);
+          _this.file = "";
         })
-        .catch(function(response) {
-          console.log("FAILURE!!");
-          console.log(response);
-        });
+        .catch(this.handleError);
     }
   }
 };

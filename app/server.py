@@ -58,9 +58,13 @@ def handle_message(message):
         print("parsed:")
         print(metadata)
 
-        if database.insert_message(metadata["user"], msg_parsed["channel"],
-            json.dumps(msg_parsed["message"]), msg_parsed["message_type"],
-            int(datetime.now().timestamp())):
+        if database.insert_message(
+            metadata["user"],
+            msg_parsed["channel"],
+            json.dumps(msg_parsed["message"]),
+            msg_parsed["message_type"],
+            int(datetime.now().timestamp()),
+        ):
             user = database.get_user(metadata["user"])
             msg_parsed["sender"] = user["display_name"]
             emit("msg", msg_parsed, room="1")
@@ -113,7 +117,7 @@ def messages():
     result = []
     for i, row in enumerate(database.get_messages(channel, initial_msg_id)):
         msg = {}
-        msg["id"] = initial_msg_id + i 
+        msg["id"] = initial_msg_id + i
         msg["sender"] = row["display_name"]
         msg["message_type"] = row["message_type"]
         msg["message"] = json.loads(row["message"])
@@ -158,8 +162,13 @@ def upload_files():
                 "full_name": secure_filename(f.filename),
             }
 
-            database.insert_file(identifier, g.user, magic.from_file(path, mime=True),
-                                 size, secure_filename(f.filename))
+            database.insert_file(
+                identifier,
+                g.user,
+                magic.from_file(path, mime=True),
+                size,
+                secure_filename(f.filename),
+            )
 
             files.append(data)
 
@@ -183,7 +192,7 @@ def get_file():
         f = fp.read()
         return Response(
             f,
-            mimetype="text/csv",
+            mimetype=result["type"],
             headers={
                 "Content-disposition": "attachment; filename={}".format(
                     result["full_name"]
@@ -221,13 +230,15 @@ def get_emoji_list():
 
     emojis = []
     for row in database.get_emojis():
-        emojis.append( {
-            "name": row["name"],
-            "short_names": [row["name"]],
-            "emoticons": [],
-            "keywords": ["custom"],
-            "imageUrl": "emoji/{}".format(row["file"]),
-        })
+        emojis.append(
+            {
+                "name": row["name"],
+                "short_names": [row["name"]],
+                "emoticons": [],
+                "keywords": ["custom"],
+                "imageUrl": "emoji/{}".format(row["file"]),
+            }
+        )
 
     print(emojis)
     return json.dumps(emojis)
@@ -239,7 +250,7 @@ def get_emoji(file_identifier):
         print("alias")
         emoji = request.args.get("e")[1:-1]
         print("stripped emoji: {}".format(emoji))
-        file_identifier = database.get_emoji(emoji) 
+        file_identifier = database.get_emoji(emoji)
 
     print(file_identifier)
 
@@ -266,9 +277,17 @@ def get_emoji(file_identifier):
 def get_users():
     return json.dumps(database.get_users())
 
+
 @app.route("/users/status", methods=["POST"])
 @multi_auth.login_required
 def set_status():
+    """
+    Sets the user status to the provided state, which can be:
+    - `ADMIN`
+    - `USER`
+    - `DISABLED`
+    - `REQUESTED`
+    """
 
     required = ["username", "status"]
 
@@ -278,6 +297,24 @@ def set_status():
 
     database.set_user_status(request.form["username"], request.form["status"])
 
+    return "ok", 200
+
+
+@app.route("/users/picture", methods=["POST"])
+@multi_auth.login_required
+def set_picture():
+    """Updates the profile picture of the logged in user in the database."""
+
+    required = ["file_identifier"]
+
+    for var in required:
+        if var not in request.form:
+            return "Key required: {}".format(var), 400
+
+    print("update {} to picture {}".format(g.user, request.form["file_identifier"]))
+
+    database.set_user_picture(g.user, request.form["file_identifier"])
+    
     return "ok", 200
 
 
@@ -291,10 +328,12 @@ def signup():
             return "Key required: {}".format(var), 400
 
     print("Request: {}".format(request.form["email"]))
-    result = database.insert_user(request.form["email"], 
-                         generate_password_hash(request.form["password"]),
-                         request.form["name"],
-                         "REQUESTED")
+    result = database.insert_user(
+        request.form["email"],
+        generate_password_hash(request.form["password"]),
+        request.form["name"],
+        "REQUESTED",
+    )
 
     if not result:
         return "Failed to create user", 400
@@ -332,6 +371,7 @@ def login():
         "token": jws.dumps({"user": g.user, "token": 1}).decode("ascii"),
         "queue": "non-valid-queue",
     }
+
 
 def run():
     socketio.run(app, host="0.0.0.0", port=9000, log_output=True)
