@@ -1,13 +1,7 @@
 <template>
   <div class="container container-login text-center">
     <form class="form-signin">
-      <img
-        class="mb-4"
-        src="https://emoji.slack-edge.com/T7738P6P3/mr-vijgen-na-pasen/707493cf1eb3974e.png"
-        alt
-        width="72"
-        height="72"
-      />
+      <img class="mb-4" src="icon.png" alt width="72" height="72" />
       <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
       <label for="inputEmail" class="sr-only">Email address</label>
       <input

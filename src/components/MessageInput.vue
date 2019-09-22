@@ -1,6 +1,6 @@
 <template>
   <div class="text-edit">
-    <div v-if="showEmojiHelper" class="col-12 emoji-predictor">
+    <div v-if="showEmojiHelper && emojiPredictions.length > 0" class="col-12 emoji-predictor">
       <div
         v-for="(emoji, index) in emojiPredictions"
         v-bind:key="index"
@@ -114,7 +114,6 @@ export default {
           this.currentSelectedEmoji = 0;
         }
       } else {
-        console.log(this.message);
         this.send(this.message);
         this.message = "";
         this.rows = 1;
@@ -133,6 +132,7 @@ export default {
       var textarea = this.$refs.textareaInput;
 
       var lastColon = this.message.lastIndexOf(":", textarea.selectionStart);
+
       if (lastColon >= 0) {
         var lastWord = this.message.substring(
           lastColon,
@@ -156,6 +156,8 @@ export default {
               console.log(err);
             });
         }
+      } else if (lastColon == -1) {
+        this.showEmojiHelper = false;
       }
     }
   }
@@ -175,6 +177,8 @@ export default {
   background-clip: padding-box;
   border: 1px solid #ced4da;
   border-radius: 0.25rem;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
   resize: none;
 }
 .text-edit {

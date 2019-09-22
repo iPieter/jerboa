@@ -1,6 +1,6 @@
 <template>
   <div class="container container-chat">
-    <div class="container input-group mb-3 type_msg px-0">
+    <div class="container input-group mb-3 type_msg px-0 pr-5">
       <message-input
         :send="send"
         :paste="handlePaste"
@@ -469,6 +469,7 @@ export default {
   display: inline-flex;
   position: absolute;
   bottom: 0;
+  z-index: 999;
 }
 
 .btn-outline {

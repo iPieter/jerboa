@@ -24,7 +24,7 @@
         :messageProp="messages[messages.length - 1].message"
         :emojis="emojis"
       ></message-input>
-      <div v-else class="content mt-0" v-bind:style="incremental ? 'margin-left: 31pt' : ''">
+      <div v-else class="content mt-0">
         <div
           v-if="
                         messages[messages.length - 1].message_type == 'TEXT_MESSAGE' ||
@@ -250,13 +250,14 @@ export default {
 .message-container,
 .message-container-inc {
   line-height: 1;
+  padding-right: 50px;
 
   .avatar {
     height: 26pt;
     line-height: 26pt;
     width: 26pt;
+    transform: translate(0, 110%);
     position: relative;
-    display: inline-block;
     vertical-align: top;
     margin-right: 5pt;
     border-radius: 3pt;
@@ -264,7 +265,9 @@ export default {
 
   .message {
     display: inline-block;
-    width: 95%;
+    width: 100%;
+    margin-left: 40px;
+    margin-right: -50px;
 
     p {
       margin-bottom: 0.8ex;
@@ -311,7 +314,7 @@ export default {
 
     .content .emoji {
       display: inline-block;
-      width: 1.5em;
+      height: 2.75ex;
       padding: 0;
       background: transparent;
       margin: 0;
@@ -344,5 +347,6 @@ export default {
 
 .message-container-inc {
   margin-top: -10px;
+  margin-left: 0;
 }
 </style>
