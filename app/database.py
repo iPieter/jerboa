@@ -42,7 +42,7 @@ class Database:
     def get_users(self):
         return self.sql_to_dict("SELECT * FROM users")
 
-    def get_user(self, username):
+    def get_user(self, username: str):
         result = self.sql_to_dict(
             """
             SELECT * FROM users
@@ -50,6 +50,33 @@ class Database:
             {"username": username},
         )
         return result[0] if len(result) == 1 else None
+
+    def update_user(self, user):
+        """
+        Updates the user record based on the field `username` in the user object. 
+        
+        The following fields are set:
+        - `title`
+        - `first_name`
+        - `last_name`
+        - `email`
+        - `language`
+        """
+        self.cursor.execute(
+            """
+            UPDATE users
+            SET 
+              title = %(title)s,
+              first_name = %(first_name)s,
+              last_name = %(last_name)s,
+              email = %(email)s,
+              language = %(language)s
+            WHERE 
+              username = %(username)s
+            """,
+            user,
+        )
+        self.conn.commit()
 
     def set_user_status(self, username, status):
         self.cursor.execute(

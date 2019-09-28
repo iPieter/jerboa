@@ -48,11 +48,18 @@
                 role="tabpanel"
                 aria-labelledby="pills-home-tab"
               >
-                <form class="needs-validation" novalidate>
+                <div class="needs-validation" novalidate>
                   <div class="row">
                     <div class="col-md-2 mb-3">
-                      <label for="firstName">Title</label>
-                      <input type="text" class="form-control" id="firstName" placeholder value />
+                      <label for="title">Title</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        id="title"
+                        v-model="user.title"
+                        placeholder
+                        value
+                      />
                     </div>
                     <div class="col-md-5 mb-3">
                       <label for="firstName">First name</label>
@@ -63,6 +70,7 @@
                         placeholder
                         value
                         required
+                        v-model="user.first_name"
                       />
                       <div class="invalid-feedback">Valid first name is required.</div>
                     </div>
@@ -75,6 +83,7 @@
                         placeholder
                         value
                         required
+                        v-model="user.last_name"
                       />
                       <div class="invalid-feedback">Valid last name is required.</div>
                     </div>
@@ -92,6 +101,8 @@
                         id="username"
                         placeholder="Username"
                         required
+                        disabled
+                        v-model="user.username"
                       />
                       <div class="invalid-feedback" style="width: 100%;">Your username is required.</div>
                     </div>
@@ -107,6 +118,7 @@
                       class="form-control"
                       id="email"
                       placeholder="you@example.com"
+                      v-model="user.email"
                     />
                     <div
                       class="invalid-feedback"
@@ -116,16 +128,29 @@
                   <div class="row">
                     <div class="col-md-5 mb-3">
                       <label for="country">Language</label>
-                      <select class="custom-select d-block w-100" id="language" required>
-                        <option value>English</option>
+                      <select
+                        class="custom-select d-block w-100"
+                        id="language"
+                        required
+                        v-model="user.language"
+                      >
+                        <option value="nl">Dutch</option>
+                        <option value="en">English</option>
                       </select>
                       <div class="invalid-feedback">Please select a valid language.</div>
                     </div>
                     <div class="col-md-7 mb-3">
                       <label for="state">Time zone</label>
-                      <select class="custom-select d-block w-100" id="timezone" required>
+                      <select
+                        class="custom-select d-block w-100"
+                        id="timezone"
+                        required
+                        v-model="user.timezone"
+                      >
                         <option value>Set the time zone automagically</option>
-                        <option>(UTC+01:00) Brussels, Copenhagen, Madrid, Paris</option>
+                        <option
+                          value="Europe/Brussels"
+                        >(UTC+01:00) Brussels, Copenhagen, Madrid, Paris</option>
                       </select>
                       <div class="invalid-feedback">Please provide a time zone.</div>
                     </div>
@@ -145,10 +170,11 @@
                     >Show an online indicator based on my active devices</label>
                   </div>
                   <button
-                    class="my-4 btn btn-outline-primary btn-lg btn-block"
+                    class="mt-4 btn btn-outline-primary btn-lg btn-block"
                     type="submit"
+                    v-on:click="updateSettings"
                   >Update my profile</button>
-                </form>
+                </div>
               </div>
             </div>
           </b-tab>
@@ -220,7 +246,8 @@ export default {
   name: "settings",
   data() {
     return {
-      file: ""
+      file: "",
+      user: []
     };
   },
   components: {},
@@ -235,18 +262,26 @@ export default {
     } else {
       this.token = localStorage.token;
     }
-    let _this = this;
+
+    var _this = this;
 
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
     axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
     console.log(axios.defaults.headers.common["Authorization"]);
+
+    axios
+      .get("user", {})
+      .then(function(response) {
+        _this.user = response.data;
+      })
+      .catch(this.handleError);
   },
   props: {},
   methods: {
     handleError(error) {
       console.log(error);
       if (error.response.status == "401") {
-        _this.$router.push({ name: "login" });
+        this.$router.push({ name: "login" });
       }
     },
     uploadProfile() {
@@ -297,6 +332,29 @@ export default {
           _this.file = "";
         })
         .catch(this.handleError);
+    },
+
+    updateSettings() {
+      let _this = this;
+
+      var bodyFormData = new FormData();
+      Object.keys(this.user).forEach(function(k) {
+        bodyFormData.set(k, _this.user[k]);
+        console.log(k, _this.user[k]);
+      });
+
+      //this.messages.push(msg);
+      axios({
+        url: "user",
+        method: "post",
+        headers: { "Content-Type": "multipart/form-data" },
+        data: bodyFormData
+      })
+        .then(function(response) {
+          console.log(response);
+          _this.loadUsers();
+        })
+        .catch(_this.handleError);
     }
   }
 };

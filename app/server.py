@@ -303,6 +303,31 @@ def get_users():
     return json.dumps(database.get_users())
 
 
+@app.route("/user/<username>")
+@multi_auth.login_required
+def get_user(username: str):
+    return json.dumps(database.get_user(username))
+
+
+@app.route("/user")
+@multi_auth.login_required
+def get_user_self():
+    return json.dumps(database.get_user(g.user))
+
+
+@app.route("/user", methods=["POST"])
+@multi_auth.login_required
+def set_user_self():
+    if g.user != request.form["username"]:
+        return (
+            "Hold on buddy, I'm not a hot-boiling waterhead and I do know you're trying to fool me! Your username should match the username we have for you, you can't change that.",
+            418,
+        )
+
+    database.update_user(request.form)
+    return "ok", 200
+
+
 @app.route("/users/status", methods=["POST"])
 @multi_auth.login_required
 def set_status():
