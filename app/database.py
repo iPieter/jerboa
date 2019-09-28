@@ -126,7 +126,7 @@ class Database:
         return result[0]
 
     def get_messages(self, channel, message_id=0):
-        query = """SELECT messages.*, display_name from messages 
+        query = """SELECT messages.*, username from messages 
                    INNER JOIN users ON messages.sender = users.id 
                    WHERE channel=%(channel)s 
                    AND messages.id > %(msg_id)s

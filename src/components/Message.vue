@@ -1,17 +1,13 @@
 <template>
   <div
-    :class="incremental ? 'message-container-inc pt-2' : 'message-container pt-2'"
+    :class="incremental ? 'message-container-inc pt-2' : 'message-container'"
     @mouseover="hovered = true"
     @mouseleave="hovered = false"
   >
-    <img
-      class="avatar"
-      src="https://ca.slack-edge.com/T7738P6P3-U76USER16-330ec1edea98-72"
-      v-if="!incremental"
-    />
+    <img class="avatar" :src="base + 'files?f=' + sender.profile_image" v-if="!incremental" />
     <div class="message">
       <div class="header" v-if="!incremental">
-        <span class="font-weight-bold">{{ messages[messages.length - 1].sender }}</span>
+        <span class="font-weight-bold">{{ sender.first_name }}</span>
         <span class="font-weight-light text-muted ml-2 d-sm-none">{{ smalltime }}</span>
         <span class="font-weight-light text-muted ml-2 d-none d-sm-inline">{{ time }}</span>
       </div>
@@ -123,6 +119,9 @@ export default {
       required: true
     },
     token: {
+      required: true
+    },
+    sender: {
       required: true
     }
   },
@@ -256,11 +255,12 @@ export default {
     height: 26pt;
     line-height: 26pt;
     width: 26pt;
-    transform: translate(0, 110%);
+    transform: translate(0, 16px);
     position: relative;
     vertical-align: top;
     margin-right: 5pt;
     border-radius: 3pt;
+    margin-top: -8px;
   }
 
   .message {
@@ -271,6 +271,10 @@ export default {
 
     p {
       margin-bottom: 0.8ex;
+    }
+
+    h1 {
+      margin-top: 0.5ex;
     }
 
     .content {
@@ -342,7 +346,11 @@ export default {
 
 .message-container {
   border-top: 1px solid #eff0f1;
-  margin-bottom: -4pt;
+  margin-bottom: -2pt;
+
+  .message {
+    margin-top: -18px;
+  }
 }
 
 .message-container-inc {

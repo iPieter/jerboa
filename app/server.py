@@ -85,7 +85,7 @@ def handle_message(message):
         if row is not None:
             msg = {}
             msg["id"] = row["id"]
-            msg["sender"] = user["display_name"]
+            msg["sender"] = user["username"]
             msg["message_type"] = row["message_type"]
             msg["message"] = json.loads(row["message"])
             msg["sent_time"] = int(row["sent_time"])
@@ -142,7 +142,7 @@ def messages():
     for i, row in enumerate(database.get_messages(channel, initial_msg_id)):
         msg = {}
         msg["id"] = row["id"]
-        msg["sender"] = row["display_name"]
+        msg["sender"] = row["username"]
         msg["message_type"] = row["message_type"]
         msg["message"] = json.loads(row["message"])
         msg["sent_time"] = row["sent_time"]

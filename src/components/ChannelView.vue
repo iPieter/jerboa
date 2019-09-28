@@ -54,6 +54,7 @@
         :token="token"
         :id="message.id"
         :incremental="message.incremental"
+        :sender="users[message.sender]"
       ></message>
     </div>
   </div>
@@ -85,7 +86,7 @@ export default {
       custom_emojis: [],
       initial_msg_id: 0,
       rst: true,
-      users: []
+      users: {}
     };
   },
   components: { Message, Picker, MessageInput },
@@ -143,7 +144,6 @@ export default {
           _this.$router.push({ name: "login" });
         }
       });
-    //this could be somewhere else, but since sqlite doesn't really allow async...
     axios
       .get("emojis/list")
       .then(function(response) {
@@ -183,8 +183,9 @@ export default {
       axios
         .get("users", {})
         .then(function(response) {
-          console.log(response);
-          _this.users = response.data;
+          for (var u in response.data) {
+            _this.users[response.data[u].username] = response.data[u];
+          }
         })
         .catch(this.handleError);
     },
@@ -224,7 +225,8 @@ export default {
           messages: [msg],
           id: msg.id,
           previousMessageDate: new Date(),
-          incremental: incremental
+          incremental: incremental,
+          sender: msg.sender
         };
         this.messages.push(newMessage);
         Vue.nextTick(function() {
