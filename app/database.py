@@ -39,6 +39,37 @@ class Database:
         self.conn.commit()
         return result == 1
 
+    def insert_session(self, username, last_seen, device, client, expires):
+
+        self.cursor.execute(
+            """INSERT INTO active_logins (last_seen, active, device, client, expires, user_id)
+            SELECT %(last_seen)s, %(active)s, %(device)s, %(client)s, %(expires)s, id
+            FROM users
+            WHERE username=%(username)s
+            RETURNING id""",
+            {
+                "last_seen": last_seen,
+                "active": "1",
+                "device": device,
+                "client": client,
+                "expires": expires,
+                "username": username,
+            },
+        )
+        results = self.conn.commit()
+        print(results)
+        return results
+
+    def get_sessions(self, username):
+        result = self.sql_to_dict(
+            """
+            select *
+            from active_logins
+            where user_id = (select id from users where username = %(username)s)""",
+            {"username": username},
+        )
+        return result
+
     def get_users(self):
         return self.sql_to_dict("SELECT * FROM users")
 

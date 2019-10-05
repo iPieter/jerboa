@@ -3,6 +3,7 @@ from flask import Flask, g, request, abort, Response, jsonify
 from flask_cors import CORS
 import pandas as pd
 import simplejson as json
+import time
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
 from werkzeug import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash, safe_str_cmp
@@ -25,8 +26,9 @@ from flask_socketio import SocketIO
 app = Flask(__name__)
 CORS(app)
 app.config["SECRET_KEY"] = os.environ["flask_secret"]
+app.config["EXPIRES"] = 7 * 24 * 3600
 socketio = SocketIO(app, cors_allowed_origins="*", engineiologger=True, logger=True)
-jws = JWS(app.config["SECRET_KEY"], expires_in=7 * 24 * 3600)
+jws = JWS(app.config["SECRET_KEY"], expires_in=app.config["EXPIRES"])
 database = Database(os.environ["db_pass"])
 
 basic_auth = HTTPBasicAuth()
@@ -349,6 +351,12 @@ def set_status():
 
     return "ok", 200
 
+@app.route("/users/sessions")
+@multi_auth.login_required
+def get_sessions():
+
+    return json.dumps(database.get_sessions(g.user))
+
 
 @app.route("/users/picture", methods=["POST"])
 @multi_auth.login_required
@@ -398,10 +406,9 @@ def signup():
 @basic_auth.login_required
 def login():
     """
-    Login endpoint for a client with three responsabilities:
+    Login endpoint for a client with two responsabilities:
         - Create a JWT for the client to use on other endpoints.
         - Register the created device/token.
-        - Construct a personal queue for the device.
 
     Returns the JWT.
     """
@@ -415,6 +422,14 @@ def login():
     # channel.queue_bind(exchange="amq.direct", queue=queue_name, routing_key="1")
     # print(" [x] Sent %r:%r" % ("1", message))
     # connection.close()
+
+    database.insert_session(
+        g.user,
+        int(time.time()),
+        request.user_agent.platform,
+        request.user_agent.browser,
+        int(time.time()) + app.config["EXPIRES"],
+    )
 
     # Create token and return it
     return {

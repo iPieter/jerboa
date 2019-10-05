@@ -13,13 +13,16 @@
       <div class="col-md-4 order-md-2 mb-4">
         <h4 class="d-flex justify-content-between align-items-center mb-3">
           <span class="text-muted">Logged in sessions</span>
-          <span class="badge badge-secondary badge-pill">3</span>
+          <span class="badge badge-secondary badge-pill">{{sessions.length}}</span>
         </h4>
         <ul class="list-group mb-3">
-          <li class="list-group-item d-flex justify-content-between lh-condensed">
+          <li
+            class="list-group-item d-flex justify-content-between lh-condensed"
+            v-for="s in sessions"
+          >
             <div>
-              <h6 class="my-0">Safari</h6>
-              <small class="text-muted">Last seen 2h ago</small>
+              <h6 class="my-0">{{s.client}} on {{s.device}}</h6>
+              <small class="text-muted">Last seen {{difference(s.last_seen)}}</small>
             </div>
             <a href class>Log out</a>
           </li>
@@ -28,13 +31,6 @@
               <h6 class="my-0">Firefox</h6>
               <small>This device</small>
             </div>
-          </li>
-          <li class="list-group-item d-flex justify-content-between lh-condensed">
-            <div>
-              <h6 class="my-0">Safari for iOS</h6>
-              <small class="text-muted">currently online</small>
-            </div>
-            <a href class>Log out</a>
           </li>
         </ul>
       </div>
@@ -238,7 +234,10 @@
 <script>
 import Vue from "vue";
 import axios from "axios";
+import moment from "moment";
 import BootstrapVue from "bootstrap-vue";
+
+moment.locale("en");
 
 Vue.use(BootstrapVue);
 
@@ -247,7 +246,8 @@ export default {
   data() {
     return {
       file: "",
-      user: []
+      user: [],
+      sessions: []
     };
   },
   components: {},
@@ -273,6 +273,13 @@ export default {
       .get("user", {})
       .then(function(response) {
         _this.user = response.data;
+      })
+      .catch(this.handleError);
+
+    axios
+      .get("users/sessions", {})
+      .then(function(response) {
+        _this.sessions = response.data;
       })
       .catch(this.handleError);
   },
@@ -355,10 +362,16 @@ export default {
           _this.loadUsers();
         })
         .catch(_this.handleError);
+    },
+    difference: function(value) {
+      return moment(new Date(value * 1000)).fromNow();
     }
   }
 };
 </script>
 
 <style lang="scss">
+h6:first-letter {
+  text-transform: capitalize;
+}
 </style>
