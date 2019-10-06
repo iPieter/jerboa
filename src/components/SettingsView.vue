@@ -22,11 +22,16 @@
           >
             <div>
               <h6 class="my-0">{{s.client}} on {{s.device}}</h6>
-              <small class="text-muted">Last seen {{difference(s.last_seen)}}</small>
+              <small class="text-muted">Logged in {{difference(s.last_seen)}}</small>
             </div>
-            <a href class>Log out</a>
+            <a href="#" class v-on:click="logout(s.id)">Log out</a>
           </li>
-          <li class="list-group-item d-flex justify-content-between bg-light"></li>
+          <li class="list-group-item d-flex justify-content-between bg-light">
+            <div class="text-success">
+              <h6 class="my-0">Firefox</h6>
+              <small>This device</small>
+            </div>
+          </li>
         </ul>
       </div>
       <div class="col-md-8 order-md-1">
@@ -271,12 +276,7 @@ export default {
       })
       .catch(this.handleError);
 
-    axios
-      .get("users/sessions", {})
-      .then(function(response) {
-        _this.sessions = response.data;
-      })
-      .catch(this.handleError);
+    this.get_sessions();
   },
   props: {},
   methods: {
@@ -285,6 +285,15 @@ export default {
       if (error.response.status == "401") {
         this.$router.push({ name: "login" });
       }
+    },
+    get_sessions() {
+      let _this = this;
+      axios
+        .get("users/sessions", {})
+        .then(function(response) {
+          _this.sessions = response.data;
+        })
+        .catch(this.handleError);
     },
     uploadProfile() {
       let formData = new FormData();
@@ -358,8 +367,19 @@ export default {
         })
         .catch(_this.handleError);
     },
-    difference: function(value) {
+    difference(value) {
       return moment(new Date(value * 1000)).fromNow();
+    },
+    logout(id) {
+      let _this = this;
+      axios({
+        url: "users/sessions/" + id,
+        method: "delete"
+      })
+        .then(function(response) {
+          _this.get_sessions();
+        })
+        .catch(_this.handleError);
     }
   }
 };

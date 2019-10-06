@@ -122,12 +122,22 @@ def verify_token(token):
     except:  # noqa: E722
         return False
     if "user" in data:
-        print("token requested")
+        print("token validation request")
         user = database.get_user(data["user"])
-        print(user)
-        if user and user["state"] != "REQUESTED":
-            g.user = data["user"]
-            return True
+        if user and (user["state"] == "USER" or user["state"] == "ADMIN"):
+            session = database.get_session(data["token"])
+            print(session)
+            print(user)
+            if (
+                session != None
+                and session["active"] == True
+                and (session["user_id"] == user["id"] or user["state"] == "ADMIN")
+            ):
+                g.user = data["user"]
+                print("token valid")
+                return True
+
+    print("token not valid")
     return False
 
 
@@ -138,7 +148,7 @@ def messages():
     channel = request.args.get("channel")
     initial_msg_id = int(request.args.get("initial_msg_id"))
 
-    print(initial_msg_id)
+    # print(initial_msg_id)
 
     result = []
     for i, row in enumerate(database.get_messages(channel, initial_msg_id)):
@@ -149,10 +159,10 @@ def messages():
         msg["message"] = json.loads(row["message"])
         msg["sent_time"] = row["sent_time"]
         msg["previous_message"] = row["previous_message"]
-        print(row)
+        # print(row)
         result.append(msg)
 
-    print(result)
+    # print(result)
     return json.dumps(result)
 
 
@@ -172,7 +182,7 @@ def count_channels():
 @multi_auth.login_required
 def upload_files():
     if request.method == "POST":
-        print(request.files)
+        # print(request.files)
         files = []
         for filename in request.files:
             f = request.files[filename]
@@ -206,7 +216,7 @@ def upload_files():
 def get_file():
     file_identifier = request.args.get("f")
 
-    print(file_identifier)
+    # print(file_identifier)
 
     result = database.get_file(file_identifier)
 
@@ -214,7 +224,7 @@ def get_file():
         return "File could not be uniquely identified.", 404
 
     file_path = "data/" + result["file"] + "_" + result["full_name"]
-    print(file_path)
+    # print(file_path)
     with open(file_path, mode="rb") as fp:
         f = fp.read()
         return Response(
@@ -239,12 +249,10 @@ def count_files():
 @multi_auth.login_required
 def upload_slack_emojis():
 
-    print(request.files)
     for filename in request.files:
         f = request.files[filename]
         emoji = json.load(f)["emoji"]
         for e in emoji:
-            print(e)
             if not emoji[e].startswith("alias:"):
                 urllib.request.urlretrieve(emoji[e], "emojis/{}".format(e))
                 database.insert_emoji(g.user, e, e, datetime.now().timestamp())
@@ -267,22 +275,16 @@ def get_emoji_list():
             }
         )
 
-    print(emojis)
     return json.dumps(emojis)
 
 
 @app.route("/emoji/<file_identifier>", methods=["GET"])
 def get_emoji(file_identifier):
     if file_identifier == "alias":
-        print("alias")
         emoji = request.args.get("e")[1:-1]
-        print("stripped emoji: {}".format(emoji))
         file_identifier = database.get_emoji(emoji)
 
-    print(file_identifier)
-
     file_path = "emojis/{}".format(file_identifier)
-    print(file_path)
     try:
         with open(file_path, mode="rb") as fp:
             f = fp.read()
@@ -351,11 +353,22 @@ def set_status():
 
     return "ok", 200
 
+
 @app.route("/users/sessions")
 @multi_auth.login_required
 def get_sessions():
 
     return json.dumps(database.get_sessions(g.user))
+
+
+@app.route("/users/sessions/<id>", methods=["DELETE"])
+@multi_auth.login_required
+def delete_session(id: int):
+    """Sets the provided session id on disabled if it is done by the owner of the session or an admin"""
+
+    database.disable_session(id)
+
+    return "ok", 200
 
 
 @app.route("/users/picture", methods=["POST"])
@@ -423,7 +436,7 @@ def login():
     # print(" [x] Sent %r:%r" % ("1", message))
     # connection.close()
 
-    database.insert_session(
+    session = database.insert_session(
         g.user,
         int(time.time()),
         request.user_agent.platform,
@@ -431,9 +444,12 @@ def login():
         int(time.time()) + app.config["EXPIRES"],
     )
 
+    print("New session with meta-data:")
+    print(session)
+
     # Create token and return it
     return {
-        "token": jws.dumps({"user": g.user, "token": 1}).decode("ascii"),
+        "token": jws.dumps({"user": g.user, "token": session["id"]}).decode("ascii"),
         "queue": "non-valid-queue",
     }
 

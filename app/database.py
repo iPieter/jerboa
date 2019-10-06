@@ -41,7 +41,7 @@ class Database:
 
     def insert_session(self, username, last_seen, device, client, expires):
 
-        self.cursor.execute(
+        result = self.sql_to_dict(
             """INSERT INTO active_logins (last_seen, active, device, client, expires, user_id)
             SELECT %(last_seen)s, %(active)s, %(device)s, %(client)s, %(expires)s, id
             FROM users
@@ -56,19 +56,46 @@ class Database:
                 "username": username,
             },
         )
-        results = self.conn.commit()
-        print(results)
-        return results
+        self.conn.commit()
+        return result[0]
 
     def get_sessions(self, username):
         result = self.sql_to_dict(
             """
             select *
             from active_logins
-            where user_id = (select id from users where username = %(username)s)""",
+            where active = 1 AND user_id = (select id from users where username = %(username)s)""",
             {"username": username},
         )
         return result
+
+    def get_session(self, session_id):
+        """Returns one session if it can be found based on a session id, `None` otherwise."""
+
+        result = self.sql_to_dict(
+            """
+            select *
+            from active_logins
+            where 
+              id = %(session_id)s
+            """,
+            {"session_id": session_id},
+        )
+        return result[0] if len(result) == 1 else None
+
+    def disable_session(self, session_id):
+
+        self.cursor.execute(
+            """
+            UPDATE active_logins
+            SET 
+              active = 0
+            WHERE 
+              id = %(session_id)s
+            """,
+            {"session_id": session_id},
+        )
+        self.conn.commit()
 
     def get_users(self):
         return self.sql_to_dict("SELECT * FROM users")
