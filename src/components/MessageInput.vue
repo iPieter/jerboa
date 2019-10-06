@@ -210,4 +210,12 @@ export default {
   color: #666;
   padding: 2px;
 }
+
+@media screen and (prefers-color-scheme: dark) {
+  .text-edit textarea {
+    background-color: rgb(38, 35, 36);
+    border-color: rgb(52, 51, 51);
+    color: #bdc3c7;
+  }
+}
 </style>

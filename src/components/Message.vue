@@ -300,11 +300,10 @@ export default {
 
     .content img {
       margin-top: 10px;
+      margin-bottom: 10px;
       max-width: 75%;
       max-height: 85vh;
-      background: #fff;
       padding: 0.5rem;
-      box-shadow: 0 0.2rem 1.2rem rgba(0, 0, 0, 0.1);
     }
 
     .content .icon {
@@ -313,7 +312,11 @@ export default {
       margin-top: 0;
       background: transparent;
       padding: 0;
+      opacity: 0.5;
       box-shadow: none;
+      &:hover {
+        opacity: 1;
+      }
     }
 
     .content .emoji {
@@ -356,5 +359,22 @@ export default {
 .message-container-inc {
   margin-top: -10px;
   margin-left: 0;
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  .message {
+    .content img {
+      background: #868686;
+      box-shadow: 0 0.2rem 1.2rem rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+@media screen and (prefers-color-scheme: light) {
+  .message {
+    .content img {
+      background: #fff;
+      box-shadow: 0 0.2rem 1.2rem rgba(0, 0, 0, 0.1);
+    }
+  }
 }
 </style>

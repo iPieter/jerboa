@@ -497,23 +497,27 @@ body {
 
 @media screen and (prefers-color-scheme: dark) {
   body {
-    background-color: rgb(52, 50, 49) !important;
+    background-color: rgb(38, 35, 36) !important;
     color: #bdc3c7;
   }
 
   .form-control {
-    background-color: rgb(52, 50, 49);
-    border-color: rgb(32, 31, 31);
+    background-color: rgb(38, 35, 36);
+    border-color: rgb(52, 51, 51);
   }
 
   .btn-outline {
-    border-top: 1px solid rgb(32, 31, 31);
-    border-bottom: 1px solid rgb(32, 31, 31);
-    background-color: rgb(52, 50, 49);
+    border-top: 1px solid rgb(52, 51, 51);
+    border-bottom: 1px solid rgb(52, 51, 51);
+    background-color: rgb(38, 35, 36);
   }
 
   .message-container {
-    border-top-color: rgb(32, 31, 31);
+    border-top-color: rgb(42, 41, 41);
+  }
+  .btn-primary {
+    background-color: #284261;
+    border-color: #1b5494;
   }
 }
 </style>
