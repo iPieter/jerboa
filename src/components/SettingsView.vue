@@ -26,12 +26,7 @@
             </div>
             <a href class>Log out</a>
           </li>
-          <li class="list-group-item d-flex justify-content-between bg-light">
-            <div class="text-success">
-              <h6 class="my-0">Firefox</h6>
-              <small>This device</small>
-            </div>
-          </li>
+          <li class="list-group-item d-flex justify-content-between bg-light"></li>
         </ul>
       </div>
       <div class="col-md-8 order-md-1">

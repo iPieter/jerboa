@@ -1,74 +1,28 @@
-# Jerboa [![Build Status](https://travis-ci.org/iPieter/chat.svg?branch=master)](https://travis-ci.org/iPieter/chat)
+<p align="center"> 
+    <img src="public/logo_with_name.png" alt="alternate text" width="60%">
+ </p>
 
-A bit late, but the best chat app you've ever seen.
+![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)
+[![Build Status](https://travis-ci.org/iPieter/chat.svg?branch=master)](https://travis-ci.org/iPieter/chat)
+![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)
 
-## Database
+A **self-deployable chat application** built on the idea that your messages should be yours to manage. It features:
 
-```sql
-CREATE TABLE `users` (
-	`id`	INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-	`username`	TEXT NOT NULL UNIQUE,
-	`password`	TEXT NOT NULL,
-	`display_name`	TEXT,
-	`profile_image`	TEXT DEFAULT 'default.png',
-	`state`	TEXT
-);
-```
+- Custom emoji
+- File sharing
+- Image sharing
+- Message editing
+- Markdown support in messages, even tables!
+- Math rendering with [KaTeX](https://katex.org)
+- User control over login sessions
+- Dark-mode support, it even follows system dark-mode (on macOS with Safari)
 
-```sql
-CREATE TABLE `active_logins` (
-	`id`	INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-	`queue`	TEXT UNIQUE,
-	`last_seen`	NUMERIC,
-	`active`	INTEGER,
-	`device`	TEXT,
-	`device_type`	TEXT,
-	`expires`	NUMERIC,
-	`user_id`	INTEGER
-);
-```
+# Screenshots
 
-```sql
-CREATE TABLE `messages` (
-	`id`	INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-	`sender`	INTEGER,
-	`channel`	TEXT,
-	`message`	TEXT,
-	`sent_time`	NUMERIC
-);
-```
+![chat screen](screenshot.png)
+![chat screen with images](screenshot_images.png)
+![Settings screen](screenshot_settings.png)
 
-```sql
-CREATE TABLE `files` (
-	`id`	INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
-	`file`	TEXT,
-	`user_id`	INTEGER,
-	`type`	TEXT,
-	`size`	INTEGER,
-	`full_name`	TEXT
-);
-```
+# Future development and contributing
 
-## Message types
-
-```json
-{
-  "message_type": "TEXT_MESSAGE",
-  "sender": "a json web token or other server-issued token",
-  "channel": "channel identifier",
-  "message": "...",
-  "sent_time": "date time",
-  "signature": "na"
-}
-```
-
-With `TEXT_MESSAGE`, the message is a simple string that can optionally be formatted in markdown. Other message types might have other contents in this field.
-
-### FILES_MESSAGE
-
-```json
-{
-  "message": "the actual message",
-  "files": ["abc123", "cde456"]
-}
-```
+In short, our future plans for this project is to make a complete chat application. For detailed targets, take a look at the project boards on this repo. Feel free to implement something and send a pull request!
