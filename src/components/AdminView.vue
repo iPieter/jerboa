@@ -1,71 +1,94 @@
 <template>
   <div class="container">
-    <h1>Admin dashboard</h1>
-    <h2>Statistics</h2>
-    <b-table striped hover :items="channels"></b-table>
-    <b-table striped hover :items="files"></b-table>
-    <table
-      aria-busy="false"
-      aria-colcount="4"
-      class="table b-table table-striped table-hover"
-      id="__BVID__8"
-    >
-      <!---->
-      <!---->
-      <thead role="rowgroup" class>
-        <!---->
-        <tr role="row">
-          <th role="columnheader" scope="col" aria-colindex="1" class>Display Name</th>
-          <th role="columnheader" scope="col" aria-colindex="2" class>Username</th>
-          <th role="columnheader" scope="col" aria-colindex="3" class>Profile Image</th>
-          <th role="columnheader" scope="col" aria-colindex="4" class>Current status</th>
-          <th role="columnheader" scope="col" aria-colindex="4" class>Actions</th>
-        </tr>
-      </thead>
-      <!---->
-      <tbody role="rowgroup" class>
-        <!---->
-        <tr role="row" class v-for="user in users">
-          <td role="cell" aria-colindex="1" class>{{user.display_name}}</td>
-          <td role="cell" aria-colindex="2" class>{{user.username}}</td>
-          <td role="cell" aria-colindex="3" class>
-            <img
-              :src="base + 'files?f=' + user.profile_image"
-              class="rounded img-thumbnail"
-              width="40px"
-            />
-          </td>
-          <td role="cell" aria-colindex="4" class>{{user.state}}</td>
-          <td>
-            <b-button-group>
-              <b-button
-                variant="success"
-                v-if="user.state != 'USER' & user.state != 'ADMIN'"
-                v-on:click="changeStatus(user.username, 'USER')"
-              >Activate</b-button>
+    <div class="py-5 text-center">
+      <img class="d-block mx-auto mb-4" src="icon.png" alt width="72" height="72" />
+      <h1>Administration and global settings</h1>
+      <div class="lead">
+        <span class="status-online">
+          <span class="breathing"></span>Backend
+        </span>
+        <span class="status-online">
+          <span class="breathing"></span>Database server
+        </span>
+      </div>
+    </div>
 
-              <b-button
-                variant="danger"
-                v-on:click="changeStatus(user.username, 'DISABLED')"
-                v-if="user.state != 'DISABLED'"
-              >Disable</b-button>
-            </b-button-group>
-          </td>
-        </tr>
-        <!---->
-        <!---->
-      </tbody>
-    </table>
-    <h2>Emojis</h2>
-    <!-- Styled -->
-    <b-form-file
-      v-model="file"
-      :state="Boolean(file)"
-      placeholder="Choose a file..."
-      drop-placeholder="Drop file here..."
-    ></b-form-file>
-    <div class="mt-3">Selected file: {{ file ? file.name : '' }}</div>
-    <button type="submit" class="btn btn-primary" v-on:click="uploadEmojiList">Submit</button>
+    <div class="row justify-content-md-center">
+      <b-card no-body class="col-md-10 order-md-1">
+        <b-tabs pills card>
+          <b-tab title="Users" active>
+            <table
+              aria-busy="false"
+              aria-colcount="4"
+              class="table b-table table-striped table-hover"
+              id="__BVID__8"
+            >
+              <!---->
+              <!---->
+              <thead role="rowgroup" class>
+                <!---->
+                <tr role="row">
+                  <th role="columnheader" scope="col" aria-colindex="1" class>Display Name</th>
+                  <th role="columnheader" scope="col" aria-colindex="2" class>Username</th>
+                  <th role="columnheader" scope="col" aria-colindex="3" class>Profile Image</th>
+                  <th role="columnheader" scope="col" aria-colindex="4" class>Current status</th>
+                  <th role="columnheader" scope="col" aria-colindex="4" class>Actions</th>
+                </tr>
+              </thead>
+              <!---->
+              <tbody role="rowgroup" class>
+                <!---->
+                <tr role="row" class v-for="user in users">
+                  <td role="cell" aria-colindex="1" class>{{user.display_name}}</td>
+                  <td role="cell" aria-colindex="2" class>{{user.username}}</td>
+                  <td role="cell" aria-colindex="3" class>
+                    <img
+                      :src="base + 'files?f=' + user.profile_image"
+                      class="rounded img-thumbnail"
+                      width="40px"
+                    />
+                  </td>
+                  <td role="cell" aria-colindex="4" class>{{user.state}}</td>
+                  <td>
+                    <b-button-group>
+                      <b-button
+                        variant="success"
+                        v-if="user.state != 'USER' & user.state != 'ADMIN'"
+                        v-on:click="changeStatus(user.username, 'USER')"
+                      >Activate</b-button>
+
+                      <b-button
+                        variant="danger"
+                        v-on:click="changeStatus(user.username, 'DISABLED')"
+                        v-if="user.state != 'DISABLED'"
+                      >Disable</b-button>
+                    </b-button-group>
+                  </td>
+                </tr>
+                <!---->
+                <!---->
+              </tbody>
+            </table>
+          </b-tab>
+          <b-tab title="Emoji">
+            <b-form-file
+              v-model="file"
+              :state="Boolean(file)"
+              placeholder="Choose a file..."
+              drop-placeholder="Drop file here..."
+            ></b-form-file>
+            <div class="mt-3">Selected file: {{ file ? file.name : '' }}</div>
+            <button type="submit" class="btn btn-primary" v-on:click="uploadEmojiList">Submit</button>
+          </b-tab>
+          <b-tab title="Channels">
+            <b-table striped hover :items="channels"></b-table>
+          </b-tab>
+          <b-tab title="Files">
+            <b-table striped hover :items="files"></b-table>
+          </b-tab>
+        </b-tabs>
+      </b-card>
+    </div>
   </div>
 </template>
 
@@ -196,4 +219,40 @@ export default {
 </script>
 
 <style lang="scss">
+.status-online {
+  margin-left: 1em;
+
+  @keyframes breath {
+    0% {
+      background-color: #30c02b;
+    }
+    50% {
+      background-color: #30c02b22;
+    }
+    100% {
+      background-color: #30c02b;
+    }
+  }
+  .breathing {
+    display: inline-block;
+    background-color: #30c02b;
+    height: 7px;
+    width: 7px;
+    margin-right: 5px;
+    margin-bottom: 3px;
+    border-radius: 300px;
+    animation: breath 2s infinite;
+  }
+}
+.card {
+  padding: 0;
+}
+
+.card-body {
+  padding: 0;
+
+  .table {
+    margin-bottom: 0;
+  }
+}
 </style>

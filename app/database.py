@@ -231,12 +231,10 @@ class Database:
         return result[0] if len(result) == 1 else None
 
     def get_file_count(self):
-        return len(
-            self.sql_to_dict(
-                """
+        return self.sql_to_dict(
+            """
                     SELECT type, COUNT(*), SUM(size) FROM files GROUP BY type
                """
-            )
         )
 
     def insert_emoji(self, username, name, file_name, date_added):
