@@ -258,6 +258,19 @@ class Database:
         )
         self.conn.commit()
 
+    def delete_emoji(self, file_identifier):
+        self.cursor.execute(
+            """DELETE
+                FROM emojis
+                WHERE name=%(name)s""",
+            {"name": file_identifier},
+        )
+        self.conn.commit()
+
+    def delete_all_emoji(self):
+        self.cursor.execute("""TRUNCATE emojis""")
+        self.conn.commit()
+
     def get_emojis(self):
         return self.sql_to_dict("SELECT * FROM emojis")
 

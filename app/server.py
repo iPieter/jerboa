@@ -1,4 +1,5 @@
 import os
+import shutil
 from flask import Flask, g, request, abort, Response, jsonify
 from flask_cors import CORS
 import pandas as pd
@@ -249,6 +250,9 @@ def count_files():
 @multi_auth.login_required
 def upload_slack_emojis():
 
+    if not os.path.exists("emojis/"):
+        os.makedirs("emojis/")
+
     for filename in request.files:
         f = request.files[filename]
         emoji = json.load(f)["emoji"]
@@ -299,6 +303,38 @@ def get_emoji(file_identifier):
             )
     except FileNotFoundError as e:
         return "Error", 500
+
+@app.route("/emoji/<file_identifier>", methods=["DELETE"])
+def delete_emoji(file_identifier):
+    if file_identifier == "alias":
+        emoji = request.args.get("e")[1:-1]
+        file_identifier = database.get_emoji(emoji)
+
+    file_path = "emojis/{}".format(file_identifier)
+
+    print("deleting emoji {}".format(file_identifier))
+    try:
+        
+        os.remove(file_path)
+    except:
+        print("Emoji file not found during removal.")
+   
+    database.delete_emoji(file_identifier)
+    return "ok", 200 
+
+@app.route("/emojis", methods=["DELETE"])
+def delete_emojis():
+
+    print("deleting all emoji")
+
+    try:    
+        shutil.rmtree("/emoji")
+    except:
+        pass
+   
+    database.delete_all_emoji()
+
+    return "ok", 200 
 
 
 @app.route("/users")
