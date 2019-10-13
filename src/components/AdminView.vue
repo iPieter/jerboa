@@ -22,7 +22,17 @@
     </div>
 
     <div class="row">
-      <div class="col-md-10"></div>
+      <div class="col-md-10 mx-auto row">
+        <div class="col">
+          <StatsTile :value="sum_messages" secondValue title="Messages" color="purple-tile"></StatsTile>
+        </div>
+        <div class="col">
+          <StatsTile :value="formatBytes(sum_files)" secondValue title="Files" color="orange-tile"></StatsTile>
+        </div>
+        <div class="col">
+          <StatsTile value="idk" secondValue title="Emoji" color="blue-tile"></StatsTile>
+        </div>
+      </div>
     </div>
 
     <div class="row justify-content-md-center">
@@ -109,6 +119,7 @@
 import Vue from "vue";
 import axios from "axios";
 import BootstrapVue from "bootstrap-vue";
+import StatsTile from "./StatsTile";
 
 Vue.use(BootstrapVue);
 
@@ -125,7 +136,7 @@ export default {
       base: process.env.VUE_APP_SERVER_BASE
     };
   },
-  components: {},
+  components: { StatsTile },
   created() {
     if (this.queue != null) {
       localStorage.queue = this.queue;
@@ -234,11 +245,65 @@ export default {
           console.log("FAILURE!!");
           console.log(response);
         });
+    },
+    formatBytes(bytes) {
+      if (bytes == 0) {
+        return "0 B";
+      }
+
+      var formatArr = ["B", "kB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+      var tmptotal;
+      var f = 0;
+
+      //round function rounds up, not down. eg. round(30.5,0) will round to 31
+      var len = String(Math.round(bytes)).length;
+
+      if (len < 4) {
+        tmptotal = bytes;
+      } else if (len >= 4 && len < 7) {
+        tmptotal = bytes / 1024;
+        ++f;
+      } else if (len >= 7 && len < 10) {
+        tmptotal = bytes / 1024 / 1024;
+        f += 2;
+      } else if (len >= 10 && len < 13) {
+        tmptotal = bytes / 1024 / 1024 / 1024;
+        f += 3;
+      } else if (len >= 13 && len < 16) {
+        tmptotal = bytes / 1024 / 1024 / 1024 / 1024;
+        f += 4;
+      } else if (len >= 16) {
+        tmptotal = bytes / 1024 / 1024 / 1024 / 1024 / 1024;
+        f += 5;
+      } else {
+        tmptotal = bytes;
+      }
+
+      tmptotal = tmptotal.toFixed(1);
+
+      //handle if too great of a value and format is passed in
+      if (f > 8) {
+        return bytes + " B";
+      }
+
+      var new_format_out = formatArr[f];
+      //round it off it is already in bits
+      if (new_format_out == "B") {
+        tmptotal = new Number(tmptotal).toFixed(0);
+      }
+
+      //strips all trailing zeroes, note the escaped period
+      tmptotal = tmptotal.toString().replace(/\.0\$/, "");
+
+      return tmptotal + " " + new_format_out;
     }
   },
   computed: {
     sum_messages() {
       return this.channels.reduce((a, c) => c.count + a, 0);
+    },
+    sum_files() {
+      return this.files.reduce((a, c) => c.sum + a, 0);
     }
   }
 };
