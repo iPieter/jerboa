@@ -249,7 +249,6 @@ export default {
       this.error = msg;
     },
     addEmoji(value) {
-      this.$refs.msgInput.setMessage();
       var newMessage = this.$refs.msgInput.getMessage() + " " + value.colons;
       this.$refs.msgInput.setMessage(newMessage);
     },

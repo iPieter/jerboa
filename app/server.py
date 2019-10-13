@@ -389,6 +389,11 @@ def set_picture():
     return "ok", 200
 
 
+@app.route("/status", methods=["GET"])
+def server_status():
+    return json.dumps({"backend": 0, "database": database.status()})
+
+
 @app.route("/signup", methods=["POST"])
 def signup():
 

@@ -16,6 +16,12 @@ class Database:
         self.cursor.close()
         self.conn.close()
 
+    def status(self):
+        if self.conn.closed:
+            return -1, "Connection closed."
+
+        return 0, self.conn.status
+
     def sql_to_dict(self, query, values={}):
         result = []
         self.cursor.execute(query, values)
