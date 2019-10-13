@@ -5,12 +5,24 @@
       <h1>Administration and global settings</h1>
       <div class="lead">
         <span class="status-online">
-          <span class="breathing"></span>Backend
+          <span class="breathing"></span>
+          Frontend v{{version}}
         </span>
         <span class="status-online">
-          <span class="breathing"></span>Database server
+          <span class="breathing" v-if="status.backend==0"></span>
+          <span class="breathing-bas" v-else></span>
+          Backend
+        </span>
+        <span class="status-online">
+          <span class="breathing" v-if="status['database']==0"></span>
+          <span class="breathing-bad" v-else></span>
+          Database server
         </span>
       </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-10"></div>
     </div>
 
     <div class="row justify-content-md-center">
@@ -107,7 +119,9 @@ export default {
       channels: [],
       files: [],
       users: [],
+      status: {},
       file: "",
+      version: process.env.VUE_APP_VERSION,
       base: process.env.VUE_APP_SERVER_BASE
     };
   },
@@ -140,6 +154,13 @@ export default {
       .then(function(response) {
         console.log(response);
         _this.files = response.data;
+      })
+      .catch(this.handleError);
+    axios
+      .get("status", {})
+      .then(function(response) {
+        console.log(response);
+        _this.status = response.data;
       })
       .catch(this.handleError);
     this.loadUsers();
@@ -214,6 +235,11 @@ export default {
           console.log(response);
         });
     }
+  },
+  computed: {
+    sum_messages() {
+      return this.channels.reduce((a, c) => c.count + a, 0);
+    }
   }
 };
 </script>
@@ -242,6 +268,27 @@ export default {
     margin-bottom: 3px;
     border-radius: 300px;
     animation: breath 2s infinite;
+  }
+  @keyframes breath-bad {
+    0% {
+      background-color: #c02b2b;
+    }
+    50% {
+      background-color: #c02b2b22;
+    }
+    100% {
+      background-color: #c02b2b;
+    }
+  }
+  .breathing-bad {
+    display: inline-block;
+    background-color: #c02b2b;
+    height: 7px;
+    width: 7px;
+    margin-right: 5px;
+    margin-bottom: 3px;
+    border-radius: 300px;
+    animation: breath-bad 0.5s infinite;
   }
 }
 .card {
