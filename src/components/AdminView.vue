@@ -14,8 +14,8 @@
           Backend
         </span>
         <span class="status-online">
-          <span class="breathing" v-if="status['database']==0"></span>
-          <span class="breathing-bad" v-else></span>
+          <span class="breathing" v-if="status['database'][0]==0"></span>
+          <span class="breathing-bad" v-else v-b-tooltip.hover :title="status['database'][1]"></span>
           Database server
         </span>
       </div>
