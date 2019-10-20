@@ -1,61 +1,73 @@
 <template>
-  <div class="container container-chat">
-    <div class="container input-group mb-3 type_msg px-0 pr-5">
-      <message-input
-        :send="send"
-        :paste="handlePaste"
-        :keyup="handleKeyUp"
-        :emojis="custom_emojis"
-        ref="msgInput"
-      ></message-input>
-      <div class="input-group-append">
-        <label hidden>
-          Files
-          <input type="file" id="files" ref="files" multiple v-on:change="handleFilesUpload()" />
-        </label>
-        <b-dropdown right text dropup variant="outline">
-          <template slot="button-content" v-if="files.length > 0">({{ files.length }})</template>
-          <b-dropdown-item v-on:click="addImage()" href="#">Upload image</b-dropdown-item>
-          <b-dropdown-item v-on:click="addFiles()" href="#">Upload file</b-dropdown-item>
-          <b-dropdown-divider v-if="files.length > 0" />
-          <b-dropdown-item v-for="(file, key) in files">
-            {{ file.name }}
-            <span class="text-muted ml-1 float-right" v-on:click="removeFile(key)">x</span>
-          </b-dropdown-item>
-        </b-dropdown>
+  <div id="drop" :class="dragging ? 'drop-area' : ''">
+    <div class="container container-chat">
+      {{files}}
+      <div class="container input-group mb-3 type_msg px-0 pr-5">
+        <message-input
+          :send="send"
+          :paste="handlePaste"
+          :keyup="handleKeyUp"
+          :emojis="custom_emojis"
+          ref="msgInput"
+        ></message-input>
+        <div class="input-group-append">
+          <label hidden>
+            Files
+            <input
+              type="file"
+              id="files"
+              ref="files"
+              multiple
+              v-on:change="handleFilesUpload()"
+            />
+          </label>
+          <b-dropdown right text dropup variant="outline">
+            <template slot="button-content" v-if="files.length > 0">({{ files.length }})</template>
+            <b-dropdown-item v-on:click="addImage()" href="#">Upload image</b-dropdown-item>
+            <b-dropdown-item v-on:click="addFiles()" href="#">Upload file</b-dropdown-item>
+            <b-dropdown-divider v-if="files.length > 0" />
+            <b-dropdown-item v-for="(file, key) in files">
+              {{ file.name }}
+              <span
+                class="text-muted ml-1 float-right"
+                v-on:click="removeFile(key)"
+              >x</span>
+            </b-dropdown-item>
+          </b-dropdown>
+        </div>
+        <div class="input-group-append" v-if="custom_emojis.length > 0">
+          <b-button variant="outline" v-on:click="emoji = !emoji">🙃</b-button>
+          <picker
+            class="emoji-picker"
+            @select="addEmoji"
+            v-bind:style="emoji ? '' : 'display: none'"
+            :custom="custom_emojis"
+            title="Pick your emoji…"
+            emoji="upside_down_face"
+          />
+        </div>
+        <div class="input-group-append">
+          <button class="btn btn-primary btn-sm" type="button" v-on:click="handleSend">Send</button>
+        </div>
       </div>
-      <div class="input-group-append" v-if="custom_emojis.length > 0">
-        <b-button variant="outline" v-on:click="emoji = !emoji">🙃</b-button>
-        <picker
-          class="emoji-picker"
-          @select="addEmoji"
-          v-bind:style="emoji ? '' : 'display: none'"
-          :custom="custom_emojis"
-          title="Pick your emoji…"
-          emoji="upside_down_face"
-        />
+      <div id="messages" class="messages">
+        <div class="text-muted mx-auto p-2" style="width: 200px;">
+          <a href="#" v-on:click="loadMessages()">load more...</a>
+        </div>
+        <message
+          v-for="(message, index) in getMessages()"
+          :messagesProp="message.messages"
+          v-if="rst"
+          :key="index"
+          :ref="`msg_${message.id}`"
+          :emojis="custom_emojis"
+          :socket="socket"
+          :token="token"
+          :id="message.id"
+          :incremental="message.incremental"
+          :sender="users[message.sender]"
+        ></message>
       </div>
-      <div class="input-group-append">
-        <button class="btn btn-primary btn-sm" type="button" v-on:click="handleSend">Send</button>
-      </div>
-    </div>
-    <div id="messages" class="messages">
-      <div class="text-muted mx-auto p-2" style="width: 200px;">
-        <a href="#" v-on:click="loadMessages()">load more...</a>
-      </div>
-      <message
-        v-for="(message, index) in getMessages()"
-        :messagesProp="message.messages"
-        v-if="rst"
-        :key="index"
-        :ref="`msg_${message.id}`"
-        :emojis="custom_emojis"
-        :socket="socket"
-        :token="token"
-        :id="message.id"
-        :incremental="message.incremental"
-        :sender="users[message.sender]"
-      ></message>
     </div>
   </div>
 </template>
@@ -86,7 +98,8 @@ export default {
       custom_emojis: [],
       initial_msg_id: 0,
       rst: true,
-      users: {}
+      users: {},
+      dragging: false
     };
   },
   components: { Message, Picker, MessageInput },
@@ -167,6 +180,42 @@ export default {
       },
       false
     );
+
+    // In the component with the drop zone div:
+    document.getElementById("drop").addEventListener("drop", event => {
+      event.preventDefault();
+      this.dragging = false;
+
+      for (var i = 0; i < event.dataTransfer.files.length; i++) {
+        this.files.push(event.dataTransfer.files[i]);
+      }
+    });
+
+    // In the entry component:
+    window.addEventListener("dragenter", event => {
+      //this.dragging++;
+      this.dragging = true;
+
+      event.stopPropagation();
+      event.preventDefault();
+    });
+
+    window.addEventListener("dragover", event => {
+      this.dragging = true;
+
+      event.stopPropagation();
+      event.preventDefault();
+    });
+
+    window.addEventListener("dragleave", event => {
+      //this.dragging--;
+      //if (this.dragging === 0) {
+      this.dragging = false;
+      //}
+
+      event.stopPropagation();
+      event.preventDefault();
+    });
   },
   props: {
     token: {
@@ -255,6 +304,9 @@ export default {
     handleSend() {
       this.send(this.$refs.msgInput.getMessage());
       this.$refs.msgInput.resetMessage();
+    },
+    onChange(e) {
+      console.log(e);
     },
     send(message) {
       if (message || this.files.length != 0) {
@@ -453,9 +505,29 @@ export default {
 
 <style lang="scss">
 .container-chat {
-  height: 100vh;
   padding-bottom: 54px; //Exactly above message bar
+  max-height: 100vh;
 }
+
+#drop {
+  height: 100vh;
+
+  .container-chat {
+    height: calc(100vh - 0px);
+  }
+}
+
+.drop-area {
+  margin: 5px;
+  border: 5px dashed #30c02b44;
+  height: calc(100vh - 10px) !important;
+
+  .container-chat {
+    margin-top: -10px;
+    height: calc(100vh - 10px) !important;
+  }
+}
+
 .messages {
   height: 100%;
   max-height: 100vh;
