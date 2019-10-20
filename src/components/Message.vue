@@ -46,10 +46,10 @@
           ></vue-markdown>
           <b-card class="m-2 files-card">
             <b-card-title
-              class="m-2"
+              class="m-3"
               v-if="messages[messages.length - 1].message.files.length != 1"
             >{{ sender.first_name }} shared {{messages[messages.length - 1].message.files.length}} files</b-card-title>
-            <b-card-title class="m-2" v-else>{{ sender.first_name }} shared a file</b-card-title>
+            <b-card-title class="m-3" v-else>{{ sender.first_name }} shared a file</b-card-title>
             <table class="card-table table">
               <tbody role="rowgroup">
                 <tr
@@ -88,7 +88,7 @@
                       <b-button
                         variant="outline-primary btn-sm"
                         v-if="file.type == 'application/pdf'"
-                        v-on:click
+                        v-on:click="togglePreview(base + 'files?show=1&f=' + file.file)"
                       >
                         <i class="fas fa-search"></i>
                       </b-button>
@@ -176,6 +176,13 @@ export default {
     }
   },
   methods: {
+    togglePreview(url) {
+      if (this.$parent.$data.file_preview == "") {
+        this.$parent.$data.file_preview = url;
+      } else {
+        this.$parent.$data.file_preview = "";
+      }
+    },
     toggleEdit() {
       this.editMode = true;
     },

@@ -1,6 +1,6 @@
 <template>
-  <div id="drop" :class="dragging ? 'drop-area' : ''">
-    <div class="container container-chat">
+  <div id="drop" class="container-fluid row" :class="dragging ? 'drop-area' : ''">
+    <div class="container container-chat" :class="file_preview == '' ? '': 'col-md-4'">
       <div class="container input-group mb-3 type_msg px-0 pr-5">
         <message-input
           :send="send"
@@ -71,6 +71,7 @@
         ></message>
       </div>
     </div>
+    <iframe class="file_preview col-md-8" v-if="file_preview != ''" :src="file_preview"></iframe>
   </div>
 </template>
 
@@ -101,7 +102,8 @@ export default {
       initial_msg_id: 0,
       rst: true,
       users: {},
-      dragging: false
+      dragging: false,
+      file_preview: ""
     };
   },
   components: { Message, Picker, MessageInput },
@@ -561,6 +563,14 @@ export default {
   right: 0px;
   -webkit-transform: translate3d(0px, -50px, 0px);
   transform: translate3d(px, -374px, 0px);
+}
+
+.file_preview {
+  height: 100vh;
+  padding-left: 0;
+  padding-right: 0;
+  border: none;
+  margin-right: -30px;
 }
 
 html,

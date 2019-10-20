@@ -216,6 +216,7 @@ def upload_files():
 @app.route("/files", methods=["GET"])
 def get_file():
     file_identifier = request.args.get("f")
+    show = request.args.get("show")
 
     # print(file_identifier)
 
@@ -232,8 +233,8 @@ def get_file():
             f,
             mimetype=result["type"],
             headers={
-                "Content-disposition": "attachment; filename={}".format(
-                    result["full_name"]
+                "Content-disposition": "{}; filename={}".format(
+                    "inline" if show else "attachment", result["full_name"]
                 )
             },
         )
@@ -304,6 +305,7 @@ def get_emoji(file_identifier):
     except FileNotFoundError as e:
         return "Error", 500
 
+
 @app.route("/emoji/<file_identifier>", methods=["DELETE"])
 def delete_emoji(file_identifier):
     if file_identifier == "alias":
@@ -314,27 +316,28 @@ def delete_emoji(file_identifier):
 
     print("deleting emoji {}".format(file_identifier))
     try:
-        
+
         os.remove(file_path)
     except:
         print("Emoji file not found during removal.")
-   
+
     database.delete_emoji(file_identifier)
-    return "ok", 200 
+    return "ok", 200
+
 
 @app.route("/emojis", methods=["DELETE"])
 def delete_emojis():
 
     print("deleting all emoji")
 
-    try:    
+    try:
         shutil.rmtree("/emoji")
     except:
         pass
-   
+
     database.delete_all_emoji()
 
-    return "ok", 200 
+    return "ok", 200
 
 
 @app.route("/users")
