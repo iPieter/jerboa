@@ -79,6 +79,12 @@
           :incremental="message.incremental"
           :sender="users[message.sender]"
         ></message>
+        <div class="text-muted mx-auto p-2" style="width: 300px;" v-if="uploadPercentage > 0">
+          <span>
+            <b-spinner variant="secondary" small label="Small Spinner"></b-spinner>
+            Uploading your files, now at {{uploadPercentage}}%.
+          </span>
+        </div>
       </div>
     </div>
     <iframe class="file_preview col-md-8" v-if="file_preview != ''" :src="file_preview"></iframe>
@@ -113,7 +119,8 @@ export default {
       rst: true,
       users: {},
       dragging: false,
-      file_preview: ""
+      file_preview: "",
+      uploadPercentage: -1
     };
   },
   components: { Message, Picker, MessageInput },
@@ -356,9 +363,17 @@ export default {
       this.$refs.files.click();
       this.image = true;
     },
+    scrollDown() {
+      let _this = this;
+      Vue.nextTick(function() {
+        _this.rst = true;
+        var objDiv = document.getElementById("messages");
+        objDiv.scrollTop = objDiv.scrollHeight;
+      });
+    },
     /*
         Submits files to the server
-      */
+    */
     submitFiles(message) {
       /*
           Initialize the form data
@@ -384,7 +399,17 @@ export default {
         .post("files", formData, {
           headers: {
             "Content-Type": "multipart/form-data"
-          }
+          },
+          onUploadProgress: function(progressEvent) {
+            let old = _this.uploadPercentage;
+            _this.uploadPercentage = parseInt(
+              Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            );
+
+            if (old < 0) {
+              _this.scrollDown();
+            }
+          }.bind(this)
         })
         .then(function(response) {
           console.log("SUCCESS!!");
@@ -405,10 +430,12 @@ export default {
           //this.messages.push(msg);
           _this.$refs.msgInput.resetMessage();
           _this.files = [];
+          _this.uploadPercentage = -1;
         })
         .catch(function(response) {
           console.log("FAILURE!!");
           console.log(response);
+          _this.uploadPercentage = -1;
         });
     },
     submitImages(message) {
@@ -506,11 +533,7 @@ export default {
           });
           _this.initial_msg_id = _this.messages[0].id;
           _this.rst = false;
-          Vue.nextTick(function() {
-            _this.rst = true;
-            var objDiv = document.getElementById("messages");
-            objDiv.scrollTop = objDiv.scrollHeight;
-          });
+          _this.scrollDown();
         });
     }
   }
