@@ -1,7 +1,6 @@
 <template>
   <div id="drop" :class="dragging ? 'drop-area' : ''">
     <div class="container container-chat">
-      {{files}}
       <div class="container input-group mb-3 type_msg px-0 pr-5">
         <message-input
           :send="send"
@@ -22,7 +21,10 @@
             />
           </label>
           <b-dropdown right text dropup variant="outline">
-            <template slot="button-content" v-if="files.length > 0">({{ files.length }})</template>
+            <template slot="button-content" v-if="files.length > 0">
+              <i class="fas fa-file-upload"></i>
+              {{ files.length }}
+            </template>
             <b-dropdown-item v-on:click="addImage()" href="#">Upload image</b-dropdown-item>
             <b-dropdown-item v-on:click="addFiles()" href="#">Upload file</b-dropdown-item>
             <b-dropdown-divider v-if="files.length > 0" />
@@ -312,9 +314,9 @@ export default {
       if (message || this.files.length != 0) {
         var msg;
         if (this.image && this.files.length != 0) {
-          this.submitImages();
+          this.submitImages(message);
         } else if (this.files.length != 0) {
-          this.submitFiles();
+          this.submitFiles(message);
         } else {
           msg = {
             message_type: "TEXT_MESSAGE",
@@ -345,7 +347,7 @@ export default {
     /*
         Submits files to the server
       */
-    submitFiles() {
+    submitFiles(message) {
       /*
           Initialize the form data
         */
@@ -380,7 +382,7 @@ export default {
             sender: _this.token,
             channel: "1",
             message: {
-              message: _this.$refs.msgInput.getMessage(),
+              message: message,
               files: response.data
             },
             sent_time: new Date(),
@@ -397,7 +399,7 @@ export default {
           console.log(response);
         });
     },
-    submitImages() {
+    submitImages(message) {
       let formData = new FormData();
       for (var i = 0; i < this.files.length; i++) {
         let file = this.files[i];
@@ -405,7 +407,7 @@ export default {
         formData.append("files[" + i + "]", file);
       }
 
-      var text = this.$refs.msgInput.getMessage();
+      var text = message;
       let _this = this;
       axios
         .post("files", formData, {

@@ -22,10 +22,7 @@
       ></message-input>
       <div v-else class="content mt-0">
         <div
-          v-if="
-                        messages[messages.length - 1].message_type == 'TEXT_MESSAGE' ||
-                            messages[messages.length - 1].message_type == 'TEXT_MESSAGE_UPDATE'
-                    "
+          v-if="messages[messages.length - 1].message_type == 'TEXT_MESSAGE' || messages[messages.length - 1].message_type == 'TEXT_MESSAGE_UPDATE'"
         >
           <vue-markdown
             :emoji="true"
@@ -41,34 +38,70 @@
           </span>
         </div>
         <div v-else>
-          <vue-markdown :emoji="false" :postrender="postMessageRender">
-            {{
-            messages[messages.length - 1].message
-            }}
-          </vue-markdown>
-          <div class="card-deck">
-            <div
-              class="card mb-4"
-              v-for="(file, index) in messages[messages.length - 1].message.files"
-              :key="index"
-              style="max-width: 20rem;"
-            >
-              <!--<img src="..." class="card-img-top" alt="..." />-->
-              <div class="card-body">
-                <h5 class="card-title">{{ file.user }} shared a file</h5>
-                <p class="card-text">{{ file.full_name }}</p>
-                <a v-bind:href="base + 'files?f=' + file.file" class="btn btn-primary mx-auto">
-                  Download
-                  <br />
-                  ({{ formatBytes(file.size) }})
-                </a>
-              </div>
-              <div class="card-footer">
-                <small class="text-muted">{{ file.type }}</small>
-              </div>
-            </div>
-            <div class="file-tile">{{ file }}</div>
-          </div>
+          <vue-markdown
+            :emoji="true"
+            :postrender="postMessageRender"
+            class="content-msg"
+            :source="messages[messages.length - 1].message.message"
+          ></vue-markdown>
+          <b-card class="m-2 files-card">
+            <b-card-title
+              class="m-2"
+              v-if="messages[messages.length - 1].message.files.length != 1"
+            >{{ sender.first_name }} shared {{messages[messages.length - 1].message.files.length}} files</b-card-title>
+            <b-card-title class="m-2" v-else>{{ sender.first_name }} shared a file</b-card-title>
+            <table class="card-table table">
+              <tbody role="rowgroup">
+                <tr
+                  role="row"
+                  v-for="(file, index) in messages[messages.length - 1].message.files"
+                  :key="index"
+                >
+                  <td class="icon-cell">
+                    <code v-if="file.type =='text/plain'" class="fas fa-file-code"></code>
+                    <code v-else-if="file.type =='application/pdf'" class="fas fa-file-pdf"></code>
+                    <code v-else-if="file.type =='application/zip'" class="fas fa-file-archive"></code>
+                    <code
+                      v-else-if="file.type =='application/vnd.ms-powerpoint'"
+                      class="fas fa-file-powerpoint"
+                    ></code>
+                    <code v-else-if="file.type.startsWith('image/')" class="fas fa-file-image"></code>
+                    <code v-else class="fas fa-file"></code>
+                  </td>
+                  <td>
+                    <code class>{{ file.full_name }}</code>
+                  </td>
+                  <td>
+                    <span class>{{ formatBytes(file.size)}}</span>
+                  </td>
+                  <td>
+                    <small class="text-muted">{{ file.type }}</small>
+                  </td>
+                  <td class="text-right">
+                    <b-button-group>
+                      <b-button
+                        variant="outline-primary btn-sm"
+                        v-bind:href="base + 'files?f=' + file.file"
+                      >
+                        <i class="fas fa-file-download"></i>
+                      </b-button>
+                      <b-button
+                        variant="outline-primary btn-sm"
+                        v-if="file.type == 'application/pdf'"
+                        v-on:click
+                      >
+                        <i class="fas fa-search"></i>
+                      </b-button>
+                    </b-button-group>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <b-card-text class="m-2 small text-muted">
+              Download all files as a
+              <a href>zip archive</a>.
+            </b-card-text>
+          </b-card>
         </div>
       </div>
     </div>
@@ -359,6 +392,23 @@ export default {
 .message-container-inc {
   margin-top: -10px;
   margin-left: 0;
+}
+
+.files-card {
+  max-width: 700px;
+  .card-table {
+    width: 100%;
+    border-bottom: 1px solid #dee2e6;
+
+    .icon-cell {
+      width: 16px;
+      padding-right: 0;
+    }
+
+    code {
+      color: #34495e;
+    }
+  }
 }
 
 @media screen and (prefers-color-scheme: dark) {
