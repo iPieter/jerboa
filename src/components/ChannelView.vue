@@ -1,5 +1,15 @@
 <template>
-  <div id="drop" class="container-fluid row" :class="dragging ? 'drop-area' : ''">
+  <div id="drop" class="container-fluid row">
+    <transition name="fade">
+      <div class="drop-area" v-if="dragging">
+        <div>
+          <h1 class="text-center">
+            <i class="fas fa-upload"></i>
+          </h1>
+          <h2 class="text-center">Drop files to upload</h2>
+        </div>
+      </div>
+    </transition>
     <div class="container container-chat" :class="file_preview == '' ? '': 'col-md-4'">
       <div class="container input-group mb-3 type_msg px-0 pr-5">
         <message-input
@@ -522,13 +532,22 @@ export default {
 }
 
 .drop-area {
-  margin: 5px;
-  border: 5px dashed #30c02b44;
-  height: calc(100vh - 10px) !important;
+  height: 100vh;
+  width: 100vw;
+  z-index: 10000;
+  padding: 5px;
+  background-color: #f2f7f8aa;
+  position: absolute;
 
-  .container-chat {
-    margin-top: -10px;
-    height: calc(100vh - 10px) !important;
+  div {
+    border: 5px dashed #56aee9;
+    height: 100%;
+    width: 100%;
+    padding-top: 10%;
+    h1,
+    h2 {
+      color: #56aee9;
+    }
   }
 }
 
@@ -602,5 +621,13 @@ body {
     background-color: #284261;
     border-color: #1b5494;
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.1s;
+}
+.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+  opacity: 0;
 }
 </style>
