@@ -79,11 +79,36 @@
           :incremental="message.incremental"
           :sender="users[message.sender]"
         ></message>
+        <div class="text-muted message-container" v-for="(message, index) in unacked_messages">
+          <img
+            class="avatar"
+            :src="base + 'files?f=' + users[user_id].profile_image"
+            v-if="!incremental"
+          />
+          <div class="message">
+            <span class="font-weight-bold">
+              {{ users[user_id].first_name }}
+              <b-spinner small label="Small Spinner" type="grow"></b-spinner>
+            </span>
+            <div class="content" v-if="message.message_type =='TEXT_MESSAGE'">
+              <vue-markdown :emoji="true" class="content-msg" :source="message.message"></vue-markdown>
+            </div>
+            <div class="content" v-else>{{message.message.message}}</div>
+            <b-card class="m-2 files-card upload-card">
+              <b-card-title class="m-3">
+                <b-spinner variant="secondary" small class="mr-1 mb-1" label="Small Spinner"></b-spinner>Uploading your files
+              </b-card-title>
+              <b-progress
+                :value="message.uploadPercentage"
+                max="100"
+                class="mb-0"
+                :label="`${((value / max) * 100).toFixed(2)}%`"
+              ></b-progress>
+            </b-card>
+          </div>
+        </div>
         <div class="text-muted mx-auto p-2" style="width: 300px;" v-if="uploadPercentage > 0">
-          <span>
-            <b-spinner variant="secondary" small label="Small Spinner"></b-spinner>
-            Uploading your files, now at {{uploadPercentage}}%.
-          </span>
+          <span>Uploading your files, now at {{uploadPercentage}}%.</span>
         </div>
       </div>
     </div>
@@ -94,10 +119,13 @@
 <script>
 import Vue from "vue";
 import Message from "./Message";
-var MessageClass = Vue.extend(Message);
+import VueMarkdown from "vue-markdown";
 import MessageInput from "./MessageInput";
 import axios from "axios";
 import { Picker } from "emoji-mart-vue";
+
+var MessageClass = Vue.extend(Message);
+Vue.use(VueMarkdown);
 
 //import paste from "../paste";
 
@@ -106,10 +134,12 @@ export default {
   data() {
     return {
       id: "",
+      base: "/",
       messages: [],
+      unacked_messages: {},
       connected: false,
       socket: {},
-      user_id: "",
+      user_id: "p",
       error: "",
       files: [],
       image: false,
@@ -123,7 +153,10 @@ export default {
       uploadPercentage: -1
     };
   },
-  components: { Message, Picker, MessageInput },
+  components: { Message, Picker, MessageInput, VueMarkdown },
+  beforeMount() {
+    this.base = process.env.VUE_APP_SERVER_BASE;
+  },
   created() {
     if (this.queue != null) {
       localStorage.queue = this.queue;
@@ -156,10 +189,8 @@ export default {
         if (response.data.length > 0)
           _this.initial_msg_id = response.data[0].id;
 
-        Vue.nextTick(function() {
-          var objDiv = document.getElementById("messages");
-          objDiv.scrollTop = objDiv.scrollHeight;
-        });
+        _this.scrollDown();
+
         _this.socket = io(process.env.VUE_APP_SERVER_BASE_WS, { origins: "*" });
         _this.socket.on("connect", _this.on_connect);
         _this.socket.on("disconnect", _this.on_connection_lost);
@@ -299,10 +330,8 @@ export default {
           sender: msg.sender
         };
         this.messages.push(newMessage);
-        Vue.nextTick(function() {
-          var objDiv = document.getElementById("messages");
-          objDiv.scrollTop = objDiv.scrollHeight;
-        });
+        delete this.unacked_messages[msg["nonce"]];
+        this.scrollDown();
       }
       if (document.hidden) {
         document.title = "Jerboa - new messages";
@@ -315,6 +344,7 @@ export default {
       }
     },
     on_error(msg) {
+      console.log("error on ws:../error");
       console.log(msg);
       this.error = msg;
     },
@@ -324,18 +354,32 @@ export default {
     },
     handleSend() {
       this.send(this.$refs.msgInput.getMessage());
-      this.$refs.msgInput.resetMessage();
     },
     onChange(e) {
       console.log(e);
     },
     send(message) {
+      /*
+      Sending a message is a bit depending on the type of message, but in general
+      they all follow the same outline:
+      1. Generate a nonce
+      2. Create a message object
+         (files should be uploaded at this point, or at least have an identifier)
+      3. Send message to server
+      4. Move message to unacked messages and display accordingly
+      5. Once acked, move to standard, acked message list
+      */
+
+      let nonce = Math.random()
+        .toString(36)
+        .substring(7);
+
       if (message || this.files.length != 0) {
         var msg;
         if (this.image && this.files.length != 0) {
-          this.submitImages(message);
+          this.submitImages(message, nonce);
         } else if (this.files.length != 0) {
-          this.submitFiles(message);
+          this.submitFiles(message, nonce);
         } else {
           msg = {
             message_type: "TEXT_MESSAGE",
@@ -343,12 +387,15 @@ export default {
             channel: "1",
             message: message,
             sent_time: new Date(),
-            signature: "na"
+            signature: "na",
+            nonce: nonce
           };
 
-          this.socket.emit("msg", JSON.stringify(msg));
+          Vue.set(this.unacked_messages, nonce, msg);
+          this.scrollDown();
 
-          //this.messages.push(msg);
+          this.socket.emit("msg", JSON.stringify(msg));
+          this.$refs.msgInput.resetMessage();
           this.emoji = false;
         }
       }
@@ -374,7 +421,7 @@ export default {
     /*
         Submits files to the server
     */
-    submitFiles(message) {
+    submitFiles(message, nonce) {
       /*
           Initialize the form data
         */
@@ -389,47 +436,51 @@ export default {
 
         formData.append("files[" + i + "]", file);
       }
-
       /*
           Make the request to the POST /select-files URL
-        */
-
+      */
       let _this = this;
+
+      let msg = {
+        message_type: "FILES_MESSAGE",
+        sender: this.token,
+        channel: "1",
+        message: {
+          message: message,
+          files: []
+        },
+        sent_time: new Date(),
+        signature: "na",
+        nonce: nonce
+      };
+      Vue.set(this.unacked_messages, nonce, msg);
+      this.scrollDown();
+      _this.files = [];
+      this.$refs.msgInput.resetMessage();
+
       axios
         .post("files", formData, {
           headers: {
             "Content-Type": "multipart/form-data"
           },
           onUploadProgress: function(progressEvent) {
-            let old = _this.uploadPercentage;
-            _this.uploadPercentage = parseInt(
-              Math.round((progressEvent.loaded * 100) / progressEvent.total)
+            console.log(progressEvent);
+            Vue.set(
+              _this.unacked_messages[nonce],
+              "uploadPercentage",
+              parseInt(
+                Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              )
             );
-
-            if (old < 0) {
-              _this.scrollDown();
-            }
           }.bind(this)
         })
         .then(function(response) {
-          console.log("SUCCESS!!");
-          console.log(response.data);
-          let msg = {
-            message_type: "FILES_MESSAGE",
-            sender: _this.token,
-            channel: "1",
-            message: {
-              message: message,
-              files: response.data
-            },
-            sent_time: new Date(),
-            signature: "na"
-          };
+          console.log("successfully uploaded file(s).");
+          msg.message.files = response.data;
+          console.log(msg);
           _this.socket.emit("msg", JSON.stringify(msg));
 
           //this.messages.push(msg);
-          _this.$refs.msgInput.resetMessage();
-          _this.files = [];
           _this.uploadPercentage = -1;
         })
         .catch(function(response) {
@@ -438,7 +489,7 @@ export default {
           _this.uploadPercentage = -1;
         });
     },
-    submitImages(message) {
+    submitImages(message, nonce) {
       let formData = new FormData();
       for (var i = 0; i < this.files.length; i++) {
         let file = this.files[i];
@@ -468,7 +519,8 @@ export default {
             channel: "1",
             message: text,
             sent_time: new Date(),
-            signature: "na"
+            signature: "na",
+            nonce: nonce
           };
           _this.socket.emit("msg", JSON.stringify(msg));
 
@@ -552,6 +604,12 @@ export default {
   .container-chat {
     height: calc(100vh - 0px);
   }
+}
+
+.upload-card .progress {
+  height: 1em;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 .drop-area {
