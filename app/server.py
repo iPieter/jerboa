@@ -93,7 +93,10 @@ def handle_message(message):
             msg["message"] = json.loads(row["message"])
             msg["sent_time"] = int(row["sent_time"])
             msg["previous_message"] = row["previous_message"]
+            msg["nonce"] = msg_parsed["nonce"]
             print(msg)
+            import time 
+            time.sleep(1)
             emit("msg", msg, room="1")
         else:
             emit("error", "Wrong message")
