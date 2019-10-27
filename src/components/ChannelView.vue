@@ -35,7 +35,6 @@
               <i class="fas fa-file-upload"></i>
               {{ files.length }}
             </template>
-            <b-dropdown-item v-on:click="addImage()" href="#">Upload image</b-dropdown-item>
             <b-dropdown-item v-on:click="addFiles()" href="#">Upload file</b-dropdown-item>
             <b-dropdown-divider v-if="files.length > 0" />
             <b-dropdown-item v-for="(file, key) in files">
@@ -142,7 +141,6 @@ export default {
       user_id: "p",
       error: "",
       files: [],
-      image: false,
       emoji: false,
       custom_emojis: [],
       initial_msg_id: 0,
@@ -376,9 +374,7 @@ export default {
 
       if (message || this.files.length != 0) {
         var msg;
-        if (this.image && this.files.length != 0) {
-          this.submitImages(message, nonce);
-        } else if (this.files.length != 0) {
+        if (this.files.length != 0) {
           this.submitFiles(message, nonce);
         } else {
           msg = {
@@ -405,10 +401,6 @@ export default {
       */
     addFiles() {
       this.$refs.files.click();
-    },
-    addImage() {
-      this.$refs.files.click();
-      this.image = true;
     },
     scrollDown() {
       let _this = this;
@@ -489,53 +481,6 @@ export default {
           _this.uploadPercentage = -1;
         });
     },
-    submitImages(message, nonce) {
-      let formData = new FormData();
-      for (var i = 0; i < this.files.length; i++) {
-        let file = this.files[i];
-
-        formData.append("files[" + i + "]", file);
-      }
-
-      var text = message;
-      let _this = this;
-      axios
-        .post("files", formData, {
-          headers: {
-            "Content-Type": "multipart/form-data"
-          }
-        })
-        .then(function(response) {
-          for (var i = 0; i < response.data.length; i++) {
-            let url =
-              process.env.VUE_APP_SERVER_BASE +
-              "files?f=" +
-              response.data[i].file;
-            text += "\n ![" + url + "](" + url + ")";
-          }
-          let msg = {
-            message_type: "TEXT_MESSAGE",
-            sender: _this.token,
-            channel: "1",
-            message: text,
-            sent_time: new Date(),
-            signature: "na",
-            nonce: nonce
-          };
-          _this.socket.emit("msg", JSON.stringify(msg));
-
-          //this.messages.push(msg);
-          _this.$refs.msgInput.resetMessage();
-          _this.rows = 1;
-          _this.files = [];
-          _this.image = false;
-        })
-        .catch(function(response) {
-          console.log("FAILURE!!");
-          console.log(response);
-        });
-    },
-
     /*
         Handles the uploading of files
       */
@@ -557,7 +502,6 @@ export default {
       this.files.splice(key, 1);
     },
     handlePaste(data) {
-      this.image = true;
       if (data.clipboardData.files.length > 0) {
         this.files.push(data.clipboardData.files[0]);
       }

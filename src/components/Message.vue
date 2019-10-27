@@ -37,6 +37,11 @@
             <img src="icons/edit24.svg" class="icon" v-if="hovered" @click="editMode = true" />
           </span>
         </div>
+        <div v-else-if="filesAreImages()">
+          <div v-for="(file, index) in messages[messages.length - 1].message.files">
+            <img :src="base + 'files?f=' + file.file" v-bind:key="index" />
+          </div>
+        </div>
         <div v-else>
           <vue-markdown
             :emoji="true"
@@ -185,6 +190,31 @@ export default {
     },
     toggleEdit() {
       this.editMode = true;
+    },
+    filesAreImages() {
+      /*
+      Returns true if the message contains files and those 
+      are all images, false otherwise.
+      */
+      if (
+        this.messages[this.messages.length - 1].message_type != "FILES_MESSAGE"
+      ) {
+        return false;
+      }
+
+      let filesAreImages = true;
+
+      for (let f in this.messages[this.messages.length - 1].message.files) {
+        console.log("files");
+        filesAreImages =
+          filesAreImages &&
+          this.messages[this.messages.length - 1].message.files[
+            f
+          ].type.startsWith("image/");
+      }
+
+      console.log(filesAreImages);
+      return filesAreImages;
     },
     updateMessage(msg) {
       this.edited = true;
