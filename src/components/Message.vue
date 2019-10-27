@@ -38,8 +38,10 @@
           </span>
         </div>
         <div v-else-if="filesAreImages()">
-          <div v-for="(file, index) in messages[messages.length - 1].message.files">
-            <img :src="base + 'files?f=' + file.file" v-bind:key="index" />
+          <div class="preview" v-for="(file, index) in messages[messages.length - 1].message.files">
+            <a href="#" v-on:click="showFullImage(base + 'files?f=' + file.file)">
+              <img class="mx-1 my-2" :src="base + 'files?f=' + file.file" v-bind:key="index" />
+            </a>
           </div>
         </div>
         <div v-else>
@@ -110,6 +112,9 @@
         </div>
       </div>
     </div>
+    <div class="modal-image" v-if="image" v-on:click.once="showFullImage('')">
+      <img :src="image" />
+    </div>
   </div>
 </template>
 
@@ -131,7 +136,8 @@ export default {
       editMode: false,
       edited: false,
       messages: [],
-      hovered: false
+      hovered: false,
+      image: ""
     };
   },
   components: {
@@ -190,6 +196,9 @@ export default {
     },
     toggleEdit() {
       this.editMode = true;
+    },
+    showFullImage(url) {
+      this.image = url;
     },
     filesAreImages() {
       /*
@@ -368,12 +377,14 @@ export default {
       width: 10%;
     }
 
-    .content img {
-      margin-top: 10px;
-      margin-bottom: 10px;
-      max-width: 75%;
-      max-height: 85vh;
-      padding: 0.5rem;
+    .content .preview {
+      display: inline-block;
+
+      img {
+        max-height: 20ex;
+        orientation: landscape;
+        padding: 0.5rem;
+      }
     }
 
     .content .icon {
@@ -448,17 +459,44 @@ export default {
   }
 }
 
+.modal-image {
+  position: absolute;
+  height: 100vh;
+  width: 100vw;
+  z-index: 9999;
+  bottom: 0;
+  top: 0;
+  right: 0;
+  left: 0;
+  background-color: #000000aa;
+  display: flex;
+  align-items: center;
+  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(5px);
+
+  img {
+    max-height: 90vh;
+    max-width: 90vw;
+    display: inline-block;
+    margin: auto;
+    orientation: landscape;
+    padding: 0.5rem;
+  }
+}
+
 @media screen and (prefers-color-scheme: dark) {
-  .message {
-    .content img {
+  .message,
+  .modal-image {
+    img {
       background: #868686;
       box-shadow: 0 0.2rem 1.2rem rgba(255, 255, 255, 0.1);
     }
   }
 }
 @media screen and (prefers-color-scheme: light) {
-  .message {
-    .content img {
+  .message,
+  .modal-image {
+    img {
       background: #fff;
       box-shadow: 0 0.2rem 1.2rem rgba(0, 0, 0, 0.1);
     }
