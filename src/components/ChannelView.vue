@@ -81,29 +81,31 @@
         <div class="text-muted message-container" v-for="(message, index) in unacked_messages">
           <img
             class="avatar"
-            :src="base + 'files?f=' + users[user_id].profile_image"
+            :src="base + 'files?f=' + current_user.profile_image"
             v-if="!incremental"
           />
           <div class="message">
             <span class="font-weight-bold">
-              {{ users[user_id].first_name }}
+              {{ current_user.first_name }}
               <b-spinner small label="Small Spinner" type="grow"></b-spinner>
             </span>
             <div class="content" v-if="message.message_type =='TEXT_MESSAGE'">
               <vue-markdown :emoji="true" class="content-msg" :source="message.message"></vue-markdown>
             </div>
-            <div class="content" v-else>{{message.message.message}}</div>
-            <b-card class="m-2 files-card upload-card">
-              <b-card-title class="m-3">
-                <b-spinner variant="secondary" small class="mr-1 mb-1" label="Small Spinner"></b-spinner>Uploading your files
-              </b-card-title>
-              <b-progress
-                :value="message.uploadPercentage"
-                max="100"
-                class="mb-0"
-                :label="`${((value / max) * 100).toFixed(2)}%`"
-              ></b-progress>
-            </b-card>
+            <div class="content" v-else>
+              {{message.message.message}}
+              <b-card class="m-2 files-card upload-card">
+                <b-card-title class="m-3">
+                  <b-spinner variant="secondary" small class="mr-1 mb-1" label="Small Spinner"></b-spinner>Uploading your files
+                </b-card-title>
+                <b-progress
+                  :value="message.uploadPercentage"
+                  max="100"
+                  class="mb-0"
+                  :label="`${((value / max) * 100).toFixed(2)}%`"
+                ></b-progress>
+              </b-card>
+            </div>
           </div>
         </div>
         <div class="text-muted mx-auto p-2" style="width: 300px;" v-if="uploadPercentage > 0">
@@ -138,7 +140,7 @@ export default {
       unacked_messages: {},
       connected: false,
       socket: {},
-      user_id: "p",
+      current_user: {},
       error: "",
       files: [],
       emoji: false,
@@ -170,7 +172,6 @@ export default {
 
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
     axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
-    console.log(axios.defaults.headers.common["Authorization"]);
 
     this.loadUsers();
 
@@ -182,7 +183,6 @@ export default {
         }
       })
       .then(function(response) {
-        console.log(response);
         response.data.reverse().forEach(m => _this.on_message(m));
         if (response.data.length > 0)
           _this.initial_msg_id = response.data[0].id;
@@ -211,7 +211,14 @@ export default {
       .get("emojis/list")
       .then(function(response) {
         _this.custom_emojis = response.data;
-        console.log(response.data);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+    axios
+      .get("user")
+      .then(function(response) {
+        _this.current_user = response.data;
       })
       .catch(function(error) {
         console.log(error);
@@ -456,7 +463,6 @@ export default {
             "Content-Type": "multipart/form-data"
           },
           onUploadProgress: function(progressEvent) {
-            console.log(progressEvent);
             Vue.set(
               _this.unacked_messages[nonce],
               "uploadPercentage",
@@ -469,7 +475,6 @@ export default {
         .then(function(response) {
           console.log("successfully uploaded file(s).");
           msg.message.files = response.data;
-          console.log(msg);
           _this.socket.emit("msg", JSON.stringify(msg));
 
           //this.messages.push(msg);
