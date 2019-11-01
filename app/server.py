@@ -150,8 +150,6 @@ def messages():
     channel = request.args.get("channel")
     initial_msg_id = int(request.args.get("initial_msg_id"))
 
-    # print(initial_msg_id)
-
     result = []
     for i, row in enumerate(database.get_messages(channel, initial_msg_id)):
         msg = {}

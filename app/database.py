@@ -193,10 +193,11 @@ class Database:
         query = """SELECT messages.*, username from messages 
                    INNER JOIN users ON messages.sender = users.id 
                    WHERE channel=%(channel)s 
-                   AND messages.id > %(msg_id)s
+                   {} 
                    ORDER BY messages.id DESC 
                    LIMIT 30 
-                """
+                """.format("" if message_id== 0 else 
+                           "AND messages.id < %(msg_id)s" )
         return self.sql_to_dict(query, {"channel": channel, "msg_id": message_id})
 
     def get_message(self, msg_id):
