@@ -34,7 +34,8 @@
             <i>(edited)</i>
           </span>
           <span>
-            <img src="icons/edit24.svg" class="icon" v-if="hovered" @click="editMode = true" />
+            <i class="fas fa-pen icon" v-if="hovered" @click="editMode = true"></i>
+            <i class="fas fa-share icon" v-if="hovered" @click="share"></i>
           </span>
         </div>
         <div v-else-if="filesAreImages()">
@@ -43,6 +44,31 @@
               <img class="mx-1 my-2" :src="base + 'files?f=' + file.file" v-bind:key="index" />
             </a>
           </div>
+        </div>
+        <div v-else-if="messages[messages.length - 1].message_type == 'SHARE_MESSAGE'">
+          <blockquote class="mb-0">
+            <img
+              class="d-inline-block small-avatar"
+              :src="base + 'files?f=' + $parent.$data.users[messages[messages.length - 1].message.source.sender].profile_image"
+            />
+
+            <b
+              class
+            >{{$parent.$data.users[messages[messages.length - 1].message.source.sender].first_name}}</b> said
+            <br />
+            <vue-markdown
+              :emoji="true"
+              :postrender="postMessageRender"
+              class="content-msg"
+              :source="messages[messages.length - 1].message.source.message"
+            ></vue-markdown>
+          </blockquote>
+          <vue-markdown
+            :emoji="true"
+            :postrender="postMessageRender"
+            class="content-msg"
+            :source="messages[messages.length - 1].message.message"
+          ></vue-markdown>
         </div>
         <div v-else>
           <vue-markdown
@@ -115,6 +141,39 @@
     <div class="modal-image" v-if="image" v-on:click.once="showFullImage('')">
       <img :src="image" />
     </div>
+    <b-modal
+      id="modal-prevent-closing"
+      ref="modal"
+      title="Share message"
+      @show="resetModal"
+      @hidden="resetModal"
+      @ok="handleOk"
+      v-if="messages[messages.length - 1].message_type == 'TEXT_MESSAGE' || messages[messages.length - 1].message_type == 'TEXT_MESSAGE_UPDATE'"
+    >
+      <blockquote>
+        <img class="d-inline-block small-avatar" :src="base + 'files?f=' + sender.profile_image" />
+        <b class>{{sender.first_name}}</b> said
+        <br />
+        <vue-markdown
+          :emoji="true"
+          :postrender="postMessageRender"
+          class="content-msg"
+          :source="messages[messages.length - 1].message"
+        ></vue-markdown>
+      </blockquote>
+      <form ref="form" @submit.stop.prevent="handleSubmit">
+        <b-form-group label="Your reply" label-for="message-input">
+          <MessageInput
+            :send="handleSubmit"
+            :paste="handlePaste"
+            :escape="() => (this.$refs.modal.hide())"
+            :emojis="emojis"
+            id="message-input"
+            ref="replyInput"
+          ></MessageInput>
+        </b-form-group>
+      </form>
+    </b-modal>
   </div>
 </template>
 
@@ -237,11 +296,47 @@ export default {
         message: content,
         sent_time: new Date(),
         signature: "na",
-        previous_message: this.id
+        previous_message: this.id,
+        nonce: ""
       };
 
       this.editMode = false;
       this.socket.emit("msg", JSON.stringify(msg));
+    },
+    resetModal() {
+      this.sharingMessage = "";
+    },
+    handleOk(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault();
+      // Trigger submit handler
+      this.handleSubmit(this.$refs.replyInput.getMessage());
+    },
+    handleSubmit(message) {
+      var msg = {
+        message_type: "SHARE_MESSAGE",
+        sender: this.token,
+        channel: "1",
+        message: {
+          source: this.messages[this.messages.length - 1],
+          message: message
+        },
+        nonce: "",
+        sent_time: new Date(),
+        signature: "na"
+      };
+
+      console.log(msg);
+
+      this.socket.emit("msg", JSON.stringify(msg));
+
+      // Hide the modal manually
+      this.$nextTick(() => {
+        this.$refs.modal.hide();
+      });
+    },
+    share() {
+      this.$refs.modal.show();
     },
     handlePaste() {},
     postMessageRender(htmlData) {
@@ -325,6 +420,14 @@ export default {
 </script>
 
 <style lang="scss">
+.small-avatar {
+  border-radius: 3pt;
+  margin-right: 4px;
+  height: 1.3em;
+  width: 1.3em;
+  margin-top: -5px;
+}
+
 .message-container,
 .message-container-inc {
   line-height: 1;
@@ -395,6 +498,7 @@ export default {
       padding: 0;
       opacity: 0.5;
       box-shadow: none;
+      color: #3498db;
       &:hover {
         opacity: 1;
       }
@@ -425,6 +529,16 @@ export default {
       border-left: 4px solid #bdc3c7;
       border-radius: 2px;
     }
+  }
+}
+
+.modal-dialog {
+  blockquote {
+    padding-left: 4px;
+    margin-left: 5px;
+    margin-top: 10px;
+    border-left: 4px solid #bdc3c7;
+    border-radius: 2px;
   }
 }
 

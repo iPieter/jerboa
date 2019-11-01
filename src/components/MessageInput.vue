@@ -1,6 +1,6 @@
 <template>
   <div class="text-edit">
-    <div v-if="showEmojiHelper && emojiPredictions.length > 0" class="col-12 emoji-predictor">
+    <div v-if="showEmojiHelper && emojiPredictions.length > 0" class="col-11 emoji-predictor">
       <div
         v-for="(emoji, index) in emojiPredictions"
         v-bind:key="index"
