@@ -338,6 +338,7 @@ export default {
         delete this.unacked_messages[msg["nonce"]];
         this.scrollDown();
       }
+      this.messages = this.messages = this.messages.sort((a, b) => a.id - b.id);
       if (document.hidden) {
         document.title = "Jerboa - new messages";
         if (Notification.permission == "granted") {
