@@ -26,6 +26,7 @@
         >
           <vue-markdown
             :emoji="true"
+            :prerender="preMessageRender"
             :postrender="postMessageRender"
             class="content-msg"
             :source="messages[messages.length - 1].message"
@@ -58,6 +59,7 @@
             <br />
             <vue-markdown
               :emoji="true"
+            :prerender="preMessageRender"
               :postrender="postMessageRender"
               class="content-msg"
               :source="messages[messages.length - 1].message.source.message"
@@ -65,6 +67,7 @@
           </blockquote>
           <vue-markdown
             :emoji="true"
+            :prerender="preMessageRender"
             :postrender="postMessageRender"
             class="content-msg"
             :source="messages[messages.length - 1].message.message"
@@ -73,6 +76,7 @@
         <div v-else>
           <vue-markdown
             :emoji="true"
+            :prerender="preMessageRender"
             :postrender="postMessageRender"
             class="content-msg"
             :source="messages[messages.length - 1].message.message"
@@ -340,6 +344,12 @@ export default {
       this.$refs.modal.show();
     },
     handlePaste() {},
+    preMessageRender(data) {
+      if (data.startsWith(">>>")) {
+      return "<blockquote>" + data.replace(/^(>>>)/,'') + "</blockquote>";
+      }
+      return data;
+    },
     postMessageRender(htmlData) {
       var re = /:([A-z0-9\-]+(:{2}\S+)?):/g;
 
