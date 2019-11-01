@@ -337,6 +337,11 @@ export default {
           Vue.set(this.typing, msg.sender, t);
         }
       } else {
+        //first remove typing indication anyway
+        let _this = this;
+
+        Vue.delete(_this.typing, msg.sender);
+
         var incremental = false;
         if (this.messages.length > 0) {
           var previousMessage = this.messages[this.messages.length - 1];
