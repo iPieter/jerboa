@@ -11,12 +11,19 @@
       </div>
     </transition>
     <div class="container container-chat" :class="file_preview == '' ? '': 'col-md-4'">
-      <div class="container input-group mb-3 type_msg px-0 pr-5">
+      <div class="typing">
+        <div v-for="(_, key) in typing" :key="key">
+          <i class="far fa-comment-dots mr-1"></i>
+          <b>{{ users[key].first_name }}</b> is typing
+        </div>
+      </div>
+      <div class="container input-group type_msg px-0 pr-5">
         <message-input
           :send="send"
           :paste="handlePaste"
           :keyup="handleKeyUp"
           :emojis="custom_emojis"
+          :typingCallback="typingCallback"
           ref="msgInput"
         ></message-input>
         <div class="input-group-append">
@@ -108,8 +115,8 @@
             </div>
           </div>
         </div>
-        <div class="text-muted mx-auto p-2" style="width: 300px;" v-if="uploadPercentage > 0">
-          <span>Uploading your files, now at {{uploadPercentage}}%.</span>
+        <div class="text-muted mx-auto p-2" style="width: 300px;" v-if="false">
+          <span>Uploading your files, now at 0%.</span>
         </div>
       </div>
     </div>
@@ -150,7 +157,7 @@ export default {
       users: {},
       dragging: false,
       file_preview: "",
-      uploadPercentage: -1
+      typing: {}
     };
   },
   components: { Message, Picker, MessageInput, VueMarkdown },
@@ -314,6 +321,21 @@ export default {
           return;
         }
         prevMsg[0].messages.push(msg);
+      } else if (msg["message_type"] == "USER_TYPING") {
+        //This creates a timeout that will delete the key in `typing` after t seconds
+        if (msg.sender != this.current_user.username) {
+          let _this = this;
+
+          //first remove old timer
+          clearTimeout(this.typing[msg.sender]);
+
+          let t = setTimeout(function() {
+            console.log("deleting key for");
+            Vue.delete(_this.typing, msg.sender);
+          }, 5000);
+
+          Vue.set(this.typing, msg.sender, t);
+        }
       } else {
         var incremental = false;
         if (this.messages.length > 0) {
@@ -337,15 +359,18 @@ export default {
         this.messages.push(newMessage);
         delete this.unacked_messages[msg["nonce"]];
         this.scrollDown();
-      }
-      this.messages = this.messages = this.messages.sort((a, b) => a.id - b.id);
-      if (document.hidden) {
-        document.title = "Jerboa - new messages";
-        if (Notification.permission == "granted") {
-          // TODO: insert channel name
-          var not = new Notification(msg.sender + "", {
-            body: msg.message
-          });
+
+        this.messages = this.messages = this.messages.sort(
+          (a, b) => a.id - b.id
+        );
+        if (document.hidden) {
+          document.title = "Jerboa - new messages";
+          if (Notification.permission == "granted") {
+            // TODO: insert channel name
+            var not = new Notification(msg.sender + "", {
+              body: msg.message
+            });
+          }
         }
       }
     },
@@ -403,6 +428,16 @@ export default {
           this.emoji = false;
         }
       }
+    },
+    typingCallback() {
+      var msg = {
+        message_type: "USER_TYPING",
+        sender: this.token,
+        channel: "1",
+        sent_time: new Date()
+      };
+
+      this.socket.emit("msg", JSON.stringify(msg));
     },
     /*
         Adds a file
@@ -544,7 +579,7 @@ export default {
 
 <style lang="scss">
 .container-chat {
-  padding-bottom: 54px; //Exactly above message bar
+  padding-bottom: 60px; //Exactly above message bar
   max-height: 100vh;
 }
 
@@ -577,7 +612,7 @@ export default {
     padding-top: 10%;
     h1,
     h2 {
-      color: #56aee9;
+      color: #eef4f8;
     }
   }
 }
@@ -596,7 +631,17 @@ export default {
   display: inline-flex;
   position: absolute;
   bottom: 0;
+  margin-bottom: 22px;
   z-index: 999;
+}
+
+.typing {
+  bottom: 0;
+  position: absolute;
+  font-size: 12px;
+  font-weight: 100;
+  color: #797d81;
+  margin-bottom: 3px;
 }
 
 .btn-outline {

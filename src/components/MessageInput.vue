@@ -59,6 +59,9 @@ export default {
     keyup: {
       type: Function
     },
+    typingCallback: {
+      type: Function
+    },
     messageProp: {}
   },
   data() {
@@ -130,6 +133,10 @@ export default {
     },
     updateEmojiShower(event) {
       var textarea = this.$refs.textareaInput;
+
+      if (this.typingCallback) {
+        this.typingCallback();
+      }
 
       var lastColon = this.message.lastIndexOf(":", textarea.selectionStart);
 
