@@ -75,6 +75,15 @@ def handle_message(message):
             ):
                 print("Attempt to edit other users message!")
                 raise Exception("invalid edit attempt")
+        
+        elif msg_parsed["message_type"] == "USER_TYPING":
+            # when we reveive a user_typing msg, we don't save it.
+            msg = {}
+            msg["sender"] = user["username"]
+            msg["message_type"] = msg_parsed["message_type"]
+            msg["sent_time"] = msg_parsed["sent_time"]
+            emit("msg", msg, room="1")
+            return 0
 
         row = database.insert_message(
             metadata["user"],

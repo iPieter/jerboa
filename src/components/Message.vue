@@ -288,6 +288,7 @@ export default {
       this.edited = true;
       this.messages.push(msg);
     },
+
     handleSend(content) {
       var msg = {
         message_type: "TEXT_MESSAGE_UPDATE",
