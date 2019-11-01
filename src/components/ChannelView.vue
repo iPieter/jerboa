@@ -11,12 +11,14 @@
       </div>
     </transition>
     <div class="container container-chat" :class="file_preview == '' ? '': 'col-md-4'">
-      <div class="typing">
-        <div v-for="(_, key) in typing" :key="key">
-          <i class="far fa-comment-dots mr-1"></i>
-          <b>{{ users[key].first_name }}</b> is typing
+        <div v-if="typing.length != 0" class="typing">
+      <transition name="fade">
+          <span v-for="(_, key) in typing" :key="key">
+            <i class="far fa-comment-dots mr-1"></i>
+            <b>{{ users[key].first_name }}</b> is typing
+          </span>
+      </transition>
         </div>
-      </div>
       <div class="container input-group type_msg px-0 pr-5">
         <message-input
           :send="send"
@@ -72,6 +74,7 @@
         <div class="text-muted mx-auto p-2" style="width: 200px;">
           <a href="#" v-on:click="loadMessages()">load more...</a>
         </div>
+
         <message
           v-for="(message, index) in getMessages()"
           :messagesProp="message.messages"
@@ -85,6 +88,7 @@
           :incremental="message.incremental"
           :sender="users[message.sender]"
         ></message>
+
         <div class="text-muted message-container" v-for="(message, index) in unacked_messages">
           <img
             class="avatar"
@@ -703,12 +707,10 @@ body {
     border-color: #1b5494;
   }
 }
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.1s;
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.5s;
 }
-.fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+.fade-enter, .fade-leave-to {
   opacity: 0;
 }
 </style>
