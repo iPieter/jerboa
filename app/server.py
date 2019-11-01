@@ -241,6 +241,7 @@ def get_file():
             f,
             mimetype=result["type"],
             headers={
+                "Cache-Control": "public, max-age=3600",
                 "Content-disposition": "{}; filename={}".format(
                     "inline" if show else "attachment", result["full_name"]
                 )
@@ -305,6 +306,7 @@ def get_emoji(file_identifier):
                 f,
                 mimetype="image/png",
                 headers={
+                    "Cache-Control": "public, max-age=3600",
                     "Content-disposition": "attachment; filename={}".format(
                         file_identifier
                     )
