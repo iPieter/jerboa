@@ -15,7 +15,9 @@ A **self-deployable chat application** built on the idea that your messages shou
 - Markdown support in messages, even tables!
 - Math rendering with [KaTeX](https://katex.org)
 - User control over login sessions
-- Dark-mode support, it even follows system dark-mode (on macOS with Safari)
+- Dark-mode support, it even follows system dark-mode (at least on macOS)
+- Small indication when other users are typing
+- Preview PDF files in the browser side-by-side with the chat
 
 # Screenshots
 
