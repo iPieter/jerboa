@@ -40,7 +40,18 @@
           </span>
         </div>
         <div v-else-if="filesAreImages()">
-          <div class="preview" v-for="(file, index) in messages[messages.length - 1].message.files">
+          <vue-markdown
+            v-if="messages[messages.length - 1].message.message.length > 0"
+            :emoji="true"
+            :prerender="preMessageRender"
+            :postrender="postMessageRender"
+            class="content-msg"
+            :source="messages[messages.length - 1].message.message"
+          ></vue-markdown>
+          <div
+            class="preview mb-2"
+            v-for="(file, index) in messages[messages.length - 1].message.files"
+          >
             <a href="#" v-on:click="showFullImage(base + 'files?f=' + file.file)">
               <img class="mx-1 my-2" :src="base + 'files?f=' + file.file" v-bind:key="index" />
             </a>
@@ -59,7 +70,7 @@
             <br />
             <vue-markdown
               :emoji="true"
-            :prerender="preMessageRender"
+              :prerender="preMessageRender"
               :postrender="postMessageRender"
               class="content-msg"
               :source="messages[messages.length - 1].message.source.message"
@@ -143,6 +154,9 @@
       </div>
     </div>
     <div class="modal-image" v-if="image" v-on:click.once="showFullImage('')">
+      <div class="closing">
+        <i class="far fa-times-circle"></i>
+      </div>
       <img :src="image" />
     </div>
     <b-modal
@@ -346,7 +360,7 @@ export default {
     handlePaste() {},
     preMessageRender(data) {
       if (data.startsWith(">>>")) {
-      return "<blockquote>" + data.replace(/^(>>>)/,'') + "</blockquote>";
+        return "<blockquote>" + data.replace(/^(>>>)/, "") + "</blockquote>";
       }
       return data;
     },
@@ -481,6 +495,16 @@ export default {
       width: 100%;
     }
 
+    .emoji {
+      display: inline-block;
+      height: 2.75ex;
+      padding: 0;
+      background: transparent;
+      margin: 0;
+      box-shadow: unset;
+      margin-top: -0.5ex;
+    }
+
     .content-msg {
       display: inline-block;
       width: 90%;
@@ -496,6 +520,7 @@ export default {
 
       img {
         max-height: 20ex;
+        max-width: 90%;
         orientation: landscape;
         padding: 0.5rem;
       }
@@ -513,16 +538,6 @@ export default {
       &:hover {
         opacity: 1;
       }
-    }
-
-    .content .emoji {
-      display: inline-block;
-      height: 2.75ex;
-      padding: 0;
-      background: transparent;
-      margin: 0;
-      box-shadow: unset;
-      margin-top: -0.5ex;
     }
 
     pre {
@@ -581,6 +596,21 @@ export default {
     code {
       color: #34495e;
     }
+  }
+}
+
+.closing {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  color: rgba(255, 255, 255, 0.8);
+  margin-left: 20px;
+  margin-top: 20px;
+  font-size: 24px;
+
+  &:hover {
+    color: rgba(255, 255, 255, 1);
   }
 }
 
