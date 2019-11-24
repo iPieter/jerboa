@@ -271,6 +271,25 @@ def upload_slack_emojis():
                 urllib.request.urlretrieve(emoji[e], "emojis/{}".format(e))
                 database.insert_emoji(g.user, e, e, datetime.now().timestamp())
     return "ok", 200
+    
+@app.route("/emoji", methods=["POST"])
+@multi_auth.login_required
+def upload_emoji():
+    "Add one emoji from a post request to the database and store it in `/emojis`."
+
+    e = request.form["name"]
+    
+    if not os.path.exists("emojis/"):
+        os.makedirs("emojis/")
+
+    f = request.files['file']
+
+    path = os.path.join("emojis", e)
+    f.save(path)
+
+    database.insert_emoji(g.user, e, e, datetime.now().timestamp())
+
+    return "ok", 200
 
 
 @app.route("/emojis/list", methods=["GET"])

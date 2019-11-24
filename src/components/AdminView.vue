@@ -105,7 +105,7 @@
           <b-tab title="Emoji">
             <div class="row">
               <div class="col-md-6 p-4">
-                <h2>Batch uploading</h2>
+                <h2>Upload</h2>
                 <b-form-file
                   v-model="file"
                   :state="Boolean(file)"
@@ -118,6 +118,7 @@
               <div class="col-md-6 p-4">
                 <h2>Quick actions</h2>
                 <b-button-group>
+                  <b-button variant="outline-primary btn-sm" v-b-modal.modal-1>New emoji</b-button>
                   <b-button variant="outline-danger" v-on:click="deleteAllEmoji()">Delete all emoji</b-button>
                 </b-button-group>
               </div>
@@ -189,6 +190,31 @@
         </b-tabs>
       </b-card>
     </div>
+    <b-modal id="modal-1" title="Add a new emoji">
+      <b-form-group
+        id="input-group-1"
+        label="Name"
+        label-for="input-1"
+        description="Give your emoji a great name without spaces"
+      >
+        <b-form-input
+          id="input-1"
+          v-model="emojiName"
+          type="text"
+          required
+          placeholder="the-best-emoji"
+        ></b-form-input>
+      </b-form-group>
+
+      <b-form-file
+        v-model="file"
+        :state="Boolean(file)"
+        placeholder="Choose a file..."
+        drop-placeholder="Drop file here..."
+      ></b-form-file>
+      <div class="mt-3">Selected file: {{ file ? file.name : '' }}</div>
+      <button type="submit" class="btn btn-primary" v-on:click="uploadEmoji">Submit</button>
+    </b-modal>
   </div>
 </template>
 
@@ -211,6 +237,7 @@ export default {
       emoji: [],
       status: {},
       file: "",
+      emojiName: "",
       version: process.env.VUE_APP_VERSION,
       base: process.env.VUE_APP_SERVER_BASE
     };
@@ -347,6 +374,39 @@ export default {
       let _this = this;
       axios
         .post("emojis/list", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        })
+        .then(function(response) {
+          console.log("SUCCESS!!");
+          console.log(response.data);
+
+          //this.messages.push(msg);
+        })
+        .catch(function(response) {
+          console.log("FAILURE!!");
+          console.log(response);
+        });
+    },
+    uploadEmoji() {
+      let formData = new FormData();
+
+      /*
+          Iteate over any file sent over appending the files
+          to the form data.
+        */
+
+      formData.append("file", this.file);
+      formData.append("name", this.emojiName);
+
+      /*
+          Make the request to the POST /select-files URL
+        */
+
+      let _this = this;
+      axios
+        .post("emoji", formData, {
           headers: {
             "Content-Type": "multipart/form-data"
           }
