@@ -52,7 +52,7 @@
             class="preview mb-2"
             v-for="(file, index) in messages[messages.length - 1].message.files"
           >
-            <a href="#" v-on:click="showFullImage(base + 'files?f=' + file.file)">
+            <a href="#" v-on:click="showFullImage(index)">
               <img class="mx-1 my-2" :src="base + 'files?f=' + file.file" v-bind:key="index" />
             </a>
           </div>
@@ -80,8 +80,9 @@
             :emoji="true"
             :prerender="preMessageRender"
             :postrender="postMessageRender"
+            message.me
             class="content-msg"
-            :source="messages[messages.length - 1].message.message"
+            :source="messages[messages.length - 1].ssage"
           ></vue-markdown>
         </div>
         <div v-else>
@@ -153,11 +154,36 @@
         </div>
       </div>
     </div>
-    <div class="modal-image" v-if="image" v-on:click.once="showFullImage('')">
-      <div class="closing">
+    <div class="modal-image" v-if="modal_id >= 0" v-on:click.self="showFullImage(-1)">
+      <div class="closing" v-on:click="showFullImage(-1)">
         <i class="far fa-times-circle"></i>
       </div>
-      <img :src="image" />
+      <div class="metadata">
+        <div class>
+          <img class="d-inline-block small-avatar" :src="base + 'files?f=' + sender.profile_image" />
+          <b class="mr-1">{{sender.first_name}}</b>shared this image
+        </div>
+
+        <div class="previews mb-2">
+          <a
+            v-for="(file, index) in messages[messages.length - 1].message.files"
+            href="#"
+            class="preview"
+            v-on:click="showFullImage(index)"
+            v-bind:key="index"
+          >
+            <img
+              class="mx-1 my-1"
+              :class="index == modal_id ? 'active' : ''"
+              :src="base + 'files?f=' + file.file"
+            />
+          </a>
+        </div>
+      </div>
+      <img
+        class="image"
+        :src="base + 'files?f=' + messages[messages.length - 1].message.files[modal_id].file"
+      />
     </div>
     <b-modal
       id="modal-prevent-closing"
@@ -214,7 +240,7 @@ export default {
       edited: false,
       messages: [],
       hovered: false,
-      image: ""
+      modal_id: -1
     };
   },
   components: {
@@ -274,8 +300,8 @@ export default {
     toggleEdit() {
       this.editMode = true;
     },
-    showFullImage(url) {
-      this.image = url;
+    showFullImage(id) {
+      this.modal_id = id;
     },
     filesAreImages() {
       /*
@@ -453,6 +479,16 @@ export default {
   margin-top: -5px;
 }
 
+.emoji {
+  display: inline-block;
+  height: 2.75ex;
+  padding: 0;
+  background: transparent;
+  margin: 0;
+  box-shadow: unset;
+  margin-top: -0.5ex;
+}
+
 .message-container,
 .message-container-inc {
   line-height: 1;
@@ -493,16 +529,6 @@ export default {
     .content {
       display: block;
       width: 100%;
-    }
-
-    .emoji {
-      display: inline-block;
-      height: 2.75ex;
-      padding: 0;
-      background: transparent;
-      margin: 0;
-      box-shadow: unset;
-      margin-top: -0.5ex;
     }
 
     .content-msg {
@@ -628,14 +654,52 @@ export default {
   align-items: center;
   -webkit-backdrop-filter: blur(5px);
   backdrop-filter: blur(5px);
+  padding-bottom: 114px;
 
-  img {
-    max-height: 90vh;
+  .image {
+    max-height: calc(90vh - 114px);
     max-width: 90vw;
     display: inline-block;
     margin: auto;
     orientation: landscape;
     padding: 0.5rem;
+  }
+
+  .metadata {
+    position: absolute;
+    z-index: 10000;
+    bottom: 0;
+    width: 100vw;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    width: 100%;
+    color: rgba(255, 255, 255, 0.9);
+    background-color: rgba(0, 0, 0, 0.15);
+    padding: 10px;
+
+    .previews {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: row;
+
+      .preview {
+        display: inline-block;
+        opacity: 0.9;
+        z-index: 10001;
+
+        img {
+          width: 60px;
+          border: 4px solid #fff;
+          border-radius: 5px;
+          box-shadow: 0 0.2rem 1.2rem rgba(255, 255, 255, 0.1);
+        }
+        .active {
+          opacity: 1;
+          border: 4px solid #3498db;
+          border-radius: 5px;
+        }
+      }
+    }
   }
 }
 
