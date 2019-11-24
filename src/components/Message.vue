@@ -82,7 +82,7 @@
             :postrender="postMessageRender"
             message.me
             class="content-msg"
-            :source="messages[messages.length - 1].ssage"
+            :source="messages[messages.length - 1].message.message"
           ></vue-markdown>
         </div>
         <div v-else>

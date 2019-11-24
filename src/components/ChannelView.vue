@@ -10,15 +10,18 @@
         </div>
       </div>
     </transition>
+    <div class="floating-icon">
+      <i class="fas fa-hashtag"></i>
+    </div>
     <div class="container container-chat" :class="file_preview == '' ? '': 'col-md-4'">
-        <div v-if="typing.length != 0" class="typing">
-      <transition name="fade">
+      <div v-if="typing.length != 0" class="typing">
+        <transition name="fade">
           <span v-for="(_, key) in typing" :key="key">
             <i class="far fa-comment-dots mr-1"></i>
             <b>{{ users[key].first_name }}</b> is typing
           </span>
-      </transition>
-        </div>
+        </transition>
+      </div>
       <div class="container input-group type_msg px-0 pr-5">
         <message-input
           :send="send"
@@ -606,6 +609,21 @@ export default {
   border-top-right-radius: 0;
 }
 
+.floating-icon {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 10000;
+  color: rgba(41, 128, 185, 0.8);
+  margin-right: 20px;
+  margin-top: 20px;
+  font-size: 24px;
+
+  &:hover {
+    color: rgba(41, 128, 185, 1);
+  }
+}
+
 .drop-area {
   height: 100vh;
   width: 100vw;
@@ -707,10 +725,12 @@ body {
     border-color: #1b5494;
   }
 }
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.5s;
 }
-.fade-enter, .fade-leave-to {
+.fade-enter,
+.fade-leave-to {
   opacity: 0;
 }
 </style>
