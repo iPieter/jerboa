@@ -3,7 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1.0,maximum-scale=1"
+    />
     <link
       rel="shortcut icon"
       href="<%= webpackConfig.output.publicPath %>favicon.ico"
@@ -12,14 +15,14 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.5.1/katex.min.css"
     />
-    <link href="icons/all.min.css" rel="stylesheet" />
+    <link href="/icons/all.min.css" rel="stylesheet" />
     <!--load all styles -->
 
     <title>Jerboa</title>
   </head>
 
   <body>
-    <script src="socket.io.js"></script>
+    <script src="/socket.io.js"></script>
 
     <div id="app"></div>
     <!-- built files will be auto injected -->
