@@ -10,9 +10,7 @@
         </div>
       </div>
     </transition>
-    <div class="floating-icon">
-      <i class="fas fa-hashtag"></i>
-    </div>
+
     <div class="container container-chat" :class="file_preview == '' ? '': 'col-md-4'">
       <div v-if="typing.length != 0" class="typing">
         <transition name="fade">
@@ -142,10 +140,8 @@ import { Picker } from "emoji-mart-vue";
 var MessageClass = Vue.extend(Message);
 Vue.use(VueMarkdown);
 
-//import paste from "../paste";
-
 export default {
-  name: "channel",
+  name: "chat",
   data() {
     return {
       id: "",
@@ -164,7 +160,8 @@ export default {
       users: {},
       dragging: false,
       file_preview: "",
-      typing: {}
+      typing: {},
+      showChannels: false
     };
   },
   components: { Message, Picker, MessageInput, VueMarkdown },
@@ -172,12 +169,7 @@ export default {
     this.base = process.env.VUE_APP_SERVER_BASE;
   },
   created() {
-    if (this.queue != null) {
-      localStorage.queue = this.queue;
-    } else {
-      this.queue = localStorage.queue;
-    }
-    if (this.token != null) {
+    if ((this.token != null) & (this.token != undefined)) {
       localStorage.token = this.token;
     } else {
       this.token = localStorage.token;
@@ -192,7 +184,7 @@ export default {
     axios
       .get("messages", {
         params: {
-          channel: "1",
+          channel: this.channel_id,
           initial_msg_id: _this.initial_msg_id
         }
       })
@@ -204,6 +196,7 @@ export default {
         _this.scrollDown();
 
         _this.socket = io(process.env.VUE_APP_SERVER_BASE_WS, { origins: "*" });
+
         _this.socket.on("connect", _this.on_connect);
         _this.socket.on("disconnect", _this.on_connection_lost);
 
@@ -293,6 +286,9 @@ export default {
       type: String
     },
     queue: {
+      type: String
+    },
+    channel_id: {
       type: String
     }
   },
@@ -425,7 +421,7 @@ export default {
           msg = {
             message_type: "TEXT_MESSAGE",
             sender: this.token,
-            channel: "1",
+            channel: this.channel_id,
             message: message,
             sent_time: new Date(),
             signature: "na",
@@ -445,7 +441,7 @@ export default {
       var msg = {
         message_type: "USER_TYPING",
         sender: this.token,
-        channel: "1",
+        channel: this.channel_id,
         sent_time: new Date()
       };
 
@@ -491,7 +487,7 @@ export default {
       let msg = {
         message_type: "FILES_MESSAGE",
         sender: this.token,
-        channel: "1",
+        channel: this.channel_id,
         message: {
           message: message,
           files: []
@@ -572,7 +568,7 @@ export default {
       axios
         .get("messages", {
           params: {
-            channel: "1",
+            channel: this.channel_id,
             initial_msg_id: _this.initial_msg_id
           }
         })
@@ -590,16 +586,17 @@ export default {
 </script>
 
 <style lang="scss">
-.container-chat {
-  padding-bottom: 60px; //Exactly above message bar
-  max-height: 100vh;
+body,
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 #drop {
   height: 100vh;
 
   .container-chat {
-    height: calc(100vh - 0px);
+    height: calc(100vh - 120px);
   }
 }
 
@@ -607,21 +604,6 @@ export default {
   height: 1em;
   border-top-left-radius: 0;
   border-top-right-radius: 0;
-}
-
-.floating-icon {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 10000;
-  color: rgba(41, 128, 185, 0.8);
-  margin-right: 20px;
-  margin-top: 20px;
-  font-size: 24px;
-
-  &:hover {
-    color: rgba(41, 128, 185, 1);
-  }
 }
 
 .drop-area {
@@ -646,8 +628,9 @@ export default {
 
 .messages {
   height: 100%;
-  max-height: 100vh;
-  margin: 0;
+  max-height: calc(100vh-120px);
+  margin-bottom: 60px; //Exactly above message bar
+
   padding: 0;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
@@ -656,7 +639,7 @@ export default {
 .type_msg {
   flex-grow: 0; /* default 0 */
   display: inline-flex;
-  position: absolute;
+  position: fixed;
   bottom: 0;
   margin-bottom: 22px;
   z-index: 999;

@@ -581,6 +581,12 @@ export default {
       border-left: 4px solid #bdc3c7;
       border-radius: 2px;
     }
+
+    .emoji {
+      background: transparent;
+      box-shadow: none;
+      border: none;
+    }
   }
 }
 

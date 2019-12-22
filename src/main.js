@@ -15,8 +15,13 @@ const router = new VueRouter({
   mode: "history",
   base: __dirname,
   routes: [
-    { path: "/", component: ChannelView, props: true, name: "chat" },
-    { path: "/admin", component: AdminView, props: true },
+    {
+      path: "/channel/:channel_id",
+      component: ChannelView,
+      name: "chat",
+      props: true
+    },
+    { path: "/admin", component: AdminView, props: true, name: "admin" },
     { path: "/login", component: LoginView, props: true, name: "login" },
     { path: "/signup", component: SignupView, props: true, name: "signup" },
     {
