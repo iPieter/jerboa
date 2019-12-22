@@ -10,7 +10,10 @@
         </template>
         <b-dropdown-item :to="{name: 'chat', params: { channel_id: '1' }}">#1</b-dropdown-item>
         <b-dropdown-item :to="{name: 'chat', params: { channel_id: 'general' }}">#general</b-dropdown-item>
-        <b-dropdown-item href="#">#2</b-dropdown-item>
+        <b-dropdown-item href="#">
+          Pheasant
+          <span class="badge badge-pill badge-danger">4</span>
+        </b-dropdown-item>
         <b-dropdown-divider />
         <b-dropdown-item :to="{name: 'settings'}">Settings</b-dropdown-item>
         <b-dropdown-item :to="{name: 'admin'}">Administration</b-dropdown-item>
@@ -70,6 +73,10 @@ export default {
   height: 60px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
   background-color: darken($jerboa_color4, 23%);
+
+  .badge-danger {
+    background-color: $jerboa_color1;
+  }
 
   .btn-outline-brand {
     color: lighten($jerboa_color5, 25%);
