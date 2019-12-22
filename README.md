@@ -28,3 +28,9 @@ A **self-deployable chat application** built on the idea that your messages shou
 # Future development and contributing
 
 In short, our future plans for this project is to make a complete chat application. For detailed targets, take a look at the project boards on this repo. Feel free to implement something and send a pull request!
+
+Our technology stack is as follows:
+
+- **Database**: We use Postgres with Yoyo for database migrations. The migrations are stored in the `migrations/` folder.
+- **Backend**: A simple Flask server in Python. For websockets support we use gevent.
+- **Frontend**: Vuejs with Bootstrap and some custom styles.
