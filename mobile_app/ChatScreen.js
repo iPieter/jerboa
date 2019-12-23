@@ -14,9 +14,10 @@ import {
   Keyboard,
 } from 'react-native';
 
-import Fuse from 'fuse.js';
-import ImagePicker from 'react-native-image-picker';
-import MessageHandler from './MessageHandler';
+import Fuse from "fuse.js";
+import ImagePicker from "react-native-image-picker";
+import MessageHandler from "./MessageHandler";
+import AsyncStorage from "@react-native-community/async-storage";
 
 export default class ChatScreen extends React.Component {
   constructor(props) {
@@ -35,11 +36,12 @@ export default class ChatScreen extends React.Component {
       showEmojiHelper: false, //Suggestions when typing
       emojiHelperPredictions: [],
     };
-    this.token = this.props.navigation.getParam('token');
+    this.token = this.props.navigation.getParam("token");
     this.messageHandler = new MessageHandler(
       this.token,
       this.onMessagesUpdate,
       this.onConnectionUpdate,
+      this.onAuthError
     );
     this.loadUsers();
     this.loadEmojis();
@@ -64,6 +66,16 @@ export default class ChatScreen extends React.Component {
 
   onConnectionUpdate = status => {
     this.setState({connected: status});
+  };
+
+  onAuthError = async () => {
+    try {
+      await AsyncStorage.removeItem("token");
+    } catch (e) {
+      console.log("Failed to delete token");
+      console.log(e);
+    }
+    this.props.navigation.replace("Login");
   };
 
   loadEmojis = async () => {
@@ -161,6 +173,7 @@ export default class ChatScreen extends React.Component {
     }
 
     var message = this.state.message;
+    var filesMessage = null;
 
     if (this.state.selectedImages.length > 0) {
       var formData = new FormData();
@@ -184,17 +197,7 @@ export default class ChatScreen extends React.Component {
           body: formData,
         });
         let responseJson = await response.json();
-
-        var extendedMessage = ' ';
-        for (var i in responseJson) {
-          extendedMessage +=
-            '![https://chat.ipieter.be/api/files?f=' +
-            responseJson[i].file +
-            '](https://chat.ipieter.be/api/files?f=' +
-            responseJson[i].file +
-            ')';
-        }
-        message += extendedMessage;
+        filesMessage = responseJson;
       } catch (e) {
         console.log(e);
         return;
@@ -212,6 +215,15 @@ export default class ChatScreen extends React.Component {
         .toString(36)
         .substring(7),
     };
+
+    if (filesMessage !== null) {
+      newMessage.message_type = "FILES_MESSAGE";
+      newMessage.message = {
+        message: newMessage.message,
+        files: filesMessage
+      };
+    }
+
     this.messageHandler.sendMessage(newMessage);
 
     this.setState(state => ({
@@ -312,12 +324,23 @@ export default class ChatScreen extends React.Component {
     }
 
     const RGX_EMOJI = /(:[\w,-]+:)/g;
-    var messageText = '';
-    if (item.message_type === 'FILES_MESSAGE') {
+    var messageText = "";
+    var sharedMessage = null;
+    if (item.message_type === "FILES_MESSAGE") {
       messageText = item.message.message;
+    } else if (item.message_type === "SHARE_MESSAGE") {
+      messageText = item.message.message;
+      sharedMessage = this.renderMessage({
+        index: this.state.messages.length - 2,
+        item: item.message.source
+      });
     } else {
       messageText = item.message;
     }
+    if (!messageText || messageText.split === undefined) {
+      messageText = "";
+    }
+
     var parts = messageText.split(RGX_EMOJI);
 
     var messageContent = [];
@@ -431,6 +454,7 @@ export default class ChatScreen extends React.Component {
             ]}>
             {messageContent}
           </View>
+          {sharedMessage && <View style={styles.reply}>{sharedMessage}</View>}
         </View>
       </View>
     );
@@ -621,6 +645,11 @@ const styles = StyleSheet.create({
   msgBody: {
     marginLeft: 5,
     flexDirection: 'column',
+  },
+  reply: {
+    marginLeft: 25,
+    paddingLeft: 25,
+    backgroundColor: "#eeeeee"
   },
   msgContent: {
     alignItems: 'center',
