@@ -201,6 +201,7 @@ def create_channel():
     return json.dumps(channel)
 
 @app.route("/channels/search", methods=["POST"])
+@multi_auth.login_required
 def search_in_channel():
 
     channel = request.form["channel"]
