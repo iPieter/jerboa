@@ -213,7 +213,10 @@ class Database:
     def get_channel_count(self):
         return self.sql_to_dict(
             """
-            SELECT channel, count(*) FROM messages GROUP BY channel"""
+            SELECT channels.name, count(*) FROM messages 
+            join channels on cast(channels.id as text) = messages.channel
+            GROUP BY channels.name 
+            order by count(*) DESC"""
         )
 
     def get_channels(self, username):
