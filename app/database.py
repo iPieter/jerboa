@@ -230,6 +230,15 @@ class Database:
             {"username": username},
         )
 
+    def search(self, query, channel):
+        return self.sql_to_dict(
+            """
+            SELECT * FROM messages  
+            WHERE channel=%(channel)s 
+              AND messages.message @@ to_tsquery(%(query)s);""",
+            {"channel": channel, "query": query},
+        )
+
     def insert_channel(self, name, channel_type):
         result = self.sql_to_dict(
             """INSERT INTO channels (name, type)

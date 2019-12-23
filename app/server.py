@@ -193,13 +193,23 @@ def get_channels():
 def create_channel():
 
     name = request.form["name"]
-    print(request.form)
     public = "PUBLIC" if request.form["public"] == "true" else "PRIVATE"
 
     channel = database.insert_channel(name, public)
     database.insert_channel_member(channel["id"], g.user)
 
     return json.dumps(channel)
+
+@app.route("/channels/search", methods=["POST"])
+def search_in_channel():
+
+    channel = request.form["channel"]
+    query = request.form["query"]
+    query = query.replace(" ", " & ")
+
+    results = database.search(query, channel)
+
+    return json.dumps(results)
 
 
 @app.route("/channels/count")
