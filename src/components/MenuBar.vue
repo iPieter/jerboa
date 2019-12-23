@@ -13,7 +13,7 @@
               </span>
               <span class="d-block">
                 <i class="fas fa-user-secret mr-2"></i>
-                Private channel with Anton
+                Private channel with Anton {{$root.$data.socket.connected}}
               </span>
             </div>
           </template>

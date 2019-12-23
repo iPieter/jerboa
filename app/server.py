@@ -55,11 +55,11 @@ def handle_message(message):
         print(request.sid)
         # emit("msg", message, room=request.sid)
         msg_parsed = json.loads(message)
-        print(msg_parsed["sender"])
+        #(msg_parsed["sender"])
 
         metadata = jws.loads(msg_parsed["sender"])
-        print("parsed:")
-        print(metadata)
+        #print("parsed:")
+        #print(metadata)
 
         previous_message = None
         if "previous_message" in msg_parsed:
@@ -133,19 +133,19 @@ def verify_token(token):
     except:  # noqa: E722
         return False
     if "user" in data:
-        print("token validation request")
+        #("token validation request")
         user = database.get_user(data["user"])
         if user and (user["state"] == "USER" or user["state"] == "ADMIN"):
             session = database.get_session(data["token"])
-            print(session)
-            print(user)
+            #print(session)
+            #print(user)
             if (
                 session != None
                 and session["active"] == True
                 and (session["user_id"] == user["id"] or user["state"] == "ADMIN")
             ):
                 g.user = data["user"]
-                print("token valid")
+                #print("token valid")
                 return True
 
     print("token not valid")
@@ -550,8 +550,8 @@ def login():
         int(time.time()) + app.config["EXPIRES"],
     )
 
-    print("New session with meta-data:")
-    print(session)
+    #print("New session with meta-data:")
+    #print(session)
 
     # Create token and return it
     return {
