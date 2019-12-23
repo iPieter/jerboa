@@ -222,6 +222,7 @@ export default {
       .catch(function(error) {
         console.log(error);
       });
+
     axios
       .get("user")
       .then(function(response) {

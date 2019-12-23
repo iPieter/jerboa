@@ -213,7 +213,9 @@
         drop-placeholder="Drop file here..."
       ></b-form-file>
       <div class="mt-3">Selected file: {{ file ? file.name : '' }}</div>
-      <button type="submit" class="btn btn-primary" v-on:click="uploadEmoji">Submit</button>
+      <template v-slot:modal-footer>
+        <button type="submit" class="btn btn-primary" v-on:click="uploadEmoji">Submit</button>
+      </template>
     </b-modal>
   </div>
 </template>

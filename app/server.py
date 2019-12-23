@@ -75,7 +75,7 @@ def handle_message(message):
             ):
                 print("Attempt to edit other users message!")
                 raise Exception("invalid edit attempt")
-        
+
         elif msg_parsed["message_type"] == "USER_TYPING":
             # when we reveive a user_typing msg, we don't save it.
             msg = {}
@@ -181,6 +181,24 @@ def index():
     return "Hello, %s!" % g.user
 
 
+@app.route("/channels")
+@multi_auth.login_required
+def get_channels():
+    print(json.dumps(database.get_channels(g.user)))
+    return json.dumps(database.get_channels(g.user))
+
+
+@app.route("/channels", methods=["POST"])
+@multi_auth.login_required
+def create_channel():
+
+    name = request.form["name"]
+    public = request.form["public"]
+
+    database.insert_channel(name, public)
+
+    return "ok", 200
+
 @app.route("/channels/count")
 @multi_auth.login_required
 def count_channels():
@@ -244,7 +262,7 @@ def get_file():
                 "Cache-Control": "public, max-age=3600",
                 "Content-disposition": "{}; filename={}".format(
                     "inline" if show else "attachment", result["full_name"]
-                )
+                ),
             },
         )
     return "Error", 500
@@ -271,18 +289,19 @@ def upload_slack_emojis():
                 urllib.request.urlretrieve(emoji[e], "emojis/{}".format(e))
                 database.insert_emoji(g.user, e, e, datetime.now().timestamp())
     return "ok", 200
-    
+
+
 @app.route("/emoji", methods=["POST"])
 @multi_auth.login_required
 def upload_emoji():
     "Add one emoji from a post request to the database and store it in `/emojis`."
 
     e = request.form["name"]
-    
+
     if not os.path.exists("emojis/"):
         os.makedirs("emojis/")
 
-    f = request.files['file']
+    f = request.files["file"]
 
     path = os.path.join("emojis", e)
     f.save(path)
@@ -328,7 +347,7 @@ def get_emoji(file_identifier):
                     "Cache-Control": "public, max-age=3600",
                     "Content-disposition": "attachment; filename={}".format(
                         file_identifier
-                    )
+                    ),
                 },
             )
     except FileNotFoundError as e:
