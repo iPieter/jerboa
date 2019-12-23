@@ -286,3 +286,4 @@ Vue.config.js
 
 data/
 emojis/
+mobile_app/node_modules

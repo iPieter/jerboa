@@ -262,9 +262,6 @@ export default {
     emojis: {
       type: Array
     },
-    socket: {
-      required: true
-    },
     token: {
       required: true
     },
@@ -346,7 +343,7 @@ export default {
       };
 
       this.editMode = false;
-      this.socket.emit("msg", JSON.stringify(msg));
+      this.$root.$data.socket.emit("msg", JSON.stringify(msg));
     },
     resetModal() {
       this.sharingMessage = "";
@@ -371,9 +368,7 @@ export default {
         signature: "na"
       };
 
-      console.log(msg);
-
-      this.socket.emit("msg", JSON.stringify(msg));
+      this.$root.$data.socket.emit("msg", JSON.stringify(msg));
 
       // Hide the modal manually
       this.$nextTick(() => {

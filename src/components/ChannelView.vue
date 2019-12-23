@@ -77,13 +77,12 @@
         </div>
 
         <message
-          v-for="(message, index) in getMessages()"
+          v-for="message in getMessages()"
           :messagesProp="message.messages"
           v-if="rst"
-          :key="index"
+          :key="message.id"
           :ref="`msg_${message.id}`"
           :emojis="custom_emojis"
-          :socket="socket"
           :token="token"
           :id="message.id"
           :incremental="message.incremental"
@@ -136,7 +135,7 @@ import VueMarkdown from "vue-markdown";
 import MessageInput from "./MessageInput";
 import axios from "axios";
 import { Picker } from "emoji-mart-vue";
-
+import MessageHandler from "../messageHandler";
 var MessageClass = Vue.extend(Message);
 Vue.use(VueMarkdown);
 
@@ -148,8 +147,6 @@ export default {
       base: "/",
       messages: [],
       unacked_messages: {},
-      connected: false,
-      socket: {},
       current_user: {},
       error: "",
       files: [],
@@ -161,7 +158,8 @@ export default {
       dragging: false,
       file_preview: "",
       typing: {},
-      showChannels: false
+      showChannels: false,
+      messagehandler: {}
     };
   },
   components: { Message, Picker, MessageInput, VueMarkdown },
@@ -181,39 +179,26 @@ export default {
 
     this.loadUsers();
 
-    axios
-      .get("messages", {
-        params: {
-          channel: this.channel_id,
-          initial_msg_id: _this.initial_msg_id
-        }
-      })
-      .then(function(response) {
-        response.data.reverse().forEach(m => _this.on_message(m));
-        if (response.data.length > 0)
-          _this.initial_msg_id = response.data[0].id;
+    this.messagehandler = new MessageHandler(
+      this,
+      this.token,
+      m => {
+        console.log({ m });
+        _this.messages = m.reverse();
 
         _this.scrollDown();
+      },
+      m => {
+        console.log(m);
+      },
+      m => {
+        //_this.$router.push({ name: "login" });
+        console.log(m);
+      },
+      process.env.VUE_APP_SERVER_BASE
+    );
+    //_this.$router.push({ name: "login" });
 
-        _this.socket = io(process.env.VUE_APP_SERVER_BASE_WS, { origins: "*" });
-
-        _this.socket.on("connect", _this.on_connect);
-        _this.socket.on("disconnect", _this.on_connection_lost);
-
-        _this.socket.on("msg", _this.on_message);
-        _this.socket.on("error", _this.on_error);
-      })
-      .catch(function(error) {
-        console.log(error);
-        if (
-          error.response &&
-          (error.response.status == "401" ||
-            error.response == "Signature expired" ||
-            error.response == "Invalid signature")
-        ) {
-          _this.$router.push({ name: "login" });
-        }
-      });
     axios
       .get("emojis/list")
       .then(function(response) {
@@ -233,7 +218,7 @@ export default {
       });
   },
   mounted() {
-    if (Notification.permission !== "denied") {
+    if (Notification.permission !== "granted") {
       Notification.requestPermission();
     }
     document.addEventListener(
@@ -315,7 +300,8 @@ export default {
     on_connection_lost() {
       this.connected = false;
     },
-    on_message(msg) {
+    on_message(msg) {},
+    on_message_old(msg) {
       if (msg["message_type"] == "TEXT_MESSAGE_UPDATE") {
         var prevMsg = this.messages.filter(
           m => m.id === msg["previous_message"]
@@ -429,10 +415,10 @@ export default {
             nonce: nonce
           };
 
+          this.messagehandler.sendMessage(msg);
           Vue.set(this.unacked_messages, nonce, msg);
           this.scrollDown();
 
-          this.socket.emit("msg", JSON.stringify(msg));
           this.$refs.msgInput.resetMessage();
           this.emoji = false;
         }
@@ -446,7 +432,7 @@ export default {
         sent_time: new Date()
       };
 
-      this.socket.emit("msg", JSON.stringify(msg));
+      this.$root.$data.socket.emit("msg", JSON.stringify(msg));
     },
     /*
         Adds a file
@@ -520,7 +506,7 @@ export default {
         .then(function(response) {
           console.log("successfully uploaded file(s).");
           msg.message.files = response.data;
-          _this.socket.emit("msg", JSON.stringify(msg));
+          _this.$root.$data.socket.emit("msg", JSON.stringify(msg));
 
           //this.messages.push(msg);
           _this.uploadPercentage = -1;

@@ -33,10 +33,19 @@ const router = new VueRouter({
   ]
 });
 
+var data = {
+  socket: {},
+  messages: {},
+  channels: []
+};
+
 // 4. Create extended base Vue with router injected here (all
 // children should inherit the same router).
 new Vue({
   router,
   el: "#app",
-  render: h => h(App)
+  render: h => h(App),
+  data() {
+    return data;
+  }
 });
