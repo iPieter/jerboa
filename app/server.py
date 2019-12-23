@@ -193,11 +193,14 @@ def get_channels():
 def create_channel():
 
     name = request.form["name"]
-    public = request.form["public"]
+    print(request.form)
+    public = "PUBLIC" if request.form["public"] == "true" else "PRIVATE"
 
-    database.insert_channel(name, public)
+    channel = database.insert_channel(name, public)
+    database.insert_channel_member(channel["id"], g.user)
 
-    return "ok", 200
+    return json.dumps(channel)
+
 
 @app.route("/channels/count")
 @multi_auth.login_required

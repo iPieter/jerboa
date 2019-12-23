@@ -290,7 +290,7 @@ export default {
       type: String
     },
     channel_id: {
-      type: String
+      default: "1"
     }
   },
   methods: {

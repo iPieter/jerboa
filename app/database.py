@@ -228,18 +228,25 @@ class Database:
         )
 
     def insert_channel(self, name, channel_type):
-        self.cursor.execute(
+        result = self.sql_to_dict(
             """INSERT INTO channels (name, type)
-            VALUES (%(name)s, %(type)s)""",
+            VALUES(%(name)s, %(type)s)
+            RETURNING *""",
             {"name": name, "type": channel_type},
         )
         self.conn.commit()
 
-    def insert_channel_member(self, channel_id, user_id):
+        print(result)
+        return result[0]
+
+    def insert_channel_member(self, channel_id, username):
         self.cursor.execute(
             """INSERT INTO channels_users (channel_id, user_id)
-            VALUES (%(channel_id)s, %(user_id)s)""",
-            {"channel_id": channel_id, "user_id": user_id},
+            SELECT %(channel_id)s, id
+            FROM users
+            WHERE username=%(username)s
+            RETURNING *;""",
+            {"channel_id": channel_id, "username": username},
         )
         self.conn.commit()
 
