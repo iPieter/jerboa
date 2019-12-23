@@ -196,8 +196,9 @@ class Database:
                    {} 
                    ORDER BY messages.id DESC 
                    LIMIT 30 
-                """.format("" if message_id== 0 else 
-                           "AND messages.id < %(msg_id)s" )
+                """.format(
+            "" if message_id == 0 else "AND messages.id < %(msg_id)s"
+        )
         return self.sql_to_dict(query, {"channel": channel, "msg_id": message_id})
 
     def get_message(self, msg_id):
@@ -214,6 +215,33 @@ class Database:
             """
             SELECT channel, count(*) FROM messages GROUP BY channel"""
         )
+
+    def get_channels(self, username):
+        return self.sql_to_dict(
+            """
+            select channels.*
+            from channels
+            inner join channels_users on channels.id = channels_users.channel_id
+            inner join users on users.id = channels_users.user_id
+            where users.username = %(username)s""",
+            {"username": username},
+        )
+
+    def insert_channel(self, name, channel_type):
+        self.cursor.execute(
+            """INSERT INTO channels (name, type)
+            VALUES (%(name)s, %(type)s)""",
+            {"name": name, "type": channel_type},
+        )
+        self.conn.commit()
+
+    def insert_channel_member(self, channel_id, user_id):
+        self.cursor.execute(
+            """INSERT INTO channels_users (channel_id, user_id)
+            VALUES (%(channel_id)s, %(user_id)s)""",
+            {"channel_id": channel_id, "user_id": user_id},
+        )
+        self.conn.commit()
 
     def insert_file(self, file_name, username, file_type, size, full_name):
         self.cursor.execute(
