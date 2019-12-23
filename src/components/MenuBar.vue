@@ -100,7 +100,7 @@
         </div>
       </form>
       <template v-slot:modal-footer>
-        <button type="submit" class="btn btn-primary" v-on:click="submit">Submit</button>
+        <button type="submit" class="btn btn-primary" v-on:click="createChannel">Submit</button>
       </template>
     </b-modal>
   </div>
@@ -163,8 +163,10 @@ export default {
           }
         })
         .then(function(response) {
-          console.log("SUCCESS!!");
-          console.log(response.data);
+          _this.$router.push({
+            name: "chat",
+            params: { channel_id: response.data.id }
+          });
 
           //this.messages.push(msg);
         })
