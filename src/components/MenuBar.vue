@@ -3,7 +3,7 @@
     <nav class="navbar fixed-top navbar-dark">
       <div class="left">
         <a class="navbar-brand" href="#">
-          <img class="ml-2" src="/icon.png" alt width="30" height="30" />
+          <img class="ml-2 mt-1" src="/icon.png" alt width="30" height="30" />
         </a>
         <b-dropdown id="dropdown-right" left variant="white" class="m-2 navbar-brand">
           <template v-slot:button-content>
@@ -64,6 +64,9 @@
           <form class="btn-group form-inline line-left ml-2 pl-2">
             <button class="btn btn-outline-brand" type="button">
               <i class="fas fa-users-cog"></i>
+            </button>
+            <button class="btn btn-outline-brand" type="button">
+              <i class="fas fa-columns"></i>
             </button>
           </form>
         </form>
