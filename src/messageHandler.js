@@ -16,13 +16,20 @@ export default class MessageHandler {
     handleMessages,
     handleConnection,
     handleAuthError,
+    handleTyping,
+    clearTyping,
+    clearSentMessages,
     baseURL
   ) {
     this.token = token;
     this.handleMessages = handleMessages;
     this.handleConnection = handleConnection;
     this.handleAuthError = handleAuthError;
+    this.handleTyping = handleTyping;
+    this.clearTyping = clearTyping;
+    this.clearSentMessages = clearSentMessages;
     this._this = _this;
+    this.current_channel_id = _this.channel_id;
     this.setupConnection(this._this);
 
     this.messages = [];
@@ -40,10 +47,15 @@ export default class MessageHandler {
     for (var i in this.messages) {
       if (msg.id === this.messages[i].id) return;
     }
+
+    // First remove the unacked message, whatever type it may be
+    if ("nonce" in msg) this.clearSentMessages(msg.nonce);
+
     if (
       msg.message_type == "TEXT_MESSAGE" ||
       msg.message_type == "FILES_MESSAGE"
     ) {
+      this.clearTyping(msg.sender);
       var incremental = false;
       if (this.messages.length > 0) {
         var previousMessage = this.messages[this.messages.length - 1];
@@ -78,6 +90,8 @@ export default class MessageHandler {
         incremental: false,
         sender: msg.sender
       });
+    } else if (msg["message_type"] == "USER_TYPING") {
+      this.handleTyping(msg);
     }
     this.messages = this.messages.sort((a, b) => a.id - b.id);
     this.handleMessages(this.messages);
@@ -116,7 +130,7 @@ export default class MessageHandler {
 
   loadMessages = async () => {
     const params = {
-      channel: "1",
+      channel: this.current_channel_id,
       initial_msg_id: 0
     };
 
