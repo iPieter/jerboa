@@ -129,8 +129,8 @@
     <b-modal id="modal-add-user" :title="'Users of channel ' + getChannel().name">
       <div class="row">
         <table class="table table-hover">
-          <tbody v-if="$root.$data.visible_channel_id in  $root.$data.channels">
-            <tr v-for="member in $root.$data.channels[$root.$data.visible_channel_id].users">
+          <tbody>
+            <tr v-for="member in getChannel().users">
               <th scope="row">@{{member.username}}</th>
               <td>{{member.first_name}}</td>
               <td>
@@ -153,7 +153,7 @@
         </div>
       </form>
       <template v-slot:modal-footer>
-        <button type="submit" class="btn btn-primary" v-on:click="createChannel">Submit</button>
+        <button type="submit" class="btn btn-primary" v-on:click="addUserToChannel">Submit</button>
       </template>
     </b-modal>
   </div>
@@ -196,17 +196,8 @@ export default {
     createChannel() {
       let formData = new FormData();
 
-      /*
-          Iteate over any file sent over appending the files
-          to the form data.
-        */
-
       formData.append("name", this.channel_form.name);
       formData.append("public", this.channel_form.public);
-
-      /*
-          Make the request to the POST /select-files URL
-        */
 
       let _this = this;
       axios
@@ -221,6 +212,28 @@ export default {
             params: { channel_id: response.data.id }
           });
 
+          //this.messages.push(msg);
+        })
+        .catch(function(response) {
+          console.log("FAILURE!!");
+          console.log(response);
+        });
+    },
+    addUserToChannel() {
+      let formData = new FormData();
+
+      formData.append("username", this.channel_user_name);
+      formData.append("channel_id", this.$root.$data.visible_channel_id);
+
+      let _this = this;
+      axios
+        .post("channels/add_user", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        })
+        .then(function(response) {
+          //TODO refresh table
           //this.messages.push(msg);
         })
         .catch(function(response) {

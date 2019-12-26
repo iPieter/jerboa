@@ -204,6 +204,17 @@ def create_channel():
     database.insert_channel_member(channel["id"], g.user)
 
     return json.dumps(channel)
+    
+@app.route("/channels/add_user", methods=["POST"])
+@multi_auth.login_required
+def add_user_to_channel():
+
+    channel_id = request.form["channel_id"]
+    username = request.form["username"]
+
+    database.insert_channel_member(channel_id, username)
+
+    return "ok", 200
 
 @app.route("/channels/search", methods=["POST"])
 @multi_auth.login_required

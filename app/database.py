@@ -266,7 +266,7 @@ class Database:
             """INSERT INTO channels_users (channel_id, user_id)
             SELECT %(channel_id)s, id
             FROM users
-            WHERE username=%(username)s
+            WHERE username=%(username)s or email=%(username)s
             RETURNING *;""",
             {"channel_id": channel_id, "username": username},
         )
