@@ -25,11 +25,7 @@ export default class MessageHandler {
     this._this = _this;
     this.setupConnection(this._this);
 
-    // Messages are stored in an array, indices to messages are stored
-    // in two maps: one for id, one for the date
     this.messages = [];
-    this.messageById = new Map();
-    this.messageByDate = new Map();
 
     axios.defaults.baseURL = baseURL;
     axios.defaults.headers.common["Authorization"] = "Bearer " + token;
@@ -48,11 +44,24 @@ export default class MessageHandler {
       msg.message_type == "TEXT_MESSAGE" ||
       msg.message_type == "FILES_MESSAGE"
     ) {
+      var incremental = false;
+      if (this.messages.length > 0) {
+        var previousMessage = this.messages[this.messages.length - 1];
+        var lastMessage =
+          previousMessage.messages[previousMessage.messages.length - 1];
+        if (
+          msg["sender"] === lastMessage["sender"] &&
+          msg["sent_time"] - lastMessage["sent_time"] < 60
+        ) {
+          incremental = true;
+        }
+      }
+
       this.messages.push({
         messages: [msg],
         id: msg.id,
         previousMessageDate: new Date(),
-        incremental: false,
+        incremental: incremental,
         sender: msg.sender
       });
     } else if (msg.message_type === "TEXT_MESSAGE_UPDATE") {
@@ -70,7 +79,7 @@ export default class MessageHandler {
         sender: msg.sender
       });
     }
-    this.messages = this.messages.sort((a, b) => b.id - a.id);
+    this.messages = this.messages.sort((a, b) => a.id - b.id);
     this.handleMessages(this.messages);
   };
 
@@ -110,6 +119,7 @@ export default class MessageHandler {
       channel: "1",
       initial_msg_id: 0
     };
+
     try {
       let response = await axios.get("messages", {
         params: {
