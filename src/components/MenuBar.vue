@@ -79,7 +79,7 @@
           </button>
 
           <form class="btn-group form-inline line-left ml-2 pl-2">
-            <button class="btn btn-outline-brand" type="button">
+            <button class="btn btn-outline-brand" type="button" v-b-modal.modal-add-user>
               <i class="fas fa-users-cog"></i>
             </button>
             <button class="btn btn-outline-brand" type="button">
@@ -126,6 +126,36 @@
         <button type="submit" class="btn btn-primary" v-on:click="createChannel">Submit</button>
       </template>
     </b-modal>
+    <b-modal id="modal-add-user" :title="'Users of channel ' + getChannel().name">
+      <div class="row">
+        <table class="table table-hover">
+          <tbody v-if="$root.$data.visible_channel_id in  $root.$data.channels">
+            <tr v-for="member in $root.$data.channels[$root.$data.visible_channel_id].users">
+              <th scope="row">@{{member.username}}</th>
+              <td>{{member.first_name}}</td>
+              <td>
+                <a href="#">Remove from this channel</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <form>
+        <div class="form-group">
+          <label for="name">Add a person</label>
+          <input
+            type="name"
+            class="form-control"
+            id="name"
+            placeholder="Username or email"
+            v-model="channel_user_name"
+          />
+        </div>
+      </form>
+      <template v-slot:modal-footer>
+        <button type="submit" class="btn btn-primary" v-on:click="createChannel">Submit</button>
+      </template>
+    </b-modal>
   </div>
 </template>
 <script>
@@ -139,7 +169,7 @@ export default {
   name: "menu-bar",
   props: {},
   data() {
-    return { channel_form: {} };
+    return { channel_form: {}, channel_user_name: "" };
   },
   created() {
     if ((this.token != null) & (this.token != undefined)) {
@@ -287,6 +317,16 @@ export default {
 
     ::-webkit-search-cancel-button {
       color: lighten($jerboa_color5, 30%);
+    }
+  }
+}
+
+.modal-body {
+  .row {
+    margin-top: -17px;
+
+    .table {
+      border-bottom: 1px solid #dee2e6;
     }
   }
 }

@@ -230,6 +230,16 @@ class Database:
             {"username": username},
         )
 
+    def get_users_for_channel(self, channel_id):
+        return self.sql_to_dict(
+            """
+            select users.username, users.id, users.first_name
+            from channels_users
+            inner join users on users.id = channels_users.user_id
+            where channels_users.channel_id = %(channel_id)s""",
+            {"channel_id": channel_id},
+        )
+
     def search(self, query, channel):
         return self.sql_to_dict(
             """

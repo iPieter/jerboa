@@ -184,8 +184,13 @@ def index():
 @app.route("/channels")
 @multi_auth.login_required
 def get_channels():
-    print(json.dumps(database.get_channels(g.user)))
-    return json.dumps(database.get_channels(g.user))
+    
+    channels = database.get_channels(g.user)
+    
+    for channel in channels:
+        channel['users'] = database.get_users_for_channel(channel['id'])
+
+    return json.dumps(channels)
 
 
 @app.route("/channels", methods=["POST"])
