@@ -18,7 +18,7 @@
             </div>
           </template>
           <b-dropdown-item
-            v-for="channel in channels"
+            v-for="channel in $root.$data.channels"
             v-bind="channel.id"
             :to="{name: 'chat', params: { channel_id: channel.id }}"
           >{{channel.name}}</b-dropdown-item>
@@ -67,6 +67,9 @@
             </button>
             <button class="btn btn-outline-brand" type="button">
               <i class="fas fa-columns"></i>
+            </button>
+            <button class="btn btn-outline-brand-muted" type="button">
+              <i class="far fa-bell"></i>
             </button>
           </form>
         </form>
@@ -119,7 +122,7 @@ export default {
   name: "menu-bar",
   props: {},
   data() {
-    return { channels: [], channel_form: {} };
+    return { channel_form: {} };
   },
   created() {
     if ((this.token != null) & (this.token != undefined)) {
@@ -136,7 +139,7 @@ export default {
     axios
       .get("channels")
       .then(function(response) {
-        _this.channels = response.data;
+        _this.$root.$data.channels = response.data;
       })
       .catch(function(error) {
         console.log(error);
@@ -188,6 +191,7 @@ export default {
   height: 60px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.125);
   background-color: darken($jerboa_color4, 23%);
+  flex-wrap: nowrap !important;
 
   .line-left {
     border-left: 1px solid darken($jerboa_color4, 17%);
@@ -224,6 +228,14 @@ export default {
 
     &:hover {
       color: lighten($jerboa_color5, 35%);
+    }
+  }
+  .btn-outline-brand-muted {
+    color: darken($jerboa_color5, 35%);
+    //border-color: lighten($jerboa_color5, 25%);
+
+    &:hover {
+      color: darken($jerboa_color5, 25%);
     }
   }
 

@@ -145,7 +145,6 @@ export default {
     return {
       id: "",
       base: "/",
-      messages: [],
       unacked_messages: {},
       current_user: {},
       error: "",
@@ -183,13 +182,13 @@ export default {
       this,
       this.token,
       m => {
-        console.log({ m });
-        _this.messages = m.reverse();
+        Vue.set(_this.$root.$data.messages, _this.channel_id, m);
+        console.log(_this.$root.$data.messages[_this.channel_id]);
 
         _this.scrollDown();
       },
       m => {
-        console.log(m);
+        console.log("current connection: " + m);
       },
       m => {
         //_this.$router.push({ name: "login" });
@@ -292,7 +291,7 @@ export default {
         .catch(this.handleError);
     },
     getMessages() {
-      return this.messages;
+      return this.$root.$data.messages[this.channel_id];
     },
     on_connect() {
       this.connected = true;
@@ -432,7 +431,7 @@ export default {
         sent_time: new Date()
       };
 
-      this.$root.$data.socket.emit("msg", JSON.stringify(msg));
+      this.messagehandler.sendMessage(msg);
     },
     /*
         Adds a file
@@ -506,7 +505,7 @@ export default {
         .then(function(response) {
           console.log("successfully uploaded file(s).");
           msg.message.files = response.data;
-          _this.$root.$data.socket.emit("msg", JSON.stringify(msg));
+          this.messagehandler.sendMessage(msg);
 
           //this.messages.push(msg);
           _this.uploadPercentage = -1;
@@ -544,29 +543,13 @@ export default {
     },
     handleKeyUp(event) {
       if (this.$refs.msgInput.getMessage().length == 0) {
-        var lastID = this.messages[this.messages.length - 1].id;
+        var lastID = this.$root.$data.messages[this.channel_id][
+          this.$root.$data.messages[this.channel_id].length - 1
+        ].id;
         var el = this.$refs["msg_" + lastID][0];
         if (el) el.toggleEdit();
         event.preventDefault();
       }
-    },
-    loadMessages() {
-      var _this = this;
-      axios
-        .get("messages", {
-          params: {
-            channel: this.channel_id,
-            initial_msg_id: _this.initial_msg_id
-          }
-        })
-        .then(function(response) {
-          response.data.forEach(m => {
-            _this.on_message(m);
-          });
-          _this.initial_msg_id = _this.messages[0].id;
-          _this.rst = false;
-          _this.scrollDown();
-        });
     }
   }
 };
