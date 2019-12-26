@@ -36,7 +36,10 @@ const router = new VueRouter({
 var data = {
   socket: {},
   messages: {},
-  channels: []
+  channels: [],
+  visible_channel_id: "",
+  visible_admin: false,
+  visible_settings: false
 };
 
 // 4. Create extended base Vue with router injected here (all

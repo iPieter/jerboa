@@ -176,6 +176,10 @@ export default {
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
     axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
 
+    this.$root.$data.visible_channel_id = this.channel_id;
+    this.$root.$data.visible_admin = false;
+    this.$root.$data.visible_settings = false;
+
     this.loadUsers();
 
     this.messagehandler = new MessageHandler(
@@ -215,6 +219,13 @@ export default {
       .catch(function(error) {
         console.log(error);
       });
+  },
+  watch: {
+    channel_id: function() {
+      this.$root.$data.visible_channel_id = this.channel_id;
+      this.$root.$data.visible_admin = false;
+      this.$root.$data.visible_settings = false;
+    }
   },
   mounted() {
     if (Notification.permission !== "granted") {

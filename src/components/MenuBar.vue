@@ -7,13 +7,30 @@
         </a>
         <b-dropdown id="dropdown-right" left variant="white" class="m-2 navbar-brand">
           <template v-slot:button-content>
-            <div class="d-inline-block text-left">
+            <div
+              class="d-inline-block text-left"
+              v-if="!$root.$data.visible_admin && !$root.$data.visible_settings"
+            >
               <span class="d-block inline-toggle">
-                <b>Main channel</b>
+                <b>{{getChannel().name}}</b>
               </span>
-              <span class="d-block">
+              <span class="d-block" v-if="getChannel().type == 'PRIVATE'">
                 <i class="fas fa-user-secret mr-2"></i>
                 Private channel with Anton {{$root.$data.socket.connected}}
+              </span>
+              <span class="d-block" v-else>
+                <i class="fas fa-users mr-2"></i>
+                Public channel
+              </span>
+            </div>
+            <div class="d-inline-block text-left" v-else-if="$root.$data.visible_admin">
+              <span class="d-block inline-toggle">
+                <b>Administration</b>
+              </span>
+            </div>
+            <div class="d-inline-block text-left" v-else-if="$root.$data.visible_settings">
+              <span class="d-block inline-toggle">
+                <b>Settings</b>
               </span>
             </div>
           </template>
@@ -180,6 +197,13 @@ export default {
           console.log("FAILURE!!");
           console.log(response);
         });
+    },
+    getChannel() {
+      let channel_id = this.$root.$data.visible_channel_id;
+      for (let channel_key in this.$root.$data.channels) {
+        if (this.$root.$data.channels[channel_key]["id"] == channel_id)
+          return this.$root.$data.channels[channel_key];
+      }
     }
   }
 };

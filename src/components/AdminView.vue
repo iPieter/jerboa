@@ -258,6 +258,9 @@ export default {
     }
     let _this = this;
 
+    this.$root.$data.visible_admin = true;
+    this.$root.$data.visible_settings = false;
+
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
     axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
     console.log(axios.defaults.headers.common["Authorization"]);
