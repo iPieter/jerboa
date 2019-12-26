@@ -16,7 +16,7 @@
               </span>
               <span class="d-block" v-if="getChannel().type == 'PRIVATE'">
                 <i class="fas fa-user-secret mr-2"></i>
-                Private channel with Anton {{$root.$data.socket.connected}}
+                Private channel
               </span>
               <span class="d-block" v-else>
                 <i class="fas fa-users mr-2"></i>
@@ -49,20 +49,6 @@
           <b-dropdown-item :to="{name: 'settings'}">Settings</b-dropdown-item>
           <b-dropdown-item :to="{name: 'admin'}">Administration</b-dropdown-item>
         </b-dropdown>
-      </div>
-
-      <div class="right">
-        <form class="btn-group form-inline">
-          <button class="btn btn-outline-brand" type="button">
-            <i class="fas fa-caret-square-left"></i>
-          </button>
-          <button class="btn btn-outline-brand" type="button">
-            <i class="fas fa-columns"></i>
-          </button>
-          <button class="btn btn-outline-brand" type="button">
-            <i class="fas fa-caret-square-right"></i>
-          </button>
-        </form>
       </div>
 
       <div class="right">
