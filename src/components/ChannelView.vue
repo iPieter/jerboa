@@ -89,7 +89,10 @@
           :sender="users[message.sender]"
         ></message>
 
-        <div class="text-muted message-container" v-for="(message, index) in unacked_messages">
+        <div
+          class="text-muted message-container"
+          v-for="(message, index) in $root.$data.unacked_messages[channel_id]"
+        >
           <img
             class="avatar"
             :src="base + 'files?f=' + current_user.profile_image"
@@ -145,7 +148,6 @@ export default {
     return {
       id: "",
       base: "/",
-      unacked_messages: {},
       current_user: {},
       error: "",
       files: [],
@@ -187,7 +189,6 @@ export default {
       this.token,
       m => {
         Vue.set(_this.$root.$data.messages, _this.channel_id, m);
-        console.log(_this.$root.$data.messages[_this.channel_id]);
 
         _this.scrollDown();
       },
@@ -362,7 +363,7 @@ export default {
           sender: msg.sender
         };
         this.messages.push(newMessage);
-        delete this.unacked_messages[msg["nonce"]];
+        delete this.$root.$data.unacked_messages[this.channel_id][msg["nonce"]];
         this.scrollDown();
 
         this.messages = this.messages = this.messages.sort(
@@ -425,8 +426,17 @@ export default {
             nonce: nonce
           };
 
+          if (!(this.channel_id in this.$root.$data.unacked_messages)) {
+            console.log("adding key");
+            Vue.set(this.$root.$data.unacked_messages, this.channel_id, {});
+          }
+
           this.messagehandler.sendMessage(msg);
-          Vue.set(this.unacked_messages, nonce, msg);
+          Vue.set(
+            this.$root.$data.unacked_messages[this.channel_id],
+            nonce,
+            msg
+          );
           this.scrollDown();
 
           this.$refs.msgInput.resetMessage();
@@ -493,7 +503,13 @@ export default {
         signature: "na",
         nonce: nonce
       };
-      Vue.set(this.unacked_messages, nonce, msg);
+
+      if (!(this.channel_id in this.$root.$data.unacked_messages)) {
+        console.log("adding key");
+        Vue.set(this.$root.$data.unacked_messages, this.channel_id, {});
+      }
+
+      Vue.set(this.$root.$data.unacked_messages[this.channel_id], nonce, msg);
       this.scrollDown();
       _this.files = [];
       this.$refs.msgInput.resetMessage();
@@ -505,7 +521,7 @@ export default {
           },
           onUploadProgress: function(progressEvent) {
             Vue.set(
-              _this.unacked_messages[nonce],
+              _this.$root.$data.unacked_messages[_this.channel_id][nonce],
               "uploadPercentage",
               parseInt(
                 Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -516,7 +532,7 @@ export default {
         .then(function(response) {
           console.log("successfully uploaded file(s).");
           msg.message.files = response.data;
-          this.messagehandler.sendMessage(msg);
+          _this.messagehandler.sendMessage(msg);
 
           //this.messages.push(msg);
           _this.uploadPercentage = -1;
