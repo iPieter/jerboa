@@ -220,7 +220,7 @@ def add_user_to_channel():
 @multi_auth.login_required
 def search_in_channel():
 
-    channel = request.form["channel"]
+    channel = request.form["channel_id"]
     query = request.form["query"]
     query = query.replace(" ", " & ")
 

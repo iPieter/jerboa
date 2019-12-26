@@ -20,6 +20,7 @@
               </span>
               <span class="d-block" v-else>
                 <i class="fas fa-users mr-2"></i>
+                ({{getChannel().users.length}})
                 Public channel
               </span>
             </div>
@@ -58,9 +59,10 @@
             type="search"
             placeholder="Search"
             aria-label="Search"
+            v-model="query"
           />
 
-          <button class="btn btn-outline-brand" type="button">
+          <button class="btn btn-outline-brand" type="button" v-on:click="search()">
             <i class="fas fa-search"></i>
           </button>
 
@@ -142,6 +144,18 @@
         <button type="submit" class="btn btn-primary" v-on:click="addUserToChannel">Submit</button>
       </template>
     </b-modal>
+    <b-modal id="modal-search" ref="modal-search" :title="'Search results for ' + query">
+      <div class="row">
+        <table class="table table-hover">
+          <tbody>
+            <tr v-for="result in query_results">
+              <th scope="row">{{result}}</th>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </b-modal>
   </div>
 </template>
 <script>
@@ -155,7 +169,12 @@ export default {
   name: "menu-bar",
   props: {},
   data() {
-    return { channel_form: {}, channel_user_name: "" };
+    return {
+      channel_form: {},
+      channel_user_name: "",
+      query: "",
+      query_results: []
+    };
   },
   created() {
     if ((this.token != null) & (this.token != undefined)) {
@@ -179,6 +198,30 @@ export default {
       });
   },
   methods: {
+    search() {
+      let formData = new FormData();
+
+      formData.append("query", this.query);
+      formData.append("channel_id", this.$root.$data.visible_channel_id);
+
+      let _this = this;
+      axios
+        .post("channels/search", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          }
+        })
+        .then(function(response) {
+          //TODO refresh table
+          //this.messages.push(msg);
+          _this.query_results = response.data;
+          _this.$refs["modal-search"].show();
+        })
+        .catch(function(response) {
+          console.log("FAILURE!!");
+          console.log(response);
+        });
+    },
     createChannel() {
       let formData = new FormData();
 
