@@ -199,6 +199,9 @@ export default {
         //_this.$router.push({ name: "login" });
         console.log(m);
       },
+      this.on_typing_message,
+      this.clear_typing,
+      this.clear_sent_messages,
       process.env.VUE_APP_SERVER_BASE
     );
     //_this.$router.push({ name: "login" });
@@ -310,6 +313,27 @@ export default {
     },
     on_connection_lost() {
       this.connected = false;
+    },
+    on_typing_message(msg) {
+      if (msg.sender != this.current_user.username) {
+        let _this = this;
+
+        //first remove old timer
+        clearTimeout(this.typing[msg.sender]);
+
+        let t = setTimeout(function() {
+          console.log("deleting key for");
+          Vue.delete(_this.typing, msg.sender);
+        }, 5000);
+
+        Vue.set(this.typing, msg.sender, t);
+      }
+    },
+    clear_typing(sender) {
+      Vue.delete(this.typing, sender);
+    },
+    clear_sent_messages(nonce) {
+      delete this.$root.$data.unacked_messages[this.channel_id][nonce];
     },
     on_message(msg) {},
     on_message_old(msg) {
