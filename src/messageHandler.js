@@ -39,6 +39,9 @@ export default class MessageHandler {
   }
 
   handleMessage = async msg => {
+    console.log({ msg });
+
+    this._this.$root.$data.notifications.push("new message");
     // Add to messages
     // Update two maps
     // Call callback with messages sorted by date
@@ -56,6 +59,7 @@ export default class MessageHandler {
       msg.message_type == "FILES_MESSAGE"
     ) {
       this.clearTyping(msg.sender);
+
       var incremental = false;
       if (this.messages.length > 0) {
         var previousMessage = this.messages[this.messages.length - 1];
@@ -110,6 +114,9 @@ export default class MessageHandler {
     this._this.$root.$data.socket.on("connect", () => {
       console.log("Connected, loading messages");
       this.loadMessages();
+      console.log("Also requesting access to rooms on server.");
+      this._this.$root.$data.socket.emit("join_rooms", this.token);
+
       this.connected = true;
     });
     this._this.$root.$data.socket.on("connect_error", error => {

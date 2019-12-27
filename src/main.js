@@ -40,7 +40,9 @@ var data = {
   channels: [],
   visible_channel_id: "",
   visible_admin: false,
-  visible_settings: false
+  visible_settings: false,
+  token: "",
+  notifications: []
 };
 
 // 4. Create extended base Vue with router injected here (all
