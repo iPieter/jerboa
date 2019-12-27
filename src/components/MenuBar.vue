@@ -73,9 +73,26 @@
             <button class="btn btn-outline-brand" type="button">
               <i class="fas fa-columns"></i>
             </button>
-            <button class="btn btn-outline-brand-muted" type="button">
-              <i class="far fa-bell"></i>
-            </button>
+            <transition name="bell" mode="out-in">
+              <button
+                class="btn btn-outline-brand-muted"
+                type="button"
+                v-if="$root.$data.notifications.length == 0"
+                v-on:click="show_notifications()"
+                key="no-notifications"
+              >
+                <i class="far fa-bell"></i>
+              </button>
+              <button
+                class="btn btn-outline-brand"
+                type="button"
+                v-else
+                v-on:click="show_notifications()"
+                v-key="notifications"
+              >
+                <i class="fas fa-bell"></i>
+              </button>
+            </transition>
           </form>
         </form>
       </div>
@@ -198,6 +215,9 @@ export default {
       });
   },
   methods: {
+    show_notifications() {
+      this.$root.$data.notifications = [];
+    },
     search() {
       let formData = new FormData();
 
@@ -371,5 +391,66 @@ export default {
       border-bottom: 1px solid #dee2e6;
     }
   }
+}
+
+@-webkit-keyframes swing {
+  20% {
+    -webkit-transform: rotate3d(0, 0, 1, 15deg);
+    transform: rotate3d(0, 0, 1, 15deg);
+  }
+
+  40% {
+    -webkit-transform: rotate3d(0, 0, 1, -10deg);
+    transform: rotate3d(0, 0, 1, -10deg);
+  }
+
+  60% {
+    -webkit-transform: rotate3d(0, 0, 1, 5deg);
+    transform: rotate3d(0, 0, 1, 5deg);
+  }
+
+  80% {
+    -webkit-transform: rotate3d(0, 0, 1, -5deg);
+    transform: rotate3d(0, 0, 1, -5deg);
+  }
+
+  to {
+    -webkit-transform: rotate3d(0, 0, 1, 0deg);
+    transform: rotate3d(0, 0, 1, 0deg);
+  }
+}
+
+@keyframes swing {
+  20% {
+    -webkit-transform: rotate3d(0, 0, 1, 15deg);
+    transform: rotate3d(0, 0, 1, 15deg);
+  }
+
+  40% {
+    -webkit-transform: rotate3d(0, 0, 1, -10deg);
+    transform: rotate3d(0, 0, 1, -10deg);
+  }
+
+  60% {
+    -webkit-transform: rotate3d(0, 0, 1, 5deg);
+    transform: rotate3d(0, 0, 1, 5deg);
+  }
+
+  80% {
+    -webkit-transform: rotate3d(0, 0, 1, -5deg);
+    transform: rotate3d(0, 0, 1, -5deg);
+  }
+
+  to {
+    -webkit-transform: rotate3d(0, 0, 1, 0deg);
+    transform: rotate3d(0, 0, 1, 0deg);
+  }
+}
+
+.bell-enter-active {
+  -webkit-transform-origin: top center;
+  transform-origin: top center;
+  -webkit-animation: swing 1s;
+  animation: swing 1s;
 }
 </style>

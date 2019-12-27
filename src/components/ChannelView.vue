@@ -93,11 +93,7 @@
           class="text-muted message-container"
           v-for="(message, index) in $root.$data.unacked_messages[channel_id]"
         >
-          <img
-            class="avatar"
-            :src="base + 'files?f=' + current_user.profile_image"
-            v-if="!incremental"
-          />
+          <img class="avatar" :src="base + 'files?f=' + current_user.profile_image" />
           <div class="message">
             <span class="font-weight-bold">
               {{ current_user.first_name }}
@@ -184,26 +180,8 @@ export default {
 
     this.loadUsers();
 
-    this.messagehandler = new MessageHandler(
-      this,
-      this.token,
-      m => {
-        Vue.set(_this.$root.$data.messages, _this.channel_id, m);
+    this.create_connection();
 
-        _this.scrollDown();
-      },
-      m => {
-        console.log("current connection: " + m);
-      },
-      m => {
-        //_this.$router.push({ name: "login" });
-        console.log(m);
-      },
-      this.on_typing_message,
-      this.clear_typing,
-      this.clear_sent_messages,
-      process.env.VUE_APP_SERVER_BASE
-    );
     //_this.$router.push({ name: "login" });
 
     axios
@@ -229,6 +207,8 @@ export default {
       this.$root.$data.visible_channel_id = this.channel_id;
       this.$root.$data.visible_admin = false;
       this.$root.$data.visible_settings = false;
+
+      this.create_connection();
     }
   },
   mounted() {
@@ -293,6 +273,28 @@ export default {
     }
   },
   methods: {
+    create_connection() {
+      let _this = this;
+
+      this.messagehandler = new MessageHandler(
+        this,
+        this.token,
+        m => {
+          Vue.set(_this.$root.$data.messages, _this.channel_id, m);
+
+          _this.scrollDown();
+        },
+        () => {},
+        m => {
+          _this.$router.push({ name: "login" });
+          console.log(m);
+        },
+        this.on_typing_message,
+        this.clear_typing,
+        this.clear_sent_messages,
+        process.env.VUE_APP_SERVER_BASE
+      );
+    },
     loadUsers() {
       let _this = this;
 

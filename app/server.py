@@ -47,6 +47,17 @@ def test_connect():
 def test_disconnect():
     print("Client disconnected")
 
+@socketio.on("join_rooms")
+def handle_join(token):
+    metadata = jws.loads(token)
+    print(metadata)
+    channels = database.get_channels(metadata['user'])
+    print(channels)
+    try:
+        for channel in channels:
+            join_room(channel['id'])    
+    except Exception as e:
+        pass
 
 @socketio.on("msg")
 def handle_message(message):
@@ -82,7 +93,9 @@ def handle_message(message):
             msg["sender"] = user["username"]
             msg["message_type"] = msg_parsed["message_type"]
             msg["sent_time"] = msg_parsed["sent_time"]
-            emit("msg", msg, room="1")
+            msg["channel"] = msg_parsed["channel"]
+
+            emit("msg", msg, room=msg_parsed["channel"])
             return 0
 
         row = database.insert_message(
@@ -103,8 +116,9 @@ def handle_message(message):
             msg["sent_time"] = int(row["sent_time"])
             msg["previous_message"] = row["previous_message"]
             msg["nonce"] = msg_parsed["nonce"]
+            msg["channel"] = msg_parsed["channel"]
             print(msg)
-            emit("msg", msg, room="1")
+            emit("msg", msg, room=msg_parsed["channel"])
         else:
             emit("error", "Wrong message")
     except SignatureExpired as e:
