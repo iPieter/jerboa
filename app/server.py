@@ -586,7 +586,7 @@ def login():
     # Create token and return it
     return {
         "token": jws.dumps({"user": g.user, "token": session["id"]}).decode("ascii"),
-        "queue": "non-valid-queue",
+        "queue": "non-valid-queue", "channel_id": 1
     }
 
 

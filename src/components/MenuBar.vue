@@ -194,14 +194,16 @@ export default {
     };
   },
   created() {
-    if ((this.token != null) & (this.token != undefined)) {
-      localStorage.token = this.token;
-    } else {
-      this.token = localStorage.token;
+    if (
+      (this.$root.$data.token == null) |
+      (this.$root.$data.token == undefined)
+    ) {
+      this.$root.$data.token = localStorage.token;
     }
 
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
-    axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
+    axios.defaults.headers.common["Authorization"] =
+      "Bearer " + this.$root.$data.token;
 
     let _this = this;
 
