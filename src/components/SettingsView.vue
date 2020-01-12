@@ -252,15 +252,13 @@ export default {
   },
   components: {},
   created() {
-    if (this.queue != null) {
-      localStorage.queue = this.queue;
+    if (
+      (this.$root.$data.token != null) &
+      (this.$root.$data.token != undefined)
+    ) {
+      localStorage.token = this.$root.$data.token;
     } else {
-      this.queue = localStorage.queue;
-    }
-    if (this.token != null) {
-      localStorage.token = this.token;
-    } else {
-      this.token = localStorage.token;
+      this.$root.$data.token = localStorage.token;
     }
 
     var _this = this;

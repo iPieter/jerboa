@@ -246,15 +246,13 @@ export default {
   },
   components: { StatsTile },
   created() {
-    if (this.queue != null) {
-      localStorage.queue = this.queue;
+    if (
+      (this.$root.$data.token != null) &
+      (this.$root.$data.token != undefined)
+    ) {
+      localStorage.token = this.$root.$data.token;
     } else {
-      this.queue = localStorage.queue;
-    }
-    if (this.token != null) {
-      localStorage.token = this.token;
-    } else {
-      this.token = localStorage.token;
+      this.$root.$data.token = localStorage.token;
     }
     let _this = this;
 
@@ -262,8 +260,9 @@ export default {
     this.$root.$data.visible_settings = false;
 
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
-    axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
-    console.log(axios.defaults.headers.common["Authorization"]);
+    axios.defaults.headers.common["Authorization"] =
+      "Bearer " + this.$root.$data.token;
+
     axios
       .get("channels/count", {})
       .then(function(response) {

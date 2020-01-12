@@ -83,7 +83,7 @@
           :key="message.id"
           :ref="`msg_${message.id}`"
           :emojis="custom_emojis"
-          :token="token"
+          :token="$root.$data.token"
           :id="message.id"
           :incremental="message.incremental"
           :sender="users[message.sender]"
@@ -166,13 +166,18 @@ export default {
   created() {
     if ((this.token != null) & (this.token != undefined)) {
       localStorage.token = this.token;
+      this.$root.$data.token = this.token;
+      console.log("replacing token");
     } else {
-      this.token = localStorage.token;
+      this.$root.$data.token = localStorage.token;
     }
     let _this = this;
 
+    console.log(this.$root.$data.token);
+
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
-    axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
+    axios.defaults.headers.common["Authorization"] =
+      "Bearer " + this.$root.$data.token;
 
     this.$root.$data.visible_channel_id = this.channel_id;
     this.$root.$data.visible_admin = false;
@@ -444,7 +449,7 @@ export default {
         } else {
           msg = {
             message_type: "TEXT_MESSAGE",
-            sender: this.token,
+            sender: this.$root.$data.token,
             channel: this.channel_id,
             message: message,
             sent_time: new Date(),
@@ -473,7 +478,7 @@ export default {
     typingCallback() {
       var msg = {
         message_type: "USER_TYPING",
-        sender: this.token,
+        sender: this.$root.$data.token,
         channel: this.channel_id,
         sent_time: new Date()
       };
@@ -519,7 +524,7 @@ export default {
 
       let msg = {
         message_type: "FILES_MESSAGE",
-        sender: this.token,
+        sender: this.$root.$data.token,
         channel: this.channel_id,
         message: {
           message: message,

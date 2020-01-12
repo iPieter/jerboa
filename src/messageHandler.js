@@ -21,7 +21,7 @@ export default class MessageHandler {
     clearSentMessages,
     baseURL
   ) {
-    this.token = token;
+    this.token = _this.$root.$data.token;
     this.handleMessages = handleMessages;
     this.handleConnection = handleConnection;
     this.handleAuthError = handleAuthError;
@@ -35,7 +35,8 @@ export default class MessageHandler {
     this.messages = [];
 
     axios.defaults.baseURL = baseURL;
-    axios.defaults.headers.common["Authorization"] = "Bearer " + token;
+    axios.defaults.headers.common["Authorization"] =
+      "Bearer " + _this.$root.$data.token;
   }
 
   handleMessage = async msg => {
