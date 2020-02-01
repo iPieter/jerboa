@@ -84,6 +84,8 @@ export default {
         .then(function(response) {
           // handle success
           console.log(response);
+          localStorage.token = response.data.token;
+          this.$root.$data.token = response.data.token;
           _this.$router.push({ name: "chat", params: response.data });
         })
         .catch(function(error) {

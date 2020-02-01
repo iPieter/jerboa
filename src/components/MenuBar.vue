@@ -37,7 +37,7 @@
           </template>
           <b-dropdown-item
             v-for="channel in $root.$data.channels"
-            v-bind="channel.id"
+            v-bind:key="channel.id"
             :to="{name: 'chat', params: { channel_id: channel.id }}"
           >{{channel.name}}</b-dropdown-item>
           <b-dropdown-item href="#">
@@ -88,7 +88,7 @@
                 type="button"
                 v-else
                 v-on:click="show_notifications()"
-                v-key="notifications"
+                key="notifications"
               >
                 <i class="fas fa-bell"></i>
               </button>
@@ -193,28 +193,25 @@ export default {
       query_results: []
     };
   },
-  created() {
-    if (
-      (this.$root.$data.token == null) |
-      (this.$root.$data.token == undefined)
-    ) {
-      this.$root.$data.token = localStorage.token;
+
+  watch: {
+    "$root.$data.token": function() {
+      console.log("watcher token");
+      axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
+      axios.defaults.headers.common["Authorization"] =
+        "Bearer " + this.$root.$data.token;
+
+      let _this = this;
+
+      axios
+        .get("channels")
+        .then(function(response) {
+          _this.$root.$data.channels = response.data;
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
     }
-
-    axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
-    axios.defaults.headers.common["Authorization"] =
-      "Bearer " + this.$root.$data.token;
-
-    let _this = this;
-
-    axios
-      .get("channels")
-      .then(function(response) {
-        _this.$root.$data.channels = response.data;
-      })
-      .catch(function(error) {
-        console.log(error);
-      });
   },
   methods: {
     show_notifications() {
@@ -293,10 +290,14 @@ export default {
         });
     },
     getChannel() {
-      let channel_id = this.$root.$data.visible_channel_id;
-      for (let channel_key in this.$root.$data.channels) {
-        if (this.$root.$data.channels[channel_key]["id"] == channel_id)
-          return this.$root.$data.channels[channel_key];
+      if (this.$root.$data.channels.length > 0) {
+        let channel_id = this.$root.$data.visible_channel_id;
+        for (let channel_key in this.$root.$data.channels) {
+          if (this.$root.$data.channels[channel_key].id == channel_id)
+            return this.$root.$data.channels[channel_key];
+        }
+      } else {
+        return { name: "No channel" };
       }
     }
   }
