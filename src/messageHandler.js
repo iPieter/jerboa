@@ -42,7 +42,6 @@ export default class MessageHandler {
   handleMessage = async msg => {
     console.log({ msg });
 
-    this._this.$root.$data.notifications.push("new message");
     // Add to messages
     // Update two maps
     // Call callback with messages sorted by date
@@ -59,6 +58,8 @@ export default class MessageHandler {
       msg.message_type == "TEXT_MESSAGE" ||
       msg.message_type == "FILES_MESSAGE"
     ) {
+      this._this.$root.$data.notifications.push("new message");
+
       this.clearTyping(msg.sender);
 
       var incremental = false;
