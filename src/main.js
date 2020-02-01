@@ -35,7 +35,6 @@ const router = new VueRouter({
 
 var data = {
   socket: {},
-  messages: {},
   unacked_messages: {},
   channels: [],
   visible_channel_id: "",

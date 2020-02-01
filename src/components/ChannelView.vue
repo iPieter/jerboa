@@ -77,7 +77,7 @@
         </div>
 
         <message
-          v-for="message in getMessages()"
+          v-for="message in messages"
           :messagesProp="message.messages"
           v-if="rst"
           :key="message.id"
@@ -156,7 +156,8 @@ export default {
       file_preview: "",
       typing: {},
       showChannels: false,
-      messagehandler: {}
+      messagehandler: {},
+      messages: []
     };
   },
   components: { Message, Picker, MessageInput, VueMarkdown },
@@ -285,7 +286,7 @@ export default {
         this,
         this.token,
         m => {
-          Vue.set(_this.$root.$data.messages, _this.channel_id, m);
+          _this.messages = m;
 
           _this.scrollDown();
         },
@@ -313,7 +314,7 @@ export default {
         .catch(this.handleError);
     },
     getMessages() {
-      return this.$root.$data.messages[this.channel_id];
+      return this.messages[this.channel_id];
     },
     on_connect() {
       this.connected = true;
@@ -601,8 +602,8 @@ export default {
     },
     handleKeyUp(event) {
       if (this.$refs.msgInput.getMessage().length == 0) {
-        var lastID = this.$root.$data.messages[this.channel_id][
-          this.$root.$data.messages[this.channel_id].length - 1
+        var lastID = this.messages[this.channel_id][
+          this.messages[this.channel_id].length - 1
         ].id;
         var el = this.$refs["msg_" + lastID][0];
         if (el) el.toggleEdit();

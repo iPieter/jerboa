@@ -40,8 +40,6 @@ export default class MessageHandler {
   }
 
   handleMessage = async msg => {
-    console.log({ msg });
-
     // Add to messages
     // Update two maps
     // Call callback with messages sorted by date
@@ -63,7 +61,7 @@ export default class MessageHandler {
       this.clearTyping(msg.sender);
 
       var incremental = false;
-      if (this.messages.length > 0) {
+      if (this.messages.length > 0 && this.current_channel_id == msg.channel) {
         var previousMessage = this.messages[this.messages.length - 1];
         var lastMessage =
           previousMessage.messages[previousMessage.messages.length - 1];
