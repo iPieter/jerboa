@@ -52,53 +52,58 @@ export default class MessageHandler {
     // First remove the unacked message, whatever type it may be
     if ("nonce" in msg) this.clearSentMessages(msg.nonce);
 
-    if (
-      msg.message_type == "TEXT_MESSAGE" ||
-      msg.message_type == "FILES_MESSAGE"
-    ) {
+    // Then only look at messages for current channel, otherwise show notifications
+    console.log(this.current_channel_id);
+    console.log(msg);
+    if (this.current_channel_id != msg.channel) {
       this._this.$root.$data.notifications.push("new message");
+    } else {
+      if (
+        msg.message_type == "TEXT_MESSAGE" ||
+        msg.message_type == "FILES_MESSAGE"
+      ) {
+        this.clearTyping(msg.sender);
 
-      this.clearTyping(msg.sender);
-
-      var incremental = false;
-      if (this.messages.length > 0 && this.current_channel_id == msg.channel) {
-        var previousMessage = this.messages[this.messages.length - 1];
-        var lastMessage =
-          previousMessage.messages[previousMessage.messages.length - 1];
-        if (
-          msg["sender"] === lastMessage["sender"] &&
-          msg["sent_time"] - lastMessage["sent_time"] < 60
-        ) {
-          incremental = true;
+        var incremental = false;
+        if (this.messages.length > 0) {
+          var previousMessage = this.messages[this.messages.length - 1];
+          var lastMessage =
+            previousMessage.messages[previousMessage.messages.length - 1];
+          if (
+            msg["sender"] === lastMessage["sender"] &&
+            msg["sent_time"] - lastMessage["sent_time"] < 60
+          ) {
+            incremental = true;
+          }
         }
-      }
 
-      this.messages.push({
-        messages: [msg],
-        id: msg.id,
-        previousMessageDate: new Date(),
-        incremental: incremental,
-        sender: msg.sender
-      });
-    } else if (msg.message_type === "TEXT_MESSAGE_UPDATE") {
-      for (var i in this.messages) {
-        if (this.messages[i].id === msg.previous_message) {
-          this.messages[i].message = msg.message;
+        this.messages.push({
+          messages: [msg],
+          id: msg.id,
+          previousMessageDate: new Date(),
+          incremental: incremental,
+          sender: msg.sender
+        });
+      } else if (msg.message_type === "TEXT_MESSAGE_UPDATE") {
+        for (let i in this.messages) {
+          if (this.messages[i].id === msg.previous_message) {
+            this.messages[i].message = msg.message;
+          }
         }
+      } else if (msg.message_type === "SHARE_MESSAGE") {
+        this.messages.push({
+          messages: [msg],
+          id: msg.id,
+          previousMessageDate: new Date(),
+          incremental: false,
+          sender: msg.sender
+        });
+      } else if (msg["message_type"] == "USER_TYPING") {
+        this.handleTyping(msg);
       }
-    } else if (msg.message_type === "SHARE_MESSAGE") {
-      this.messages.push({
-        messages: [msg],
-        id: msg.id,
-        previousMessageDate: new Date(),
-        incremental: false,
-        sender: msg.sender
-      });
-    } else if (msg["message_type"] == "USER_TYPING") {
-      this.handleTyping(msg);
+      this.messages = this.messages.sort((a, b) => a.id - b.id);
+      this.handleMessages(this.messages);
     }
-    this.messages = this.messages.sort((a, b) => a.id - b.id);
-    this.handleMessages(this.messages);
   };
 
   sendMessage = async msg => {

@@ -182,6 +182,7 @@ def messages():
         msg["message"] = json.loads(row["message"])
         msg["sent_time"] = row["sent_time"]
         msg["previous_message"] = row["previous_message"]
+        msg["channel"] = channel
         # print(row)
         result.append(msg)
 
