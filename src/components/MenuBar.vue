@@ -297,7 +297,7 @@ export default {
       let formData = new FormData();
 
       formData.append("username", this.channel_user_name);
-      formData.append("channel_id", this.$root.$data.visible_channel_id);
+      formData.append("channel_id", this.channel_id);
 
       let _this = this;
       axios
