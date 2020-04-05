@@ -11,7 +11,7 @@ export default class MessageHandler {
   // @param handleMessages: callback which can be used to listen
   // to message changes
   constructor(
-    _this,
+    channel_id,
     token,
     handleMessages,
     handleConnection,
@@ -19,24 +19,25 @@ export default class MessageHandler {
     handleTyping,
     clearTyping,
     clearSentMessages,
-    baseURL
+    baseURL,
+    root_data
   ) {
-    this.token = _this.$root.$data.token;
+    this.channel_id = channel_id;
+    this.token = token;
     this.handleMessages = handleMessages;
     this.handleConnection = handleConnection;
     this.handleAuthError = handleAuthError;
     this.handleTyping = handleTyping;
     this.clearTyping = clearTyping;
     this.clearSentMessages = clearSentMessages;
-    this._this = _this;
-    this.current_channel_id = _this.channel_id;
-    this.setupConnection(this._this);
+    this.root_data = root_data;
+
+    this.setupConnection();
 
     this.messages = [];
 
     axios.defaults.baseURL = baseURL;
-    axios.defaults.headers.common["Authorization"] =
-      "Bearer " + _this.$root.$data.token;
+    axios.defaults.headers.common["Authorization"] = "Bearer " + token;
   }
 
   handleMessage = async msg => {
@@ -52,11 +53,15 @@ export default class MessageHandler {
     // First remove the unacked message, whatever type it may be
     if ("nonce" in msg) this.clearSentMessages(msg.nonce);
 
-    // Then only look at messages for current channel, otherwise show notifications
-    console.log(this.current_channel_id);
-    console.log(msg);
-    if (this.current_channel_id != msg.channel) {
-      this._this.$root.$data.notifications.push("new message");
+    // en only look at messages for current channel, otherwise show notifications
+    if (this.channel_id != msg.channel) {
+      console.log(msg);
+      if (
+        msg.message_type == "TEXT_MESSAGE" ||
+        msg.message_type == "FILES_MESSAGE"
+      ) {
+      }
+      //this.root_data.notifications.push("new message");
     } else {
       if (
         msg.message_type == "TEXT_MESSAGE" ||
@@ -107,34 +112,34 @@ export default class MessageHandler {
   };
 
   sendMessage = async msg => {
-    this._this.$root.$data.socket.emit("msg", JSON.stringify(msg));
+    this.root_data.socket.emit("msg", JSON.stringify(msg));
   };
 
   setupConnection = async () => {
     console.log("Making connection");
-    this._this.$root.$data.socket = io(process.env.VUE_APP_SERVER_BASE_WS, {
+    this.root_data.socket = io(process.env.VUE_APP_SERVER_BASE_WS, {
       origins: "*"
     });
 
-    this._this.$root.$data.socket.on("connect", () => {
+    this.root_data.socket.on("connect", () => {
       console.log("Connected, loading messages");
       this.loadMessages();
       console.log("Also requesting access to rooms on server.");
-      this._this.$root.$data.socket.emit("join_rooms", this.token);
+      this.root_data.socket.emit("join_rooms", this.token);
 
       this.connected = true;
     });
-    this._this.$root.$data.socket.on("connect_error", error => {
+    this.root_data.socket.on("connect_error", error => {
       console.log("Error connecting");
       console.log(error);
     });
-    this._this.$root.$data.socket.on("disconnect", msg => {
+    this.root_data.socket.on("disconnect", msg => {
       this.handleConnection(false);
     });
-    this._this.$root.$data.socket.on("msg", msg => {
+    this.root_data.socket.on("msg", msg => {
       this.handleMessage(msg);
     });
-    this._this.$root.$data.socket.on("error", e => {
+    this.root_data.socket.on("error", e => {
       console.log("ERROR");
       console.log(e);
     });
@@ -142,7 +147,7 @@ export default class MessageHandler {
 
   loadMessages = async () => {
     const params = {
-      channel: this.current_channel_id,
+      channel: this.channel_id,
       initial_msg_id: 0
     };
 

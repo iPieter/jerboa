@@ -1,6 +1,6 @@
 import Vue from "vue";
 import App from "./App.vue";
-import ChannelView from "./components/ChannelView";
+import MainView from "./components/MainView";
 import LoginView from "./components/LoginView";
 import SignupView from "./components/SignupView";
 import SettingsView from "./components/SettingsView";
@@ -17,7 +17,13 @@ const router = new VueRouter({
   routes: [
     {
       path: "/channel/:channel_id",
-      component: ChannelView,
+      component: MainView,
+      name: "chat",
+      props: true
+    },
+    {
+      path: "/",
+      component: MainView,
       name: "chat",
       props: true
     },
@@ -41,7 +47,8 @@ var data = {
   visible_admin: false,
   visible_settings: false,
   token: "",
-  notifications: []
+  notifications: [],
+  user: {}
 };
 
 // 4. Create extended base Vue with router injected here (all

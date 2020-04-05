@@ -1,0 +1,177 @@
+<template>
+  <div>
+    <MenuBar />
+    <!-- MAIN BODY -->
+    <ChannelView v-if="connected" :messages="list_messages()" />
+    <div class="info" v-else>
+      <div class="text-center pt-5">
+        <b-spinner label="Spinning"></b-spinner>
+        <p class="mt-2">Sending bits to the server...</p>
+      </div>
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="container-fluid composer">
+      <div class="col-xl-6 col-md-8 col-sm-12 mx-auto input-group">
+        <message-input
+          :send="send"
+          :paste="handlePaste"
+          :keyup="handleKeyUp"
+          :emojis="custom_emojis"
+          :typingCallback="typingCallback"
+          ref="msgInput"
+          class=""
+        ></message-input>
+
+        <div class="input-group-append">
+          <button
+            class="btn btn-primary btn-sm"
+            type="button"
+            v-on:click="handleSend"
+          >
+            Send
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import Vue from "vue";
+import MenuBar from "./MenuBar";
+import ChannelView from "./ChannelView";
+import MessageHandler from "../messageHandler";
+import MessageInput from "./MessageInput";
+
+export default {
+  name: "main",
+  components: { MenuBar, ChannelView, MessageInput },
+  data() {
+    return {
+      connected: false,
+      custom_emojis: [],
+      files: [],
+      messages: []
+    };
+  },
+  props: {
+    channel_id: {
+      default: "1"
+    }
+  },
+  methods: {
+    list_messages() {
+      return this.messages;
+    },
+    create_connection() {
+      let _this = this;
+
+      this.messagehandler = new MessageHandler(
+        this.channel_id,
+        this.$root.$data.token,
+        m => {
+          _this.messages = m;
+
+          //_this.scrollDown();
+        },
+        connection => {
+          this.connected = connection;
+        },
+        () => {
+          _this.$router.push({ name: "login" });
+        },
+        () => {},
+        () => {},
+        () => {},
+        process.env.VUE_APP_SERVER_BASE,
+        this.$root.$data
+      );
+    },
+    send(message) {
+      /*
+      Sending a message is a bit depending on the type of message, but in general
+      they all follow the same outline:
+      1. Generate a nonce
+      2. Create a message object
+         (files should be uploaded at this point, or at least have an identifier)
+      3. Send message to server
+      4. Move message to unacked messages and display accordingly
+      5. Once acked, move to standard, acked message list
+      */
+
+      let nonce = Math.random()
+        .toString(36)
+        .substring(7);
+
+      if (message || this.files.length != 0) {
+        var msg;
+        if (this.files.length != 0) {
+          this.submitFiles(message, nonce);
+        } else {
+          msg = {
+            message_type: "TEXT_MESSAGE",
+            sender: this.$root.$data.token,
+            channel: this.channel_id,
+            message: message,
+            sent_time: new Date(),
+            signature: "na",
+            nonce: nonce
+          };
+
+          if (!(this.channel_id in this.$root.$data.unacked_messages)) {
+            console.log("adding key");
+            Vue.set(this.$root.$data.unacked_messages, this.channel_id, {});
+          }
+
+          this.messagehandler.sendMessage(msg);
+          Vue.set(
+            this.$root.$data.unacked_messages[this.channel_id],
+            nonce,
+            msg
+          );
+          //this.scrollDown();
+
+          this.$refs.msgInput.resetMessage();
+          //this.emoji = false;
+        }
+      }
+    },
+    handlePaste() {},
+    handleKeyUp() {},
+    typingCallback() {},
+    handleSend() {
+      this.send(this.$refs.msgInput.getMessage());
+    }
+  },
+  created() {
+    // When the main component is created, we get everything from local storage
+    this.$root.$data.token = localStorage.token;
+  },
+  mounted() {
+    // When the compontend is created and mounted, we start to connect with our socket server.
+    this.create_connection();
+  }
+};
+</script>
+
+<style lang="scss" scoped>
+@import "../style.scss";
+
+.view {
+  margin-top: 60px;
+  margin-bottom: 50px;
+}
+
+.info {
+  color: $jerboa_color5;
+}
+
+.composer {
+  position: fixed;
+  bottom: 0;
+  padding-bottom: 5px;
+  margin: auto;
+  background: #f5f5f5;
+}
+</style>

@@ -32,9 +32,20 @@
         type="submit"
         v-on:click="login"
         v-if="logging_in"
-      >Sign in</button>
-      <button class="btn btn-lg btn-primary btn-block" type="button" disabled v-else>
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      >
+        Sign in
+      </button>
+      <button
+        class="btn btn-lg btn-primary btn-block"
+        type="button"
+        disabled
+        v-else
+      >
+        <span
+          class="spinner-border spinner-border-sm"
+          role="status"
+          aria-hidden="true"
+        ></span>
         <span class="sr-only">Loading...</span>
       </button>
       <p class="mt-5 mb-3 text-muted">
@@ -44,7 +55,6 @@
     </form>
   </div>
 </template>
-
 
 <script>
 import Vue from "vue";
