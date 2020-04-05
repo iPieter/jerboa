@@ -6,3 +6,11 @@ $jerboa_color2: rgba(38, 38, 38, 1);
 $jerboa_color3: rgba(192, 165, 110, 1);
 $jerboa_color4: rgba(37, 92, 153, 1);
 $jerboa_color5: rgba(126, 163, 204, 1);
+
+@mixin alpha-attribute($attribute, $color, $background) {
+  $percent: alpha($color) * 100%;
+  $opaque: opacify($color, 1);
+  $solid-color: mix($opaque, $background, $percent);
+  #{$attribute}: $solid-color;
+  #{$attribute}: $color;
+}
