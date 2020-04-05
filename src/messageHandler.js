@@ -145,6 +145,13 @@ export default class MessageHandler {
     });
   };
 
+  switchChannels = async new_channel_id => {
+    console.log("Switching channels");
+    this.channel_id = new_channel_id;
+    this.messages = [];
+    this.loadMessages();
+  };
+
   loadMessages = async () => {
     const params = {
       channel: this.channel_id,
@@ -153,10 +160,7 @@ export default class MessageHandler {
 
     try {
       let response = await axios.get("messages", {
-        params: {
-          channel: params.channel,
-          initial_msg_id: params.initial_msg_id
-        }
+        params: params
       });
 
       console.log(response);
