@@ -1,8 +1,8 @@
 <template>
   <div>
-    <MenuBar />
+    <MenuBar :channel_id="channel_id" />
     <!-- MAIN BODY -->
-    <ChannelView v-if="connected" :messages="list_messages()" />
+    <ChannelView v-if="connected" :messages="messages" id="messages" />
     <div class="info" v-else>
       <div class="text-center pt-5">
         <b-spinner label="Spinning"></b-spinner>
@@ -46,7 +46,7 @@ import MessageInput from "./MessageInput";
 import axios from "axios";
 
 export default {
-  name: "main",
+  name: "mainview",
   components: { MenuBar, ChannelView, MessageInput },
   data() {
     return {
@@ -61,9 +61,22 @@ export default {
       default: "1"
     }
   },
+  watch: {
+    channel_id: function(new_channel_id) {
+      console.log("changing channels to id = " + new_channel_id);
+      this.messages = [];
+      this.messagehandler.switchChannels(new_channel_id);
+    }
+  },
   methods: {
     list_messages() {
       return this.messages;
+    },
+    scroll_down() {
+      Vue.nextTick(function() {
+        var objDiv = document.getElementById("messages");
+        objDiv.scrollTop = objDiv.scrollHeight;
+      });
     },
     create_connection() {
       let _this = this;
@@ -74,7 +87,7 @@ export default {
         m => {
           _this.messages = m;
 
-          //_this.scrollDown();
+          //_this.scroll_down();
         },
         connection => {
           this.connected = connection;

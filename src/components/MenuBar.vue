@@ -5,14 +5,19 @@
         <a class="navbar-brand" href="#">
           <img class="ml-2 mt-1" src="/icon.png" alt width="30" height="30" />
         </a>
-        <b-dropdown id="dropdown-right" left variant="white" class="m-2 navbar-brand">
+        <b-dropdown
+          id="dropdown-right"
+          left
+          variant="white"
+          class="m-2 navbar-brand"
+        >
           <template v-slot:button-content>
             <div
               class="d-inline-block text-left"
               v-if="!$root.$data.visible_admin && !$root.$data.visible_settings"
             >
               <span class="d-block inline-toggle">
-                <b>{{getChannel().name}}</b>
+                <b>{{ getChannel().name }}</b>
               </span>
               <span class="d-block" v-if="getChannel().type == 'PRIVATE'">
                 <i class="fas fa-user-secret mr-2"></i>
@@ -20,16 +25,21 @@
               </span>
               <span class="d-block" v-else>
                 <i class="fas fa-users mr-2"></i>
-                ({{getChannel().users.length}})
-                Public channel
+                ({{ getChannel().users.length }}) Public channel
               </span>
             </div>
-            <div class="d-inline-block text-left" v-else-if="$root.$data.visible_admin">
+            <div
+              class="d-inline-block text-left"
+              v-else-if="$root.$data.visible_admin"
+            >
               <span class="d-block inline-toggle">
                 <b>Administration</b>
               </span>
             </div>
-            <div class="d-inline-block text-left" v-else-if="$root.$data.visible_settings">
+            <div
+              class="d-inline-block text-left"
+              v-else-if="$root.$data.visible_settings"
+            >
               <span class="d-block inline-toggle">
                 <b>Settings</b>
               </span>
@@ -38,17 +48,22 @@
           <b-dropdown-item
             v-for="channel in $root.$data.channels"
             v-bind:key="channel.id"
-            :to="{name: 'chat', params: { channel_id: channel.id }}"
-          >{{channel.name}}</b-dropdown-item>
+            :to="{ name: 'chat', params: { channel_id: channel.id } }"
+            >{{ channel.name }}</b-dropdown-item
+          >
           <b-dropdown-item href="#">
             Pheasant
             <span class="badge badge-pill badge-danger">4</span>
           </b-dropdown-item>
           <b-dropdown-divider />
-          <b-dropdown-item v-b-modal.modal-channels>Create new channel</b-dropdown-item>
+          <b-dropdown-item v-b-modal.modal-channels
+            >Create new channel</b-dropdown-item
+          >
           <b-dropdown-divider />
-          <b-dropdown-item :to="{name: 'settings'}">Settings</b-dropdown-item>
-          <b-dropdown-item :to="{name: 'admin'}">Administration</b-dropdown-item>
+          <b-dropdown-item :to="{ name: 'settings' }">Settings</b-dropdown-item>
+          <b-dropdown-item :to="{ name: 'admin' }"
+            >Administration</b-dropdown-item
+          >
         </b-dropdown>
       </div>
 
@@ -62,12 +77,20 @@
             v-model="query"
           />
 
-          <button class="btn btn-outline-brand" type="button" v-on:click="search()">
+          <button
+            class="btn btn-outline-brand"
+            type="button"
+            v-on:click="search()"
+          >
             <i class="fas fa-search"></i>
           </button>
 
           <form class="btn-group form-inline line-left ml-2 pl-2">
-            <button class="btn btn-outline-brand" type="button" v-b-modal.modal-add-user>
+            <button
+              class="btn btn-outline-brand"
+              type="button"
+              v-b-modal.modal-add-user
+            >
               <i class="fas fa-users-cog"></i>
             </button>
             <button class="btn btn-outline-brand" type="button">
@@ -117,27 +140,36 @@
             id="public"
             v-model="channel_form.public"
           />
-          <label
-            class="form-check-label"
-            for="public"
-          >This is a public channel that can be joined freely.</label>
-          <small
-            id="publicHelp"
-            class="form-text text-muted"
-          >Channels can be public or private. Public channels can be read and joined by everyone, while private channels require an invitation.</small>
+          <label class="form-check-label" for="public"
+            >This is a public channel that can be joined freely.</label
+          >
+          <small id="publicHelp" class="form-text text-muted"
+            >Channels can be public or private. Public channels can be read and
+            joined by everyone, while private channels require an
+            invitation.</small
+          >
         </div>
       </form>
       <template v-slot:modal-footer>
-        <button type="submit" class="btn btn-primary" v-on:click="createChannel">Submit</button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          v-on:click="createChannel"
+        >
+          Submit
+        </button>
       </template>
     </b-modal>
-    <b-modal id="modal-add-user" :title="'Users of channel ' + getChannel().name">
+    <b-modal
+      id="modal-add-user"
+      :title="'Users of channel ' + getChannel().name"
+    >
       <div class="row">
         <table class="table table-hover" v-if="'users' in getChannel()">
           <tbody>
             <tr v-for="member in getChannel().users">
-              <th scope="row">@{{member.username}}</th>
-              <td>{{member.first_name}}</td>
+              <th scope="row">@{{ member.username }}</th>
+              <td>{{ member.first_name }}</td>
               <td>
                 <a href="#">Remove from this channel</a>
               </td>
@@ -158,15 +190,25 @@
         </div>
       </form>
       <template v-slot:modal-footer>
-        <button type="submit" class="btn btn-primary" v-on:click="addUserToChannel">Submit</button>
+        <button
+          type="submit"
+          class="btn btn-primary"
+          v-on:click="addUserToChannel"
+        >
+          Submit
+        </button>
       </template>
     </b-modal>
-    <b-modal id="modal-search" ref="modal-search" :title="'Search results for ' + query">
+    <b-modal
+      id="modal-search"
+      ref="modal-search"
+      :title="'Search results for ' + query"
+    >
       <div class="row">
         <table class="table table-hover">
           <tbody>
             <tr v-for="result in query_results">
-              <th scope="row">{{result}}</th>
+              <th scope="row">{{ result }}</th>
               <td></td>
             </tr>
           </tbody>
@@ -184,7 +226,7 @@ Vue.use(VueMarkdown);
 
 export default {
   name: "menu-bar",
-  props: {},
+  props: ["channel_id"],
   data() {
     return {
       channel_form: {},
@@ -195,23 +237,7 @@ export default {
   },
 
   watch: {
-    "$root.$data.token": function() {
-      console.log("watcher token");
-      axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
-      axios.defaults.headers.common["Authorization"] =
-        "Bearer " + this.$root.$data.token;
-
-      let _this = this;
-
-      axios
-        .get("channels")
-        .then(function(response) {
-          _this.$root.$data.channels = response.data;
-        })
-        .catch(function(error) {
-          console.log(error);
-        });
-    }
+    "$root.$data.token": function() {}
   },
   methods: {
     show_notifications() {
@@ -291,7 +317,7 @@ export default {
     },
     getChannel() {
       if (this.$root.$data.channels.length > 0) {
-        let channel_id = this.$root.$data.visible_channel_id;
+        let channel_id = this.channel_id;
         for (let channel_key in this.$root.$data.channels) {
           if (this.$root.$data.channels[channel_key].id == channel_id)
             return this.$root.$data.channels[channel_key];
@@ -300,6 +326,23 @@ export default {
         return { name: "No channel", users: [] };
       }
     }
+  },
+  mounted() {
+    console.log("watcher token");
+    axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
+    axios.defaults.headers.common["Authorization"] =
+      "Bearer " + this.$root.$data.token;
+
+    let _this = this;
+
+    axios
+      .get("channels")
+      .then(function(response) {
+        _this.$root.$data.channels = response.data;
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
   }
 };
 </script>
