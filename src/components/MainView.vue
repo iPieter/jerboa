@@ -36,7 +36,7 @@
             :send="send"
             :paste="handlePaste"
             :keyup="handleKeyUp"
-            :emojis="custom_emojis"
+            :emojis="$root.$data.custom_emojis"
             :typingCallback="typingCallback"
             ref="msgInput"
             class=""
@@ -303,9 +303,6 @@ export default {
           _this.uploadPercentage = -1;
         });
     },
-    /*
-        Handles the uploading of files
-      */
     handleFilesUpload() {
       let uploadedFiles = this.$refs.files.files;
 
@@ -315,6 +312,17 @@ export default {
       for (var i = 0; i < uploadedFiles.length; i++) {
         this.files.push(uploadedFiles[i]);
       }
+    },
+    load_emojis() {
+      let _this = this;
+      axios
+        .get("emojis/list")
+        .then(function(response) {
+          _this.$root.$data.custom_emojis = response.data;
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
     }
   },
   created() {
@@ -325,6 +333,7 @@ export default {
     // When the compontend is created and mounted, we start to connect with our socket server.
     this.create_connection();
     this.load_users();
+    this.load_emojis();
 
     // add listeners
     window.addEventListener("scroll", this.handle_scroll);

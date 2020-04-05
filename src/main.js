@@ -49,7 +49,8 @@ var data = {
   token: "",
   notifications: [],
   user: {},
-  users: []
+  users: [],
+  custom_emojis: []
 };
 
 // 4. Create extended base Vue with router injected here (all
