@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div id="drop">
     <MenuBar :channel_id="channel_id" />
     <!-- MAIN BODY -->
     <ChannelView v-if="connected" :messages="messages" id="messages" />
@@ -9,6 +9,17 @@
         <p class="mt-2">Sending bits to the server...</p>
       </div>
     </div>
+
+    <transition name="fade">
+      <div class="drop-area" v-if="dragging">
+        <div>
+          <h1 class="text-center">
+            <i class="fas fa-upload"></i>
+          </h1>
+          <h2 class="text-center">Drop files to upload</h2>
+        </div>
+      </div>
+    </transition>
 
     <!-- BOTTOM -->
     <div class="container-fluid composer">
@@ -30,6 +41,43 @@
             ref="msgInput"
             class=""
           ></message-input>
+
+          <div class="input-group-append">
+            <label hidden>
+              Files
+              <input
+                type="file"
+                id="files"
+                ref="files"
+                multiple
+                v-on:change="handleFilesUpload()"
+              />
+            </label>
+            <b-dropdown
+              right
+              text
+              dropup
+              variant="outline"
+              class="btn-composer"
+            >
+              <template slot="button-content" v-if="files.length > 0">
+                <i class="fas fa-file-upload"></i>
+                {{ files.length }}
+              </template>
+              <b-dropdown-item v-on:click="addFiles()" href="#"
+                >Upload file</b-dropdown-item
+              >
+              <b-dropdown-divider v-if="files.length > 0" />
+              <b-dropdown-item v-for="(file, key) in files">
+                {{ file.name }}
+                <span
+                  class="text-muted ml-1 float-right"
+                  v-on:click="removeFile(key)"
+                  >x</span
+                >
+              </b-dropdown-item>
+            </b-dropdown>
+          </div>
 
           <div class="input-group-append">
             <button
@@ -63,7 +111,8 @@ export default {
       custom_emojis: [],
       files: [],
       messages: [],
-      scrolling: false
+      scrolling: false,
+      dragging: false
     };
   },
   props: {
@@ -130,7 +179,7 @@ export default {
       if (message || this.files.length != 0) {
         var msg;
         if (this.files.length != 0) {
-          this.submitFiles(message, nonce);
+          this.submit_files(message, nonce);
         } else {
           msg = {
             message_type: "TEXT_MESSAGE",
@@ -181,6 +230,91 @@ export default {
     },
     handle_scroll() {
       this.scrolling = window.scrollY < window.scrollMaxY - 5;
+    },
+    submit_files(message, nonce) {
+      /*
+          Initialize the form data
+        */
+      let formData = new FormData();
+
+      /*
+          Iteate over any file sent over appending the files
+          to the form data.
+        */
+      for (var i = 0; i < this.files.length; i++) {
+        let file = this.files[i];
+
+        formData.append("files[" + i + "]", file);
+      }
+      /*
+          Make the request to the POST /select-files URL
+      */
+      let _this = this;
+
+      let msg = {
+        message_type: "FILES_MESSAGE",
+        sender: this.$root.$data.token,
+        channel: this.channel_id,
+        message: {
+          message: message,
+          files: []
+        },
+        sent_time: new Date(),
+        signature: "na",
+        nonce: nonce
+      };
+
+      if (!(this.channel_id in this.$root.$data.unacked_messages)) {
+        console.log("adding key");
+        Vue.set(this.$root.$data.unacked_messages, this.channel_id, {});
+      }
+
+      Vue.set(this.$root.$data.unacked_messages[this.channel_id], nonce, msg);
+      //this.scrollDown();
+      _this.files = [];
+      this.$refs.msgInput.resetMessage();
+
+      axios
+        .post("files", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data"
+          },
+          onUploadProgress: function(progressEvent) {
+            Vue.set(
+              _this.$root.$data.unacked_messages[_this.channel_id][nonce],
+              "uploadPercentage",
+              parseInt(
+                Math.round((progressEvent.loaded * 100) / progressEvent.total)
+              )
+            );
+          }.bind(this)
+        })
+        .then(function(response) {
+          console.log("successfully uploaded file(s).");
+          msg.message.files = response.data;
+          _this.messagehandler.sendMessage(msg);
+
+          //this.messages.push(msg);
+          _this.uploadPercentage = -1;
+        })
+        .catch(function(response) {
+          console.log("FAILURE!!");
+          console.log(response);
+          _this.uploadPercentage = -1;
+        });
+    },
+    /*
+        Handles the uploading of files
+      */
+    handleFilesUpload() {
+      let uploadedFiles = this.$refs.files.files;
+
+      /*
+          Adds the uploaded file to the files array
+        */
+      for (var i = 0; i < uploadedFiles.length; i++) {
+        this.files.push(uploadedFiles[i]);
+      }
     }
   },
   created() {
@@ -194,10 +328,48 @@ export default {
 
     // add listeners
     window.addEventListener("scroll", this.handle_scroll);
+
+    document.getElementById("drop").addEventListener("drop", event => {
+      event.preventDefault();
+      this.dragging = false;
+
+      for (var i = 0; i < event.dataTransfer.files.length; i++) {
+        this.files.push(event.dataTransfer.files[i]);
+      }
+    });
+
+    window.addEventListener("dragenter", event => {
+      //this.dragging++;
+      this.dragging = true;
+
+      event.stopPropagation();
+      event.preventDefault();
+    });
+
+    window.addEventListener("dragover", event => {
+      this.dragging = true;
+
+      event.stopPropagation();
+      event.preventDefault();
+    });
+
+    window.addEventListener("dragleave", event => {
+      //this.dragging--;
+      //if (this.dragging === 0) {
+      this.dragging = false;
+      //}
+
+      event.stopPropagation();
+      event.preventDefault();
+    });
   },
   destroyed() {
     // Finally, remove all event listners
     window.removeEventListener("scroll", this.handle_scroll);
+    window.removeEventListener("dragenter");
+    window.removeEventListener("dragover");
+    window.removeEventListener("dragleave");
+    document.getElementById("drop").removeEventListener("drop");
   }
 };
 </script>
@@ -227,5 +399,66 @@ export default {
 
 .transparant {
   background: transparent;
+}
+
+.upload-card .progress {
+  height: 1em;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.drop-area {
+  top: 60px;
+  left: 0;
+  bottom: 0;
+  width: 100vw;
+  z-index: 10000;
+  padding: 5px;
+  background-color: #f2f7f8aa;
+  position: fixed;
+
+  div {
+    border: 5px dashed #56aee9;
+    padding-top: 10%;
+    height: 100%;
+    h1,
+    h2 {
+      color: $jerboa_color5;
+    }
+  }
+}
+
+.btn-composer {
+  border-top: 1px solid #ced4da;
+  border-bottom: 1px solid #ced4da;
+  background: #fff;
+  color: #ced4da;
+  height: calc(1.5em + 0.75rem + 2px);
+}
+
+@media screen and (prefers-color-scheme: dark) {
+  body {
+    background-color: rgb(38, 35, 36) !important;
+    color: #bdc3c7;
+  }
+
+  .form-control {
+    background-color: rgb(38, 35, 36);
+    border-color: rgb(52, 51, 51);
+  }
+
+  .btn-outline {
+    border-top: 1px solid rgb(52, 51, 51);
+    border-bottom: 1px solid rgb(52, 51, 51);
+    background-color: rgb(38, 35, 36);
+  }
+
+  .message-container {
+    border-top-color: rgb(42, 41, 41);
+  }
+  .btn-primary {
+    background-color: #284261;
+    border-color: #1b5494;
+  }
 }
 </style>
