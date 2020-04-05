@@ -2,7 +2,12 @@
   <div id="drop">
     <MenuBar :channel_id="channel_id" />
     <!-- MAIN BODY -->
-    <ChannelView v-if="connected" :messages="messages" id="messages" />
+    <ChannelView
+      v-if="connected"
+      :messages="messages"
+      :unacked_messages="$root.$data.unacked_messages[channel_id]"
+      id="messages"
+    />
     <div class="info" v-else>
       <div class="text-center pt-5">
         <b-spinner label="Spinning"></b-spinner>
@@ -155,7 +160,7 @@ export default {
         },
         () => {},
         () => {},
-        () => {},
+        this.clear_sent_messages,
         process.env.VUE_APP_SERVER_BASE,
         this.$root.$data
       );
@@ -222,6 +227,18 @@ export default {
         })
         .catch(this.handleError);
     },
+    load_current_user() {
+      let _this = this;
+
+      axios
+        .get("user")
+        .then(function(response) {
+          _this.$root.$data.user = response.data;
+        })
+        .catch(function(error) {
+          console.log(error);
+        });
+    },
     handlePaste() {},
     handleKeyUp() {},
     typingCallback() {},
@@ -270,7 +287,7 @@ export default {
       }
 
       Vue.set(this.$root.$data.unacked_messages[this.channel_id], nonce, msg);
-      //this.scrollDown();
+      if (!this.scrolling) this.scroll_down();
       _this.files = [];
       this.$refs.msgInput.resetMessage();
 
@@ -323,6 +340,14 @@ export default {
         .catch(function(error) {
           console.log(error);
         });
+    },
+    clear_sent_messages(nonce) {
+      try {
+        if (nonce in this.$root.$data.unacked_messages[this.channel_id])
+          delete this.$root.$data.unacked_messages[this.channel_id][nonce];
+      } catch {
+        console.log("exception");
+      }
     }
   },
   created() {
@@ -333,6 +358,7 @@ export default {
     // When the compontend is created and mounted, we start to connect with our socket server.
     this.create_connection();
     this.load_users();
+    this.load_current_user();
     this.load_emojis();
 
     // add listeners
