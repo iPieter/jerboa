@@ -12,25 +12,34 @@
 
     <!-- BOTTOM -->
     <div class="container-fluid composer">
-      <div class="col-xl-6 col-md-8 col-sm-12 mx-auto input-group">
-        <message-input
-          :send="send"
-          :paste="handlePaste"
-          :keyup="handleKeyUp"
-          :emojis="custom_emojis"
-          :typingCallback="typingCallback"
-          ref="msgInput"
-          class=""
-        ></message-input>
-
-        <div class="input-group-append">
-          <button
-            class="btn btn-primary btn-sm"
-            type="button"
-            v-on:click="handleSend"
+      <div class="row transparant" v-if="scrolling">
+        <div class="col-xl-1 mx-auto">
+          <b-button variant="link" v-on:click="scroll_down()"
+            >scroll down</b-button
           >
-            Send
-          </button>
+        </div>
+      </div>
+      <div class="row composer-row">
+        <div class="col-xl-6 col-md-8 col-sm-12 mx-auto input-group">
+          <message-input
+            :send="send"
+            :paste="handlePaste"
+            :keyup="handleKeyUp"
+            :emojis="custom_emojis"
+            :typingCallback="typingCallback"
+            ref="msgInput"
+            class=""
+          ></message-input>
+
+          <div class="input-group-append">
+            <button
+              class="btn btn-primary btn-sm"
+              type="button"
+              v-on:click="handleSend"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -53,7 +62,8 @@ export default {
       connected: false,
       custom_emojis: [],
       files: [],
-      messages: []
+      messages: [],
+      scrolling: false
     };
   },
   props: {
@@ -86,7 +96,7 @@ export default {
         m => {
           _this.messages = m;
 
-          _this.scroll_down();
+          if (!_this.scrolling) _this.scroll_down();
         },
         connection => {
           this.connected = connection;
@@ -168,6 +178,9 @@ export default {
     typingCallback() {},
     handleSend() {
       this.send(this.$refs.msgInput.getMessage());
+    },
+    handle_scroll() {
+      this.scrolling = window.scrollY < window.scrollMaxY - 5;
     }
   },
   created() {
@@ -178,6 +191,13 @@ export default {
     // When the compontend is created and mounted, we start to connect with our socket server.
     this.create_connection();
     this.load_users();
+
+    // add listeners
+    window.addEventListener("scroll", this.handle_scroll);
+  },
+  destroyed() {
+    // Finally, remove all event listners
+    window.removeEventListener("scroll", this.handle_scroll);
   }
 };
 </script>
@@ -197,8 +217,15 @@ export default {
 .composer {
   position: fixed;
   bottom: 0;
-  padding-bottom: 5px;
   margin: auto;
+}
+
+.composer-row {
+  padding-bottom: 5px;
   background: #f5f5f5;
+}
+
+.transparant {
+  background: transparent;
 }
 </style>
