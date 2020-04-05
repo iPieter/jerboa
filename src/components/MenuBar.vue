@@ -133,7 +133,7 @@
     </b-modal>
     <b-modal id="modal-add-user" :title="'Users of channel ' + getChannel().name">
       <div class="row">
-        <table class="table table-hover">
+        <table class="table table-hover" v-if="'users' in getChannel()">
           <tbody>
             <tr v-for="member in getChannel().users">
               <th scope="row">@{{member.username}}</th>
@@ -297,7 +297,7 @@ export default {
             return this.$root.$data.channels[channel_key];
         }
       } else {
-        return { name: "No channel" };
+        return { name: "No channel", users: [] };
       }
     }
   }
