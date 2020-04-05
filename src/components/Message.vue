@@ -4,12 +4,20 @@
     @mouseover="hovered = true"
     @mouseleave="hovered = false"
   >
-    <img class="avatar" :src="base + 'files?f=' + sender.profile_image" v-if="!incremental" />
+    <img
+      class="avatar"
+      :src="base + 'files?f=' + sender.profile_image"
+      v-if="!incremental"
+    />
     <div class="message">
       <div class="header" v-if="!incremental">
         <span class="font-weight-bold">{{ sender.first_name }}</span>
-        <span class="font-weight-light text-muted ml-2 d-sm-none">{{ smalltime }}</span>
-        <span class="font-weight-light text-muted ml-2 d-none d-sm-inline">{{ time }}</span>
+        <span class="font-weight-light text-muted ml-2 d-sm-none">{{
+          smalltime
+        }}</span>
+        <span class="font-weight-light text-muted ml-2 d-none d-sm-inline">{{
+          time
+        }}</span>
       </div>
 
       <message-input
@@ -22,7 +30,11 @@
       ></message-input>
       <div v-else class="content mt-0">
         <div
-          v-if="messages[messages.length - 1].message_type == 'TEXT_MESSAGE' || messages[messages.length - 1].message_type == 'TEXT_MESSAGE_UPDATE'"
+          v-if="
+            messages[messages.length - 1].message_type == 'TEXT_MESSAGE' ||
+              messages[messages.length - 1].message_type ==
+                'TEXT_MESSAGE_UPDATE'
+          "
         >
           <vue-markdown
             :emoji="true"
@@ -35,7 +47,11 @@
             <i>(edited)</i>
           </span>
           <span>
-            <i class="fas fa-pen icon" v-if="hovered" @click="editMode = true"></i>
+            <i
+              class="fas fa-pen icon"
+              v-if="hovered"
+              @click="editMode = true"
+            ></i>
             <i class="fas fa-share icon" v-if="hovered" @click="share"></i>
           </span>
         </div>
@@ -53,20 +69,37 @@
             v-for="(file, index) in messages[messages.length - 1].message.files"
           >
             <a href="#" v-on:click="showFullImage(index)">
-              <img class="mx-1 my-2" :src="base + 'files?f=' + file.file" v-bind:key="index" />
+              <img
+                class="mx-1 my-2"
+                :src="base + 'files?f=' + file.file"
+                v-bind:key="index"
+              />
             </a>
           </div>
         </div>
-        <div v-else-if="messages[messages.length - 1].message_type == 'SHARE_MESSAGE'">
+        <div
+          v-else-if="
+            messages[messages.length - 1].message_type == 'SHARE_MESSAGE'
+          "
+        >
           <blockquote class="mb-0">
             <img
               class="d-inline-block small-avatar"
-              :src="base + 'files?f=' + $parent.$data.users[messages[messages.length - 1].message.source.sender].profile_image"
+              :src="
+                base +
+                  'files?f=' +
+                  $parent.$data.users[
+                    messages[messages.length - 1].message.source.sender
+                  ].profile_image
+              "
             />
 
-            <b
-              class
-            >{{$parent.$data.users[messages[messages.length - 1].message.source.sender].first_name}}</b> said
+            <b class>{{
+              $parent.$data.users[
+                messages[messages.length - 1].message.source.sender
+              ].first_name
+            }}</b>
+            said
             <br />
             <vue-markdown
               :emoji="true"
@@ -97,31 +130,49 @@
             <b-card-title
               class="m-3"
               v-if="messages[messages.length - 1].message.files.length != 1"
-            >{{ sender.first_name }} shared {{messages[messages.length - 1].message.files.length}} files</b-card-title>
-            <b-card-title class="m-3" v-else>{{ sender.first_name }} shared a file</b-card-title>
+              >{{ sender.first_name }} shared
+              {{ messages[messages.length - 1].message.files.length }}
+              files</b-card-title
+            >
+            <b-card-title class="m-3" v-else
+              >{{ sender.first_name }} shared a file</b-card-title
+            >
             <table class="card-table table">
               <tbody role="rowgroup">
                 <tr
                   role="row"
-                  v-for="(file, index) in messages[messages.length - 1].message.files"
+                  v-for="(file, index) in messages[messages.length - 1].message
+                    .files"
                   :key="index"
                 >
                   <td class="icon-cell">
-                    <code v-if="file.type =='text/plain'" class="fas fa-file-code"></code>
-                    <code v-else-if="file.type =='application/pdf'" class="fas fa-file-pdf"></code>
-                    <code v-else-if="file.type =='application/zip'" class="fas fa-file-archive"></code>
                     <code
-                      v-else-if="file.type =='application/vnd.ms-powerpoint'"
+                      v-if="file.type == 'text/plain'"
+                      class="fas fa-file-code"
+                    ></code>
+                    <code
+                      v-else-if="file.type == 'application/pdf'"
+                      class="fas fa-file-pdf"
+                    ></code>
+                    <code
+                      v-else-if="file.type == 'application/zip'"
+                      class="fas fa-file-archive"
+                    ></code>
+                    <code
+                      v-else-if="file.type == 'application/vnd.ms-powerpoint'"
                       class="fas fa-file-powerpoint"
                     ></code>
-                    <code v-else-if="file.type.startsWith('image/')" class="fas fa-file-image"></code>
+                    <code
+                      v-else-if="file.type.startsWith('image/')"
+                      class="fas fa-file-image"
+                    ></code>
                     <code v-else class="fas fa-file"></code>
                   </td>
                   <td>
                     <code class>{{ file.full_name }}</code>
                   </td>
                   <td>
-                    <span class>{{ formatBytes(file.size)}}</span>
+                    <span class>{{ formatBytes(file.size) }}</span>
                   </td>
                   <td>
                     <small class="text-muted">{{ file.type }}</small>
@@ -137,7 +188,9 @@
                       <b-button
                         variant="outline-primary btn-sm"
                         v-if="file.type == 'application/pdf'"
-                        v-on:click="togglePreview(base + 'files?show=1&f=' + file.file)"
+                        v-on:click="
+                          togglePreview(base + 'files?show=1&f=' + file.file)
+                        "
                       >
                         <i class="fas fa-search"></i>
                       </b-button>
@@ -154,14 +207,22 @@
         </div>
       </div>
     </div>
-    <div class="modal-image" v-if="modal_id >= 0" v-on:click.self="showFullImage(-1)">
+    <div
+      class="modal-image"
+      v-if="modal_id >= 0"
+      v-on:click.self="showFullImage(-1)"
+    >
       <div class="closing" v-on:click="showFullImage(-1)">
         <i class="far fa-times-circle"></i>
       </div>
       <div class="metadata">
         <div class>
-          <img class="d-inline-block small-avatar" :src="base + 'files?f=' + sender.profile_image" />
-          <b class="mr-1">{{sender.first_name}}</b>shared this image
+          <img
+            class="d-inline-block small-avatar"
+            :src="base + 'files?f=' + sender.profile_image"
+          />
+          <b class="mr-1">{{ sender.first_name }}</b
+          >shared this image
         </div>
 
         <div class="previews mb-2">
@@ -182,7 +243,11 @@
       </div>
       <img
         class="image"
-        :src="base + 'files?f=' + messages[messages.length - 1].message.files[modal_id].file"
+        :src="
+          base +
+            'files?f=' +
+            messages[messages.length - 1].message.files[modal_id].file
+        "
       />
     </div>
     <b-modal
@@ -192,11 +257,17 @@
       @show="resetModal"
       @hidden="resetModal"
       @ok="handleOk"
-      v-if="messages[messages.length - 1].message_type == 'TEXT_MESSAGE' || messages[messages.length - 1].message_type == 'TEXT_MESSAGE_UPDATE'"
+      v-if="
+        messages[messages.length - 1].message_type == 'TEXT_MESSAGE' ||
+          messages[messages.length - 1].message_type == 'TEXT_MESSAGE_UPDATE'
+      "
     >
       <blockquote>
-        <img class="d-inline-block small-avatar" :src="base + 'files?f=' + sender.profile_image" />
-        <b class>{{sender.first_name}}</b> said
+        <img
+          class="d-inline-block small-avatar"
+          :src="base + 'files?f=' + sender.profile_image"
+        />
+        <b class>{{ sender.first_name }}</b> said
         <br />
         <vue-markdown
           :emoji="true"
@@ -210,7 +281,7 @@
           <MessageInput
             :send="handleSubmit"
             :paste="handlePaste"
-            :escape="() => (this.$refs.modal.hide())"
+            :escape="() => this.$refs.modal.hide()"
             :emojis="emojis"
             id="message-input"
             ref="replyInput"
@@ -466,6 +537,8 @@ export default {
 </script>
 
 <style lang="scss">
+@import "../style.scss";
+
 .small-avatar {
   border-radius: 3pt;
   margin-right: 4px;
@@ -642,15 +715,19 @@ export default {
 }
 
 .modal-image {
-  position: absolute;
-  height: 100vh;
+  position: fixed;
+  margin-top: 60px;
   width: 100vw;
   z-index: 9999;
   bottom: 0;
   top: 0;
   right: 0;
   left: 0;
-  background-color: #000000aa;
+  @include alpha-attribute(
+    "background-color",
+    rgba(darken($jerboa_color4, 30%), 0.7),
+    black
+  );
   display: flex;
   align-items: center;
   -webkit-backdrop-filter: blur(5px);
