@@ -74,8 +74,7 @@ export default {
     },
     scroll_down() {
       Vue.nextTick(function() {
-        var objDiv = document.getElementById("messages");
-        objDiv.scrollTop = objDiv.scrollHeight;
+        window.scrollTo(0, document.body.scrollHeight);
       });
     },
     create_connection() {
@@ -87,7 +86,7 @@ export default {
         m => {
           _this.messages = m;
 
-          //_this.scroll_down();
+          _this.scroll_down();
         },
         connection => {
           this.connected = connection;
