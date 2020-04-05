@@ -11,6 +11,49 @@
       :incremental="message.incremental"
       :sender="$root.$data.users[message.sender]"
     ></message>
+
+    <div
+      class="text-muted message-container"
+      v-for="(message, index) in unacked_messages"
+    >
+      <img
+        class="avatar"
+        :src="base + 'files?f=' + $root.$data.user.profile_image"
+      />
+      <div class="message">
+        <span class="font-weight-bold">
+          {{ $root.$data.user.first_name }}
+          <b-spinner small label="Small Spinner" type="grow"></b-spinner>
+        </span>
+        <div class="content" v-if="message.message_type == 'TEXT_MESSAGE'">
+          <vue-markdown
+            :emoji="true"
+            class="content-msg"
+            :source="message.message"
+          ></vue-markdown>
+        </div>
+        <div class="content" v-else>
+          {{ message.message.message }}
+          <b-card class="m-2 files-card upload-card">
+            <b-card-title class="m-3">
+              <b-spinner
+                variant="secondary"
+                small
+                class="mr-1 mb-1"
+                label="Small Spinner"
+              ></b-spinner
+              >Uploading your files
+            </b-card-title>
+            <b-progress
+              :value="message.uploadPercentage"
+              max="100"
+              class="mb-0"
+              :label="`${((value / max) * 100).toFixed(2)}%`"
+            ></b-progress>
+          </b-card>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -26,13 +69,18 @@ export default {
 
   data: function() {
     return {
-      custom_emojis: []
+      custom_emojis: [],
+      base: "/"
     };
   },
   props: {
     messages: {
       type: Array
-    }
+    },
+    unacked_messages: {}
+  },
+  beforeMount() {
+    this.base = process.env.VUE_APP_SERVER_BASE;
   }
 };
 </script>

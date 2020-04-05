@@ -207,8 +207,20 @@
       <div class="row">
         <table class="table table-hover">
           <tbody>
-            <tr v-for="result in query_results">
-              <th scope="row">{{ result }}</th>
+            <tr v-for="message in query_results">
+              <th scope="row">
+                {{ result }}
+                <message
+                  :messagesProp="[message]"
+                  :key="message.id"
+                  :ref="`msg_${message.id}`"
+                  :emojis="$root.$data.custom_emojis"
+                  :token="$root.$data.token"
+                  :id="message.id"
+                  :incremental="false"
+                  sender="Bob"
+                ></message>
+              </th>
               <td></td>
             </tr>
           </tbody>
@@ -221,11 +233,14 @@
 import Vue from "vue";
 import VueMarkdown from "vue-markdown";
 import axios from "axios";
+import Message from "./Message";
 
+var MessageClass = Vue.extend(Message);
 Vue.use(VueMarkdown);
 
 export default {
   name: "menu-bar",
+  components: { Message },
   props: ["channel_id"],
   data() {
     return {
