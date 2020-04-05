@@ -13,7 +13,7 @@
         :token="$root.$data.token"
         :id="message.id"
         :incremental="message.incremental"
-        sender="Bob"
+        :sender="$root.$data.users[message.sender]"
       ></message>
     </div>
   </div>
@@ -21,6 +21,7 @@
 
 <script>
 import Vue from "vue";
+
 import Message from "./Message";
 
 var MessageClass = Vue.extend(Message);

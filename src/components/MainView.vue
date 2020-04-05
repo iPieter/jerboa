@@ -43,6 +43,7 @@ import MenuBar from "./MenuBar";
 import ChannelView from "./ChannelView";
 import MessageHandler from "../messageHandler";
 import MessageInput from "./MessageInput";
+import axios from "axios";
 
 export default {
   name: "main",
@@ -137,6 +138,19 @@ export default {
         }
       }
     },
+    load_users() {
+      let _this = this;
+
+      axios
+        .get("users", {})
+        .then(function(response) {
+          for (var u in response.data) {
+            _this.$root.$data.users[response.data[u].username] =
+              response.data[u];
+          }
+        })
+        .catch(this.handleError);
+    },
     handlePaste() {},
     handleKeyUp() {},
     typingCallback() {},
@@ -151,6 +165,7 @@ export default {
   mounted() {
     // When the compontend is created and mounted, we start to connect with our socket server.
     this.create_connection();
+    this.load_users();
   }
 };
 </script>

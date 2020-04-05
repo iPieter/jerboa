@@ -48,7 +48,8 @@ var data = {
   visible_settings: false,
   token: "",
   notifications: [],
-  user: {}
+  user: {},
+  users: []
 };
 
 // 4. Create extended base Vue with router injected here (all
