@@ -59,13 +59,15 @@
 
 <script>
 import Vue from "vue";
+import VueMarkdown from "vue-markdown";
 
+Vue.use(VueMarkdown);
 import Message from "./Message";
 
 var MessageClass = Vue.extend(Message);
 
 export default {
-  components: { Message },
+  components: { Message, VueMarkdown },
 
   data: function() {
     return {

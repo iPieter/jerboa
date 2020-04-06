@@ -28,11 +28,29 @@
 
     <!-- BOTTOM -->
     <div class="container-fluid composer">
-      <div class="row transparant" v-if="scrolling">
-        <div class="col-xl-1 mx-auto">
-          <b-button variant="link" v-on:click="scroll_down()"
-            >scroll down</b-button
-          >
+      <div class="col-xl-6 col-md-8 col-sm-12 mx-auto">
+        <div class="row transparant">
+          <div class="col-2"></div>
+          <div class="col-2 mx-auto">
+            <b-button variant="link" v-on:click="scroll_down()" v-if="scrolling"
+              >scroll down</b-button
+            >
+          </div>
+
+          <div class="col-2 px-0">
+            <div class="typing float-right">
+              <transition name="fade">
+                <span v-for="(_, key) in typing" :key="key" class="float-right">
+                  <img
+                    class="d-inline-block small-avatar"
+                    :src="
+                      base + 'files?f=' + $root.$data.users[key].profile_image
+                    "
+                  />
+                </span>
+              </transition>
+            </div>
+          </div>
         </div>
       </div>
       <div class="row composer-row">
@@ -42,7 +60,7 @@
             :paste="handlePaste"
             :keyup="handleKeyUp"
             :emojis="$root.$data.custom_emojis"
-            :typingCallback="typingCallback"
+            :typingCallback="typing_callback"
             ref="msgInput"
             class=""
           ></message-input>
@@ -112,12 +130,14 @@ export default {
   components: { MenuBar, ChannelView, MessageInput },
   data() {
     return {
+      base: "/",
       connected: false,
       custom_emojis: [],
       files: [],
       messages: [],
       scrolling: false,
-      dragging: false
+      dragging: false,
+      typing: {}
     };
   },
   props: {
@@ -158,8 +178,8 @@ export default {
         () => {
           _this.$router.push({ name: "login" });
         },
-        () => {},
-        () => {},
+        this.on_typing_message,
+        this.clear_typing,
         this.clear_sent_messages,
         process.env.VUE_APP_SERVER_BASE,
         this.$root.$data
@@ -227,6 +247,24 @@ export default {
         })
         .catch(this.handleError);
     },
+    on_typing_message(msg) {
+      if (msg.sender != this.$root.$data.user.username) {
+        let _this = this;
+
+        //first remove old timer
+        clearTimeout(this.typing[msg.sender]);
+
+        let t = setTimeout(function() {
+          console.log("deleting key for");
+          Vue.delete(_this.typing, msg.sender);
+        }, 5000);
+
+        Vue.set(this.typing, msg.sender, t);
+      }
+    },
+    clear_typing(sender) {
+      Vue.delete(this.typing, sender);
+    },
     load_current_user() {
       let _this = this;
 
@@ -241,7 +279,16 @@ export default {
     },
     handlePaste() {},
     handleKeyUp() {},
-    typingCallback() {},
+    typing_callback() {
+      var msg = {
+        message_type: "USER_TYPING",
+        sender: this.$root.$data.token,
+        channel: this.channel_id,
+        sent_time: new Date()
+      };
+
+      this.messagehandler.sendMessage(msg);
+    },
     handleSend() {
       this.send(this.$refs.msgInput.getMessage());
     },
@@ -342,6 +389,7 @@ export default {
         });
     },
     clear_sent_messages(nonce) {
+      console.log("trying to clear message");
       try {
         if (nonce in this.$root.$data.unacked_messages[this.channel_id])
           delete this.$root.$data.unacked_messages[this.channel_id][nonce];
@@ -353,6 +401,9 @@ export default {
   created() {
     // When the main component is created, we get everything from local storage
     this.$root.$data.token = localStorage.token;
+  },
+  beforeMount() {
+    this.base = process.env.VUE_APP_SERVER_BASE;
   },
   mounted() {
     // When the compontend is created and mounted, we start to connect with our socket server.
@@ -414,7 +465,7 @@ export default {
 
 .view {
   margin-top: 60px;
-  margin-bottom: 50px;
+  margin-bottom: 55px;
 }
 
 .info {
@@ -494,6 +545,42 @@ export default {
   .btn-primary {
     background-color: #284261;
     border-color: #1b5494;
+  }
+}
+
+@keyframes breathing {
+  0% {
+    //opacity: 30%;
+    transform: scale(120%);
+    -webkit-transform: scale(1.2);
+
+    //transform: translate(0, -21px);
+  }
+  50% {
+    //opacity: 100%;
+    transform: scale(100%);
+    -webkit-transform: scale(1);
+
+    //transform: translate(1px, -20px);
+  }
+  100% {
+    //opacity: 30%;
+    //transform: translate(0, -21px);
+    transform: scale(120%);
+    -webkit-transform: scale(1.2);
+  }
+}
+
+.typing {
+  //position: fixed;
+  img {
+    border-radius: 100px;
+    image-rendering: optimizeQuality;
+    height: 18px;
+    width: 18px;
+    border: solid 1px #f5f5f5;
+    background: white;
+    animation: breathing 2s linear infinite;
   }
 }
 </style>
