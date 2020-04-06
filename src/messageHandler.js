@@ -50,6 +50,8 @@ export default class MessageHandler {
       if (msg.id === this.messages[i].id) return;
     }
 
+    console.log(msg);
+
     // First remove the unacked message, whatever type it may be
     if ("nonce" in msg) this.clearSentMessages(msg.nonce);
 
