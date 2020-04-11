@@ -273,9 +273,7 @@ export default {
         .then(function(response) {
           _this.$root.$data.user = response.data;
         })
-        .catch(function(error) {
-          console.log(error);
-        });
+        .catch(this.handle_api_error);
     },
     handlePaste() {},
     handleKeyUp() {},
@@ -384,9 +382,7 @@ export default {
         .then(function(response) {
           _this.$root.$data.custom_emojis = response.data;
         })
-        .catch(function(error) {
-          console.log(error);
-        });
+        .catch(this.handle_api_error);
     },
     clear_sent_messages(nonce) {
       console.log("trying to clear message");
@@ -395,6 +391,13 @@ export default {
           delete this.$root.$data.unacked_messages[this.channel_id][nonce];
       } catch {
         console.log("exception");
+      }
+    },
+    handle_api_error(error) {
+      console.log(error);
+
+      if (error.response.status === 401) {
+        this.$router.push({ name: "login" });
       }
     }
   },
