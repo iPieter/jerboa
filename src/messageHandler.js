@@ -92,8 +92,6 @@ export default class MessageHandler {
           sender: msg.sender
         });
       } else if (msg.message_type === "TEXT_MESSAGE_UPDATE") {
-        console.log("update");
-        console.log(msg);
         for (let i in this.messages) {
           if (this.messages[i].id === msg.previous_message) {
             this.messages[i].messages.push(msg);
