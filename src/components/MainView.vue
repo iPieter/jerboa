@@ -401,6 +401,11 @@ export default {
   created() {
     // When the main component is created, we get everything from local storage
     this.$root.$data.token = localStorage.token;
+
+    // If there is no token, we redirect to login
+    if (!this.$root.$data.token) {
+      this.$router.push({ name: "login" });
+    }
   },
   beforeMount() {
     this.base = process.env.VUE_APP_SERVER_BASE;
