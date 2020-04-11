@@ -88,14 +88,14 @@
               :src="
                 base +
                   'files?f=' +
-                  $parent.$data.users[
+                  $root.$data.users[
                     messages[messages.length - 1].message.source.sender
                   ].profile_image
               "
             />
 
             <b class>{{
-              $parent.$data.users[
+              $root.$data.users[
                 messages[messages.length - 1].message.source.sender
               ].first_name
             }}</b>
