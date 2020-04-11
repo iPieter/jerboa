@@ -96,7 +96,7 @@ export default class MessageHandler {
         console.log(msg);
         for (let i in this.messages) {
           if (this.messages[i].id === msg.previous_message) {
-            this.messages[i].message = msg.message;
+            this.messages[i].messages.push(msg);
           }
         }
       } else if (msg.message_type === "SHARE_MESSAGE") {
