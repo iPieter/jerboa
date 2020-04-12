@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React from "react";
 import {
   SafeAreaView,
   View,
@@ -12,7 +12,8 @@ import {
   Dimensions,
   TouchableOpacity,
   Keyboard,
-} from 'react-native';
+  Linking
+} from "react-native";
 
 import Fuse from "fuse.js";
 import ImagePicker from "react-native-image-picker";
@@ -25,16 +26,16 @@ export default class ChatScreen extends React.Component {
     this.state = {
       showEmojiPicker: false, //Separate menu for emoji
       inputHasFocus: false,
-      keyboardHeight: Dimensions.get('window').height * 0.33, // will be replaced
-      message: '',
+      keyboardHeight: Dimensions.get("window").height * 0.33, // will be replaced
+      message: "",
       messages: [],
       emojisLoaded: false,
       emojis: [],
-      emojiSearch: '',
+      emojiSearch: "",
       selectedImages: [],
       connected: false,
       showEmojiHelper: false, //Suggestions when typing
-      emojiHelperPredictions: [],
+      emojiHelperPredictions: []
     };
     this.token = this.props.navigation.getParam("token");
     this.messageHandler = new MessageHandler(
@@ -47,25 +48,25 @@ export default class ChatScreen extends React.Component {
     this.loadEmojis();
   }
   static navigationOptions = {
-    header: null,
+    header: null
   };
 
   componentDidMount() {
-    Keyboard.addListener('keyboardDidShow', e => {
+    Keyboard.addListener("keyboardDidShow", e => {
       if (this.state.inputHasFocus) {
         this.setState({
-          keyboardHeight: e.endCoordinates.height,
+          keyboardHeight: e.endCoordinates.height
         });
       }
     });
   }
 
   onMessagesUpdate = messages => {
-    this.setState({messages: messages});
+    this.setState({ messages: messages });
   };
 
   onConnectionUpdate = status => {
-    this.setState({connected: status});
+    this.setState({ connected: status });
   };
 
   onAuthError = async () => {
@@ -80,16 +81,16 @@ export default class ChatScreen extends React.Component {
 
   loadEmojis = async () => {
     try {
-      let response = await fetch('https://chat.ipieter.be/api/emojis/list', {
-        method: 'GET',
+      let response = await fetch("https://chat.ipieter.be/api/emojis/list", {
+        method: "GET",
         headers: {
-          Authorization: 'Bearer ' + this.token,
-        },
+          Authorization: "Bearer " + this.token
+        }
       });
       let responseJson = await response.json();
       this.setState(state => ({
         emojis: responseJson,
-        emojisLoaded: true,
+        emojisLoaded: true
       }));
     } catch (e) {
       console.log(e);
@@ -98,15 +99,15 @@ export default class ChatScreen extends React.Component {
 
   loadUsers = async () => {
     try {
-      let response = await fetch('https://chat.ipieter.be/api/users', {
-        method: 'GET',
+      let response = await fetch("https://chat.ipieter.be/api/users", {
+        method: "GET",
         headers: {
-          Authorization: 'Bearer ' + this.token,
-        },
+          Authorization: "Bearer " + this.token
+        }
       });
       let responseJson = await response.json();
       this.setState(state => ({
-        users: responseJson,
+        users: responseJson
       }));
     } catch (e) {
       console.log(e);
@@ -115,20 +116,20 @@ export default class ChatScreen extends React.Component {
 
   addImage = () => {
     const options = {
-      title: 'Add an image',
-      chooseWhichLibraryTitle: null,
+      title: "Add an image",
+      chooseWhichLibraryTitle: null
     };
 
     ImagePicker.showImagePicker(options, response => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
+        console.log("User cancelled image picker");
       } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
+        console.log("ImagePicker Error: ", response.error);
       } else if (response.customButton) {
-        console.log('User tapped custom button: ', response.customButton);
+        console.log("User tapped custom button: ", response.customButton);
       } else {
         this.setState(state => ({
-          selectedImages: [...state.selectedImages, response],
+          selectedImages: [...state.selectedImages, response]
         }));
       }
     });
@@ -136,7 +137,7 @@ export default class ChatScreen extends React.Component {
 
   removeImage = uri => {
     var images = this.state.selectedImages.filter(img => img.uri !== uri);
-    this.setState({selectedImages: images});
+    this.setState({ selectedImages: images });
   };
 
   renderImages = () => {
@@ -145,8 +146,8 @@ export default class ChatScreen extends React.Component {
       var img = this.state.selectedImages[index];
       images.push(
         <TouchableOpacity onPress={() => this.removeImage(img.uri)}>
-          <Image source={{uri: img.uri}} style={styles.previewImage} />
-        </TouchableOpacity>,
+          <Image source={{ uri: img.uri }} style={styles.previewImage} />
+        </TouchableOpacity>
       );
     }
     return (
@@ -158,10 +159,10 @@ export default class ChatScreen extends React.Component {
   };
 
   onInputFocus = e => {
-    this.setState({inputHasFocus: true});
+    this.setState({ inputHasFocus: true });
   };
   onInputBlur = e => {
-    this.setState({inputHasFocus: false});
+    this.setState({ inputHasFocus: false });
   };
 
   sendMessage = async () => {
@@ -180,21 +181,21 @@ export default class ChatScreen extends React.Component {
 
       for (var i in this.state.selectedImages) {
         var file = this.state.selectedImages[i];
-        formData.append('files[' + i + ']', {
+        formData.append("files[" + i + "]", {
           uri: file.uri,
           type: file.type,
-          name: 'Uploaded file',
+          name: "Uploaded file"
         });
       }
 
       try {
-        let response = await fetch('https://chat.ipieter.be/api/files', {
-          method: 'POST',
+        let response = await fetch("https://chat.ipieter.be/api/files", {
+          method: "POST",
           headers: {
-            Authorization: 'Bearer ' + this.token,
-            'Content-Type': 'multipart/form-data',
+            Authorization: "Bearer " + this.token,
+            "Content-Type": "multipart/form-data"
           },
-          body: formData,
+          body: formData
         });
         let responseJson = await response.json();
         filesMessage = responseJson;
@@ -205,15 +206,15 @@ export default class ChatScreen extends React.Component {
     }
 
     var newMessage = {
-      message_type: 'TEXT_MESSAGE',
+      message_type: "TEXT_MESSAGE",
       sender: this.token,
-      channel: '1',
+      channel: "1",
       message: message,
       sent_time: new Date(),
-      signature: 'na',
+      signature: "na",
       nonce: Math.random()
         .toString(36)
-        .substring(7),
+        .substring(7)
     };
 
     if (filesMessage !== null) {
@@ -227,14 +228,14 @@ export default class ChatScreen extends React.Component {
     this.messageHandler.sendMessage(newMessage);
 
     this.setState(state => ({
-      message: '',
-      selectedImages: [],
+      message: "",
+      selectedImages: []
     }));
   };
 
   onEmojiPicked = name => {
     this.setState(state => ({
-      message: state.message + ' :' + name + ': ',
+      message: state.message + " :" + name + ": "
     }));
   };
 
@@ -249,37 +250,39 @@ export default class ChatScreen extends React.Component {
         distance: 100,
         maxPatternLength: 32,
         minMatchCharLength: 1,
-        keys: ['name'],
+        keys: ["name"]
       };
       var fuse = new Fuse(this.state.emojis, options);
       emojis = fuse.search(this.state.emojiSearch);
     }
 
-    const cols = Math.floor(Dimensions.get('window').width / 42);
+    const cols = Math.floor(Dimensions.get("window").width / 42);
     return (
       <KeyboardAvoidingView
-        style={[styles.emojiPicker, {height: this.state.keyboardHeight}]}>
+        style={[styles.emojiPicker, { height: this.state.keyboardHeight }]}
+      >
         <View style={styles.emojiPickerInputContainer}>
           <TouchableOpacity
             onPress={() => {
               this.mainInput.focus();
-              this.setState({showEmojiPicker: false});
-            }}>
+              this.setState({ showEmojiPicker: false });
+            }}
+          >
             <Image
               style={styles.emojiPickerButton}
-              source={require('./btn_keyboard.png')}
+              source={require("./btn_keyboard.png")}
             />
           </TouchableOpacity>
           <TextInput
             placeholder="Search for emojis"
             style={styles.emojiPickerInput}
-            onChangeText={text => this.setState({emojiSearch: text})}
+            onChangeText={text => this.setState({ emojiSearch: text })}
             value={this.state.emojiSearch}
           />
-          <TouchableOpacity onPress={() => this.setState({emojiSearch: ''})}>
+          <TouchableOpacity onPress={() => this.setState({ emojiSearch: "" })}>
             <Image
               style={styles.emojiPickerButton}
-              source={require('./btn_clear.png')}
+              source={require("./btn_clear.png")}
             />
           </TouchableOpacity>
         </View>
@@ -293,12 +296,12 @@ export default class ChatScreen extends React.Component {
             horizontal={false}
             numColumns={cols}
             data={emojis}
-            renderItem={({item}) => (
+            renderItem={({ item }) => (
               <TouchableOpacity onPress={() => this.onEmojiPicked(item.name)}>
                 <Image
                   source={{
                     uri: `https://chat.ipieter.be/api/${item.imageUrl}`,
-                    method: 'GET',
+                    method: "GET"
                   }}
                   style={styles.emoji}
                 />
@@ -311,7 +314,7 @@ export default class ChatScreen extends React.Component {
     );
   };
 
-  renderMessage = ({index, item}) => {
+  renderMessage = ({ index, item }) => {
     var progressive = false;
     if (index + 1 < this.state.messages.length) {
       var prevMessage = this.state.messages[index + 1];
@@ -323,7 +326,6 @@ export default class ChatScreen extends React.Component {
       }
     }
 
-    const RGX_EMOJI = /(:[\w,-]+:)/g;
     var messageText = "";
     var sharedMessage = null;
     if (item.message_type === "FILES_MESSAGE") {
@@ -341,13 +343,17 @@ export default class ChatScreen extends React.Component {
       messageText = "";
     }
 
-    var parts = messageText.split(RGX_EMOJI);
+    const RGX_EMOJI = /(:[\w,-]+:)/g;
+    const RGX_URL = /http[^\s]+/g;
+    var parts = messageText.split(RGX_URL);
+    parts = parts.flatMap(part => part.split(RGX_EMOJI));
+    parts = parts.filter(part => part != "");
 
     var messageContent = [];
 
     for (var part in parts) {
       var hasMatch = false;
-      var keyName = 'message-' + item.id + '-part-' + part;
+      var keyName = "message-" + item.id + "-part-" + part;
       if (parts[part].match(RGX_EMOJI)) {
         var emojiName = parts[part].substring(1, parts[part].length - 1);
 
@@ -362,43 +368,65 @@ export default class ChatScreen extends React.Component {
                   uri: `https://chat.ipieter.be/api/${
                     this.state.emojis[emoji].imageUrl
                   }`,
-                  method: 'GET',
+                  method: "GET"
                 }}
                 style={styles.inlineEmoji}
-              />,
+              />
             );
             break;
           }
         }
+      } else if (parts[part].match(RGX_URL)) {
+        hasMatch = true;
+        messageContent.push(
+          <TouchableOpacity
+            key={parts[part]}
+            onPress={() => {
+              console.log("Link clicked: " + parts[part]);
+              Linking.canOpenURL(parts[part]).then(supported => {
+                if (supported) {
+                  Linking.openURL(parts[part]);
+                } else {
+                  console.log("Don't know how to open URI: " + this.props.url);
+                }
+              });
+            }}
+          >
+            <Text style={styles.link}>{parts[part]}</Text>
+          </TouchableOpacity>
+        );
       }
       if (!hasMatch) {
         messageContent.push(
           <Text key={keyName} style={styles.msgContentText}>
             {parts[part]}
-          </Text>,
+          </Text>
         );
       }
     }
 
-    if (item.message_type === 'FILES_MESSAGE') {
+    if (item.message_type === "FILES_MESSAGE") {
       for (var i in item.message.files) {
         var file = item.message.files[i];
-        var url = 'https://chat.ipieter.be/api/files?f=' + file.file;
-        if (file.type.includes('image')) {
+        var url = "https://chat.ipieter.be/api/files?f=" + file.file;
+        if (file.type.includes("image")) {
           messageContent.push(
             <TouchableOpacity
               key={file.file}
               onPress={() => {
-                this.props.navigation.navigate('DetailedImageView', {uri: url});
-              }}>
+                this.props.navigation.navigate("DetailedImageView", {
+                  uri: url
+                });
+              }}
+            >
               <Image
                 source={{
                   uri: url,
-                  method: 'GET',
+                  method: "GET"
                 }}
                 style={styles.inlineImage}
               />
-            </TouchableOpacity>,
+            </TouchableOpacity>
           );
         } else {
           messageContent.push(
@@ -406,7 +434,7 @@ export default class ChatScreen extends React.Component {
               <Text>
                 A file has been shared by {file.user} {file.size} {file.type}
               </Text>
-            </TouchableOpacity>,
+            </TouchableOpacity>
           );
         }
       }
@@ -423,7 +451,7 @@ export default class ChatScreen extends React.Component {
               uri: `https://chat.ipieter.be/api/files?f=${
                 this.state.users[user].profile_image
               }`,
-              method: 'GET',
+              method: "GET"
             }}
           />
         );
@@ -431,7 +459,7 @@ export default class ChatScreen extends React.Component {
     }
     if (imageSource === null) {
       imageSource = (
-        <Image style={styles.msgUserImg} source={require('./user_image.gif')} />
+        <Image style={styles.msgUserImg} source={require("./user_image.gif")} />
       );
     }
 
@@ -450,8 +478,9 @@ export default class ChatScreen extends React.Component {
           <View
             style={[
               styles.msgContent,
-              progressive && styles.msgContentProgressive,
-            ]}>
+              progressive && styles.msgContentProgressive
+            ]}
+          >
             {messageContent}
           </View>
           {sharedMessage && <View style={styles.reply}>{sharedMessage}</View>}
@@ -461,15 +490,15 @@ export default class ChatScreen extends React.Component {
   };
 
   handleMessageInput = text => {
-    this.setState({message: text});
+    this.setState({ message: text });
 
-    var lastColon = text.lastIndexOf(':');
+    var lastColon = text.lastIndexOf(":");
     if (lastColon >= 0) {
       var word = text.substring(lastColon + 1);
       if (word.length < 1) return;
       if (/\s/g.test(word)) return;
 
-      this.setState({showEmojiHelper: true});
+      this.setState({ showEmojiHelper: true });
       var options = {
         shouldSort: true,
         threshold: 0.6,
@@ -477,13 +506,13 @@ export default class ChatScreen extends React.Component {
         distance: 100,
         maxPatternLength: 32,
         minMatchCharLength: 1,
-        keys: ['name'],
+        keys: ["name"]
       };
       var fuse = new Fuse(this.state.emojis, options);
       var emojis = fuse.search(word).slice(0, 5);
-      this.setState({emojiHelperPredictions: emojis});
+      this.setState({ emojiHelperPredictions: emojis });
     } else {
-      this.setState({showEmojiHelper: false, emojiHelperPredictions: []});
+      this.setState({ showEmojiHelper: false, emojiHelperPredictions: [] });
     }
   };
 
@@ -492,31 +521,32 @@ export default class ChatScreen extends React.Component {
       <FlatList
         style={styles.emojiHelper}
         data={this.state.emojiHelperPredictions}
-        renderItem={({item}) => (
+        renderItem={({ item }) => (
           <TouchableOpacity
             style={styles.emojiSuggestion}
             onPress={() => {
               var message = this.state.message;
-              message = message.substring(0, message.lastIndexOf(':'));
-              message = message + ' :' + item.name + ': ';
+              message = message.substring(0, message.lastIndexOf(":"));
+              message = message + " :" + item.name + ": ";
 
               this.setState(state => ({
                 showEmojiHelper: false,
                 emojiHelperPredictions: [],
-                message: message,
+                message: message
               }));
-            }}>
+            }}
+          >
             <Image
               source={{
                 uri: `https://chat.ipieter.be/api/${item.imageUrl}`,
-                method: 'GET',
+                method: "GET"
               }}
               style={styles.inlineEmoji}
             />
             <Text>:{item.name}:</Text>
           </TouchableOpacity>
         )}
-        keyExtractor={emoji => 'emoji-suggestion-' + emoji.name}
+        keyExtractor={emoji => "emoji-suggestion-" + emoji.name}
         initialNumToRender="5"
         keyboardShouldPersistTaps="handled"
       />
@@ -539,7 +569,7 @@ export default class ChatScreen extends React.Component {
           inverted
           data={this.state.messages}
           renderItem={this.renderMessage}
-          keyExtractor={item => 'message-' + item.id}
+          keyExtractor={item => "message-" + item.id}
           style={styles.messages}
         />
         {this.state.showEmojiHelper && this.renderEmojiSuggestions()}
@@ -547,9 +577,10 @@ export default class ChatScreen extends React.Component {
           <TouchableOpacity
             onPress={() => {
               Keyboard.dismiss();
-              this.setState({showEmojiPicker: !this.state.showEmojiPicker});
-            }}>
-            <Image style={styles.button} source={require('./btn_emoji.png')} />
+              this.setState({ showEmojiPicker: !this.state.showEmojiPicker });
+            }}
+          >
+            <Image style={styles.button} source={require("./btn_emoji.png")} />
           </TouchableOpacity>
           <TextInput
             style={styles.input}
@@ -566,11 +597,11 @@ export default class ChatScreen extends React.Component {
           <TouchableOpacity onPress={this.addImage}>
             <Image
               style={styles.button}
-              source={require('./btn_add_image.png')}
+              source={require("./btn_add_image.png")}
             />
           </TouchableOpacity>
           <TouchableOpacity onPress={this.sendMessage}>
-            <Image style={styles.button} source={require('./btn_send.png')} />
+            <Image style={styles.button} source={require("./btn_send.png")} />
           </TouchableOpacity>
         </KeyboardAvoidingView>
         {this.state.selectedImages.length > 0 && this.renderImages()}
@@ -582,69 +613,69 @@ export default class ChatScreen extends React.Component {
 
 const styles = StyleSheet.create({
   connectionStatusContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1
   },
   container: {
     flex: 1,
-    flexDirection: 'column',
-    justifyContent: 'flex-end',
+    flexDirection: "column",
+    justifyContent: "flex-end"
   },
   messages: {
-    flexGrow: 1,
+    flexGrow: 1
   },
   item: {
     padding: 8,
-    borderTopColor: '#cccccc',
-    borderTopWidth: 1,
+    borderTopColor: "#cccccc",
+    borderTopWidth: 1
   },
   itemDefault: {
-    flexDirection: 'row',
+    flexDirection: "row"
   },
   inputView: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderTopColor: '#aaaaaa',
+    flexDirection: "row",
+    alignItems: "center",
+    borderTopColor: "#aaaaaa",
     borderTopWidth: 1,
-    paddingTop: 5,
+    paddingTop: 5
   },
   title: {
-    fontSize: 16,
+    fontSize: 16
   },
   input: {
     flex: 1,
-    padding: 5,
+    padding: 5
   },
   button: {
     width: 24,
     height: 24,
-    resizeMode: 'contain',
+    resizeMode: "contain",
     marginRight: 5,
-    marginLeft: 5,
+    marginLeft: 5
   },
   msgUserImg: {
     width: 32,
     height: 32,
-    resizeMode: 'contain',
+    resizeMode: "contain"
   },
   msgHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    textAlign: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    textAlign: "center"
   },
   msgDate: {
     fontSize: 12,
     marginLeft: 4,
-    color: '#878787',
+    color: "#878787"
   },
   msgSender: {
     fontSize: 15,
-    fontWeight: 'bold',
+    fontWeight: "bold"
   },
   msgBody: {
     marginLeft: 5,
-    flexDirection: 'column',
+    flexDirection: "column"
   },
   reply: {
     marginLeft: 25,
@@ -652,40 +683,40 @@ const styles = StyleSheet.create({
     backgroundColor: "#eeeeee"
   },
   msgContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    flexShrink: 1,
+    alignItems: "center",
+    flexDirection: "row",
+    flexShrink: 1
   },
   msgContentProgressive: {
-    marginLeft: 40, // FIXME
+    marginLeft: 40 // FIXME
   },
   msgContentText: {},
   inlineEmoji: {
     width: 24,
     height: 24,
-    resizeMode: 'contain',
-    margin: 0,
+    resizeMode: "contain",
+    margin: 0
   },
   inlineImage: {
     width: 200,
     height: 200,
-    resizeMode: 'contain',
+    resizeMode: "contain"
   },
   emojiPickerInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     borderTopWidth: 0.5,
-    borderBottomWidth: 0.5,
+    borderBottomWidth: 0.5
   },
   emojiPickerInput: {
     padding: 2,
-    flex: 1,
+    flex: 1
   },
   emojiPickerButton: {
     margin: 5,
     width: 24,
     height: 24,
-    resizeMode: 'contain',
+    resizeMode: "contain"
   },
   emojiPicker: {},
   emojiList: {},
@@ -693,20 +724,23 @@ const styles = StyleSheet.create({
     margin: 5,
     width: 32,
     height: 32,
-    resizeMode: 'contain',
+    resizeMode: "contain"
   },
   previewImage: {
     margin: 5,
     width: 50,
     height: 50,
-    resizeMode: 'contain',
+    resizeMode: "contain"
   },
   emojiSuggestion: {
-    flexDirection: 'row',
-    padding: 5,
+    flexDirection: "row",
+    padding: 5
   },
   emojiHelper: {
-    borderTopColor: '#aaaaaa',
-    borderTopWidth: 1,
+    borderTopColor: "#aaaaaa",
+    borderTopWidth: 1
   },
+  link: {
+    color: "rgb(25, 25, 240)"
+  }
 });
