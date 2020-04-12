@@ -51,10 +51,7 @@
             :to="{ name: 'chat', params: { channel_id: channel.id } }"
             >{{ channel.name }}</b-dropdown-item
           >
-          <b-dropdown-item href="#">
-            Pheasant
-            <span class="badge badge-pill badge-danger">4</span>
-          </b-dropdown-item>
+
           <b-dropdown-divider />
           <b-dropdown-item v-b-modal.modal-channels
             >Create new channel</b-dropdown-item
