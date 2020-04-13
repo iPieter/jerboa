@@ -1,21 +1,32 @@
 <template>
   <div class="container">
     <div class="py-5 text-center">
-      <img class="d-block mx-auto mb-4" src="icon.png" alt width="72" height="72" />
+      <img
+        class="d-block mx-auto mb-4"
+        src="icon.png"
+        alt
+        width="72"
+        height="72"
+      />
       <h1>Administration and global settings</h1>
       <div class="lead">
         <span class="status-online">
           <span class="breathing"></span>
-          Frontend v{{version}}
+          Frontend v{{ version }}
         </span>
         <span class="status-online">
-          <span class="breathing" v-if="status.backend==0"></span>
+          <span class="breathing" v-if="status.backend == 0"></span>
           <span class="breathing-bas" v-else></span>
           Backend
         </span>
         <span class="status-online">
-          <span class="breathing" v-if="status['database'][0]==0"></span>
-          <span class="breathing-bad" v-else v-b-tooltip.hover :title="status['database'][1]"></span>
+          <span class="breathing" v-if="status['database'][0] == 0"></span>
+          <span
+            class="breathing-bad"
+            v-else
+            v-b-tooltip.hover
+            :title="status['database'][1]"
+          ></span>
           Database server
         </span>
       </div>
@@ -24,13 +35,28 @@
     <div class="row mb-4">
       <div class="col-md-10 mx-auto row">
         <div class="col">
-          <StatsTile :value="sum_messages" secondValue title="Messages" color="purple-tile"></StatsTile>
+          <StatsTile
+            :value="sum_messages"
+            secondValue
+            title="Messages"
+            color="purple-tile"
+          ></StatsTile>
         </div>
         <div class="col">
-          <StatsTile :value="formatBytes(sum_files)" secondValue title="Files" color="orange-tile"></StatsTile>
+          <StatsTile
+            :value="formatBytes(sum_files)"
+            secondValue
+            title="Files"
+            color="orange-tile"
+          ></StatsTile>
         </div>
         <div class="col">
-          <StatsTile :value="emoji.length" secondValue title="Emoji" color="blue-tile"></StatsTile>
+          <StatsTile
+            :value="emoji.length"
+            secondValue
+            title="Emoji"
+            color="blue-tile"
+          ></StatsTile>
         </div>
       </div>
     </div>
@@ -50,19 +76,33 @@
               <thead role="rowgroup" class>
                 <!---->
                 <tr role="row">
-                  <th role="columnheader" scope="col" aria-colindex="1" class>Display Name</th>
-                  <th role="columnheader" scope="col" aria-colindex="2" class>Username</th>
-                  <th role="columnheader" scope="col" aria-colindex="3" class>Profile Image</th>
-                  <th role="columnheader" scope="col" aria-colindex="4" class>Current status</th>
-                  <th role="columnheader" scope="col" aria-colindex="4" class>Actions</th>
+                  <th role="columnheader" scope="col" aria-colindex="1" class>
+                    Display Name
+                  </th>
+                  <th role="columnheader" scope="col" aria-colindex="2" class>
+                    Username
+                  </th>
+                  <th role="columnheader" scope="col" aria-colindex="3" class>
+                    Profile Image
+                  </th>
+                  <th role="columnheader" scope="col" aria-colindex="4" class>
+                    Current status
+                  </th>
+                  <th role="columnheader" scope="col" aria-colindex="4" class>
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <!---->
               <tbody role="rowgroup" class>
                 <!---->
                 <tr role="row" class v-for="user in users">
-                  <td role="cell" aria-colindex="1" class>{{user.display_name}}</td>
-                  <td role="cell" aria-colindex="2" class>{{user.username}}</td>
+                  <td role="cell" aria-colindex="1" class>
+                    {{ user.display_name }}
+                  </td>
+                  <td role="cell" aria-colindex="2" class>
+                    {{ user.username }}
+                  </td>
                   <td role="cell" aria-colindex="3" class>
                     <img
                       :src="base + 'files?f=' + user.profile_image"
@@ -70,30 +110,34 @@
                       width="40px"
                     />
                   </td>
-                  <td role="cell" aria-colindex="4" class>{{user.state}}</td>
+                  <td role="cell" aria-colindex="4" class>{{ user.state }}</td>
                   <td class="text-right">
                     <b-button-group>
                       <b-button
                         variant="outline-success btn-sm"
-                        v-if="user.state != 'USER' & user.state != 'ADMIN'"
+                        v-if="(user.state != 'USER') & (user.state != 'ADMIN')"
                         v-on:click="changeStatus(user.username, 'USER')"
-                      >Activate</b-button>
+                        >Activate</b-button
+                      >
                       <b-button
                         variant="outline-primary btn-sm"
                         v-if="user.state == 'USER'"
                         v-on:click="changeStatus(user.username, 'ADMIN')"
-                      >Make admin</b-button>
+                        >Make admin</b-button
+                      >
                       <b-button
                         variant="outline-success btn-sm"
                         v-if="user.state == 'ADMIN'"
                         v-on:click="changeStatus(user.username, 'USER')"
-                      >Revoke admin</b-button>
+                        >Revoke admin</b-button
+                      >
 
                       <b-button
                         variant="outline-danger btn-sm"
                         v-on:click="changeStatus(user.username, 'DISABLED')"
                         v-if="user.state != 'DISABLED'"
-                      >Disable</b-button>
+                        >Disable</b-button
+                      >
                     </b-button-group>
                   </td>
                 </tr>
@@ -112,14 +156,28 @@
                   placeholder="Choose a file..."
                   drop-placeholder="Drop file here..."
                 ></b-form-file>
-                <div class="mt-3">Selected file: {{ file ? file.name : '' }}</div>
-                <button type="submit" class="btn btn-primary" v-on:click="uploadEmojiList">Submit</button>
+                <div class="mt-3">
+                  Selected file: {{ file ? file.name : "" }}
+                </div>
+                <button
+                  type="submit"
+                  class="btn btn-primary"
+                  v-on:click="uploadEmojiList"
+                >
+                  Submit
+                </button>
               </div>
               <div class="col-md-6 p-4">
                 <h2>Quick actions</h2>
                 <b-button-group>
-                  <b-button variant="outline-primary btn-sm" v-b-modal.modal-1>New emoji</b-button>
-                  <b-button variant="outline-danger" v-on:click="deleteAllEmoji()">Delete all emoji</b-button>
+                  <b-button variant="outline-primary btn-sm" v-b-modal.modal-1
+                    >New emoji</b-button
+                  >
+                  <b-button
+                    variant="outline-danger"
+                    v-on:click="deleteAllEmoji()"
+                    >Delete all emoji</b-button
+                  >
                 </b-button-group>
               </div>
             </div>
@@ -134,10 +192,21 @@
               <thead role="rowgroup" class>
                 <!---->
                 <tr role="row">
-                  <th role="columnheader" scope="col" aria-colindex="1" class></th>
-                  <th role="columnheader" scope="col" aria-colindex="2" class>Name</th>
-                  <th role="columnheader" scope="col" aria-colindex="3" class>Keywords</th>
-                  <th role="columnheader" scope="col" aria-colindex="4" class>Actions</th>
+                  <th
+                    role="columnheader"
+                    scope="col"
+                    aria-colindex="1"
+                    class
+                  ></th>
+                  <th role="columnheader" scope="col" aria-colindex="2" class>
+                    Name
+                  </th>
+                  <th role="columnheader" scope="col" aria-colindex="3" class>
+                    Keywords
+                  </th>
+                  <th role="columnheader" scope="col" aria-colindex="4" class>
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <!---->
@@ -145,18 +214,21 @@
                 <!---->
                 <tr role="row" class v-for="e in emoji">
                   <td role="cell" aria-colindex="1" class>
-                    <img :src="base  + e.imageUrl" class width="26px" />
+                    <img :src="base + e.imageUrl" class width="26px" />
                   </td>
-                  <td role="cell" aria-colindex="2" class>{{e.name}}</td>
+                  <td role="cell" aria-colindex="2" class>{{ e.name }}</td>
                   <td role="cell" aria-colindex="3" class>
-                    <b-badge pill variant="primary" v-for="k in e.keywords">{{k}}</b-badge>
+                    <b-badge pill variant="primary" v-for="k in e.keywords">{{
+                      k
+                    }}</b-badge>
                   </td>
                   <td role="cell" aria-colindex="4" class="text-right">
                     <b-button-group>
                       <b-button
                         variant="outline-danger btn-sm"
                         v-on:click="deleteEmoji(e.name)"
-                      >Delete</b-button>
+                        >Delete</b-button
+                      >
                     </b-button-group>
                   </td>
                 </tr>
@@ -170,21 +242,37 @@
             <b-table striped hover :items="files"></b-table>
           </b-tab>
           <b-tab title="Data export" class="p-2">
-            <h2>Messages</h2>Download all messages as
+            <h2>Messages</h2>
+            Download all messages as
             <b-button-group>
-              <b-button variant="outline-primary btn-sm" v-on:click>csv</b-button>
-              <b-button variant="outline-primary btn-sm" v-on:click>JSON</b-button>
-              <b-button variant="outline-primary btn-sm" v-on:click>txt (no metadata)</b-button>
+              <b-button variant="outline-primary btn-sm" v-on:click
+                >csv</b-button
+              >
+              <b-button variant="outline-primary btn-sm" v-on:click
+                >JSON</b-button
+              >
+              <b-button variant="outline-primary btn-sm" v-on:click
+                >txt (no metadata)</b-button
+              >
             </b-button-group>
             <br class="mb-3" />Download messages grouped per channel as
             <b-button-group>
-              <b-button variant="outline-primary btn-sm" v-on:click>csv</b-button>
-              <b-button variant="outline-primary btn-sm" v-on:click>JSON</b-button>
-              <b-button variant="outline-primary btn-sm" v-on:click>txt (no metadata)</b-button>
+              <b-button variant="outline-primary btn-sm" v-on:click
+                >csv</b-button
+              >
+              <b-button variant="outline-primary btn-sm" v-on:click
+                >JSON</b-button
+              >
+              <b-button variant="outline-primary btn-sm" v-on:click
+                >txt (no metadata)</b-button
+              >
             </b-button-group>
-            <h2>Files</h2>Download files as
+            <h2>Files</h2>
+            Download files as
             <b-button-group>
-              <b-button variant="outline-primary btn-sm" v-on:click>zip</b-button>
+              <b-button variant="outline-primary btn-sm" v-on:click
+                >zip</b-button
+              >
             </b-button-group>
           </b-tab>
         </b-tabs>
@@ -212,14 +300,15 @@
         placeholder="Choose a file..."
         drop-placeholder="Drop file here..."
       ></b-form-file>
-      <div class="mt-3">Selected file: {{ file ? file.name : '' }}</div>
+      <div class="mt-3">Selected file: {{ file ? file.name : "" }}</div>
       <template v-slot:modal-footer>
-        <button type="submit" class="btn btn-primary" v-on:click="uploadEmoji">Submit</button>
+        <button type="submit" class="btn btn-primary" v-on:click="uploadEmoji">
+          Submit
+        </button>
       </template>
     </b-modal>
   </div>
 </template>
-
 
 <script>
 import Vue from "vue";
@@ -246,14 +335,14 @@ export default {
   },
   components: { StatsTile },
   created() {
-    if (
-      (this.$root.$data.token != null) &
-      (this.$root.$data.token != undefined)
-    ) {
-      localStorage.token = this.$root.$data.token;
-    } else {
-      this.$root.$data.token = localStorage.token;
+    // When the main component is created, we get everything from local storage
+    this.$root.$data.token = localStorage.token;
+
+    // If there is no token, we redirect to login
+    if (!this.$root.$data.token) {
+      this.$router.push({ name: "login" });
     }
+
     let _this = this;
 
     this.$root.$data.visible_admin = true;
@@ -315,7 +404,7 @@ export default {
     handleError(error) {
       console.log(error);
       if (error.response.status == "401") {
-        _this.$router.push({ name: "login" });
+        this.$router.push({ name: "login" });
       }
     },
     changeStatus(username, status) {
