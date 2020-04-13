@@ -1,5 +1,5 @@
 <template>
-  <div class="col-xl-6 col-md-8 col-sm-12 mx-auto ">
+  <div class="col-xl-6 col-md-8 col-sm-12 mx-auto " v-if="messages.length > 0">
     <message
       v-for="message in messages"
       :messagesProp="message.messages"
@@ -55,6 +55,15 @@
       </div>
     </div>
   </div>
+  <div class="col-xl-6 col-md-8 col-sm-12 mx-auto empty-channel" v-else>
+    <div class="row pt-4">
+      <img src="/start_writing.png" class="col-md-3 mx-auto" />
+    </div>
+    <div class="text-center pt-4">
+      <h1 class="">This is the beginning of this channel</h1>
+      <h2 class="">Start writing by saying hello.</h2>
+    </div>
+  </div>
 </template>
 
 <script>
@@ -87,4 +96,13 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss">
+@import "../style.scss";
+
+.empty-channel {
+  h1,
+  h2 {
+    color: darken($jerboa_color4, 10%);
+  }
+}
+</style>
