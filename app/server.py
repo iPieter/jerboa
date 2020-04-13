@@ -47,17 +47,17 @@ def test_connect():
 def test_disconnect():
     print("Client disconnected")
 
+
 @socketio.on("join_rooms")
 def handle_join(token):
     metadata = jws.loads(token)
-    print(metadata)
-    channels = database.get_channels(metadata['user'])
-    print(channels)
+    channels = database.get_channels(metadata["user"])
     try:
         for channel in channels:
-            join_room(channel['id'])    
+            join_room(channel["id"])
     except Exception as e:
         pass
+
 
 @socketio.on("msg")
 def handle_message(message):
@@ -66,11 +66,9 @@ def handle_message(message):
         print(request.sid)
         # emit("msg", message, room=request.sid)
         msg_parsed = json.loads(message)
-        #(msg_parsed["sender"])
+        # (msg_parsed["sender"])
 
         metadata = jws.loads(msg_parsed["sender"])
-        #print("parsed:")
-        #print(metadata)
 
         previous_message = None
         if "previous_message" in msg_parsed:
@@ -117,7 +115,6 @@ def handle_message(message):
             msg["previous_message"] = row["previous_message"]
             msg["nonce"] = msg_parsed["nonce"]
             msg["channel"] = msg_parsed["channel"]
-            print(msg)
             emit("msg", msg, room=msg_parsed["channel"])
         else:
             emit("error", "Wrong message")
@@ -147,19 +144,19 @@ def verify_token(token):
     except:  # noqa: E722
         return False
     if "user" in data:
-        #("token validation request")
+        # ("token validation request")
         user = database.get_user(data["user"])
         if user and (user["state"] == "USER" or user["state"] == "ADMIN"):
             session = database.get_session(data["token"])
-            #print(session)
-            #print(user)
+            # print(session)
+            # print(user)
             if (
                 session != None
                 and session["active"] == True
                 and (session["user_id"] == user["id"] or user["state"] == "ADMIN")
             ):
                 g.user = data["user"]
-                #print("token valid")
+                # print("token valid")
                 return True
 
     print("token not valid")
@@ -199,11 +196,11 @@ def index():
 @app.route("/channels")
 @multi_auth.login_required
 def get_channels():
-    
+
     channels = database.get_channels(g.user)
-    
+
     for channel in channels:
-        channel['users'] = database.get_users_for_channel(channel['id'])
+        channel["users"] = database.get_users_for_channel(channel["id"])
 
     return json.dumps(channels)
 
@@ -219,7 +216,8 @@ def create_channel():
     database.insert_channel_member(channel["id"], g.user)
 
     return json.dumps(channel)
-    
+
+
 @app.route("/channels/add_user", methods=["POST"])
 @multi_auth.login_required
 def add_user_to_channel():
@@ -230,6 +228,7 @@ def add_user_to_channel():
     database.insert_channel_member(channel_id, username)
 
     return "ok", 200
+
 
 @app.route("/channels/search", methods=["POST"])
 @multi_auth.login_required
@@ -289,15 +288,12 @@ def get_file():
     file_identifier = request.args.get("f")
     show = request.args.get("show")
 
-    # print(file_identifier)
-
     result = database.get_file(file_identifier)
 
     if not result:
         return "File could not be uniquely identified.", 404
 
     file_path = "data/" + result["file"] + "_" + result["full_name"]
-    # print(file_path)
     with open(file_path, mode="rb") as fp:
         f = fp.read()
         return Response(
@@ -581,13 +577,11 @@ def login():
         int(time.time()) + app.config["EXPIRES"],
     )
 
-    #print("New session with meta-data:")
-    #print(session)
-
     # Create token and return it
     return {
         "token": jws.dumps({"user": g.user, "token": session["id"]}).decode("ascii"),
-        "queue": "non-valid-queue", "channel_id": 1
+        "queue": "non-valid-queue",
+        "channel_id": 1,
     }
 
 
