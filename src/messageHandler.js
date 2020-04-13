@@ -50,14 +50,11 @@ export default class MessageHandler {
       if (msg.id === this.messages[i].id) return;
     }
 
-    console.log(msg);
-
     // First remove the unacked message, whatever type it may be
     if ("nonce" in msg) this.clearSentMessages(msg.nonce);
 
     // en only look at messages for current channel, otherwise show notifications
     if (this.channel_id != msg.channel) {
-      console.log(msg);
       if (
         msg.message_type == "TEXT_MESSAGE" ||
         msg.message_type == "FILES_MESSAGE"
@@ -164,8 +161,6 @@ export default class MessageHandler {
       let response = await axios.get("messages", {
         params: params
       });
-
-      console.log(response);
 
       if (response.status == 401) {
         console.log("Authorization error when fetching messages");
