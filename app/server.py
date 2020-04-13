@@ -542,9 +542,13 @@ def signup():
     if not result:
         return "Failed to create user", 400
 
+    # All users are in channel 1 ("General") by default
+    database.insert_channel_member(1, request.form["email"])
+
     return {
         "token": jws.dumps({"user": request.form["email"], "token": 1}).decode("ascii"),
         "queue": "non-valid-queue",
+        "channel_id": 1,
     }
 
 

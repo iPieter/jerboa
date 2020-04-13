@@ -1,10 +1,19 @@
 <template>
   <div class="container">
     <div class="py-5 text-center">
-      <img class="d-block mx-auto mb-4" src="icon.png" alt width="72" height="72" />
+      <img
+        class="d-block mx-auto mb-4"
+        src="icon.png"
+        alt
+        width="72"
+        height="72"
+      />
       <h1>Profile and settings</h1>
       <cite class="lead">
-        Historically, privacy was almost implicit, because it was hard to find and gather information. But in the digital world, whether it's digital cameras or satellites or just what you click on, we need to have more explicit rules - not just for governments but for private companies.
+        Historically, privacy was almost implicit, because it was hard to find
+        and gather information. But in the digital world, whether it's digital
+        cameras or satellites or just what you click on, we need to have more
+        explicit rules - not just for governments but for private companies.
         <br />— Bill Gates
       </cite>
     </div>
@@ -13,7 +22,9 @@
       <div class="col-md-4 order-md-2 mb-4">
         <h4 class="d-flex justify-content-between align-items-center mb-3">
           <span class="text-muted">Logged in sessions</span>
-          <span class="badge badge-secondary badge-pill">{{sessions.length}}</span>
+          <span class="badge badge-secondary badge-pill">{{
+            sessions.length
+          }}</span>
         </h4>
         <ul class="list-group mb-3">
           <li
@@ -21,8 +32,10 @@
             v-for="s in sessions"
           >
             <div>
-              <h6 class="my-0">{{s.client}} on {{s.device}}</h6>
-              <small class="text-muted">Logged in {{difference(s.last_seen)}}</small>
+              <h6 class="my-0">{{ s.client }} on {{ s.device }}</h6>
+              <small class="text-muted"
+                >Logged in {{ difference(s.last_seen) }}</small
+              >
             </div>
             <a href="#" class v-on:click="logout(s.id)">Log out</a>
           </li>
@@ -68,7 +81,9 @@
                         required
                         v-model="user.first_name"
                       />
-                      <div class="invalid-feedback">Valid first name is required.</div>
+                      <div class="invalid-feedback">
+                        Valid first name is required.
+                      </div>
                     </div>
                     <div class="col-md-5 mb-3">
                       <label for="lastName">Last name</label>
@@ -81,7 +96,9 @@
                         required
                         v-model="user.last_name"
                       />
-                      <div class="invalid-feedback">Valid last name is required.</div>
+                      <div class="invalid-feedback">
+                        Valid last name is required.
+                      </div>
                     </div>
                   </div>
 
@@ -100,7 +117,9 @@
                         disabled
                         v-model="user.username"
                       />
-                      <div class="invalid-feedback" style="width: 100%;">Your username is required.</div>
+                      <div class="invalid-feedback" style="width: 100%;">
+                        Your username is required.
+                      </div>
                     </div>
                   </div>
 
@@ -116,9 +135,10 @@
                       placeholder="you@example.com"
                       v-model="user.email"
                     />
-                    <div
-                      class="invalid-feedback"
-                    >Please enter a valid email address if you want email notifications.</div>
+                    <div class="invalid-feedback">
+                      Please enter a valid email address if you want email
+                      notifications.
+                    </div>
                   </div>
 
                   <div class="row">
@@ -133,7 +153,9 @@
                         <option value="nl">Dutch</option>
                         <option value="en">English</option>
                       </select>
-                      <div class="invalid-feedback">Please select a valid language.</div>
+                      <div class="invalid-feedback">
+                        Please select a valid language.
+                      </div>
                     </div>
                     <div class="col-md-7 mb-3">
                       <label for="state">Time zone</label>
@@ -144,32 +166,46 @@
                         v-model="user.timezone"
                       >
                         <option value>Set the time zone automagically</option>
-                        <option
-                          value="Europe/Brussels"
-                        >(UTC+01:00) Brussels, Copenhagen, Madrid, Paris</option>
+                        <option value="Europe/Brussels"
+                          >(UTC+01:00) Brussels, Copenhagen, Madrid,
+                          Paris</option
+                        >
                       </select>
-                      <div class="invalid-feedback">Please provide a time zone.</div>
+                      <div class="invalid-feedback">
+                        Please provide a time zone.
+                      </div>
                     </div>
                   </div>
                   <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="email-notifications" />
+                    <input
+                      type="checkbox"
+                      class="custom-control-input"
+                      id="email-notifications"
+                    />
                     <label
                       class="custom-control-label"
                       for="email-notifications"
-                    >Forward unread messages to my email address</label>
+                      >Forward unread messages to my email address</label
+                    >
                   </div>
                   <div class="custom-control custom-checkbox">
-                    <input type="checkbox" class="custom-control-input" id="show-online" />
-                    <label
-                      class="custom-control-label"
-                      for="show-online"
-                    >Show an online indicator based on my active devices</label>
+                    <input
+                      type="checkbox"
+                      class="custom-control-input"
+                      id="show-online"
+                    />
+                    <label class="custom-control-label" for="show-online"
+                      >Show an online indicator based on my active
+                      devices</label
+                    >
                   </div>
                   <button
                     class="mt-4 btn btn-outline-primary btn-lg btn-block"
                     type="submit"
                     v-on:click="updateSettings"
-                  >Update my profile</button>
+                  >
+                    Update my profile
+                  </button>
                 </div>
               </div>
             </div>
@@ -179,10 +215,16 @@
               <div class="row">
                 <div class="col-md-6 mb-3">
                   <label for="password">Password</label>
-                  <input type="password" class="form-control" id="password" placeholder required />
-                  <div
-                    class="invalid-feedback"
-                  >A password is kind of required when changing a password</div>
+                  <input
+                    type="password"
+                    class="form-control"
+                    id="password"
+                    placeholder
+                    required
+                  />
+                  <div class="invalid-feedback">
+                    A password is kind of required when changing a password
+                  </div>
                 </div>
                 <div class="col-md-6 mb-3">
                   <label for="password-confirm">Retype password</label>
@@ -200,7 +242,9 @@
               <button
                 class="mt-4 btn btn-outline-primary btn-lg btn-block"
                 type="submit"
-              >Update password</button>
+              >
+                Update password
+              </button>
             </form>
           </b-tab>
           <b-tab title="Profile picture">
@@ -214,7 +258,9 @@
                   placeholder="Choose a file..."
                   drop-placeholder="Drop file here..."
                 ></b-form-file>
-                <div class="invalid-feedback">Something's wrong with this file...</div>
+                <div class="invalid-feedback">
+                  Something's wrong with this file...
+                </div>
               </div>
             </div>
 
@@ -222,14 +268,15 @@
               class="mt-4 btn btn-outline-primary btn-lg btn-block"
               type="submit"
               v-on:click="uploadProfile"
-            >Update profile picture</button>
+            >
+              Update profile picture
+            </button>
           </b-tab>
         </b-tabs>
       </div>
     </div>
   </div>
 </template>
-
 
 <script>
 import Vue from "vue";
@@ -252,22 +299,14 @@ export default {
   },
   components: {},
   created() {
-    if (
-      (this.$root.$data.token != null) &
-      (this.$root.$data.token != undefined)
-    ) {
-      localStorage.token = this.$root.$data.token;
-    } else {
-      this.$root.$data.token = localStorage.token;
-    }
-
     var _this = this;
 
     this.$root.$data.visible_admin = false;
     this.$root.$data.visible_settings = true;
 
     axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
-    axios.defaults.headers.common["Authorization"] = "Bearer " + this.token;
+    axios.defaults.headers.common["Authorization"] =
+      "Bearer " + this.$root.$data.token;
     console.log(axios.defaults.headers.common["Authorization"]);
 
     axios
