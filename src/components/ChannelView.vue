@@ -100,6 +100,10 @@ export default {
 @import "../style.scss";
 
 .empty-channel {
+  img {
+    height: 100%;
+  }
+
   h1,
   h2 {
     color: darken($jerboa_color4, 10%);
