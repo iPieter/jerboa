@@ -179,6 +179,7 @@ export default {
           _this.$router.push({ name: "login" });
         },
         this.on_typing_message,
+        this.handle_notifcation,
         this.clear_typing,
         this.clear_sent_messages,
         process.env.VUE_APP_SERVER_BASE,
@@ -292,6 +293,28 @@ export default {
     },
     handle_scroll() {
       this.scrolling = window.scrollY < window.scrollMaxY - 5;
+    },
+    handle_notifcation(message) {
+      if (document.hidden) {
+        document.title = "Jerboa - new messages";
+        if (Notification.permission == "granted") {
+          var body = message.message;
+          console.log(body);
+          if (message.message_type == "FILES_MESSAGE") {
+            if (body.files.length > 1)
+              var title =
+                message.sender + " shared " + body.files.length + " files";
+            else
+              var title =
+                message.sender + " shared " + body.files.length + " file";
+            new Notification(title, { body: body.message });
+          } else {
+            new Notification(message.sender + "", {
+              body: body
+            });
+          }
+        }
+      }
     },
     submit_files(message, nonce) {
       /*
@@ -456,6 +479,11 @@ export default {
       event.stopPropagation();
       event.preventDefault();
     });
+
+    //finally ask permission for notifications
+    if (Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
   },
   destroyed() {
     // Finally, remove all event listners
