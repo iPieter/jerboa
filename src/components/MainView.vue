@@ -299,7 +299,6 @@ export default {
         document.title = "Jerboa - new messages";
         if (Notification.permission == "granted") {
           var body = message.message;
-          console.log(body);
           if (message.message_type == "FILES_MESSAGE") {
             if (body.files.length > 1)
               var title =
