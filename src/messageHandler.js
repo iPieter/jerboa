@@ -17,6 +17,7 @@ export default class MessageHandler {
     handleConnection,
     handleAuthError,
     handleTyping,
+    handleNotification,
     clearTyping,
     clearSentMessages,
     baseURL,
@@ -28,6 +29,7 @@ export default class MessageHandler {
     this.handleConnection = handleConnection;
     this.handleAuthError = handleAuthError;
     this.handleTyping = handleTyping;
+    this.handleNotification = handleNotification;
     this.clearTyping = clearTyping;
     this.clearSentMessages = clearSentMessages;
     this.root_data = root_data;
@@ -40,7 +42,7 @@ export default class MessageHandler {
     axios.defaults.headers.common["Authorization"] = "Bearer " + token;
   }
 
-  handleMessage = async msg => {
+  handleMessage = async (msg, silent = false) => {
     // Add to messages
     // Update two maps
     // Call callback with messages sorted by date
@@ -88,6 +90,7 @@ export default class MessageHandler {
           incremental: incremental,
           sender: msg.sender
         });
+        if (!silent) this.handleNotification(msg);
       } else if (msg.message_type === "TEXT_MESSAGE_UPDATE") {
         for (let i in this.messages) {
           if (this.messages[i].id === msg.previous_message) {
@@ -171,7 +174,7 @@ export default class MessageHandler {
       let responseJson = response.data;
       responseJson = responseJson.reverse();
       for (var i in responseJson) {
-        this.handleMessage(responseJson[i]);
+        this.handleMessage(responseJson[i], true);
       }
       this.handleConnection(true);
     } catch (e) {
