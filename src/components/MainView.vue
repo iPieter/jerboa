@@ -57,7 +57,7 @@
         <div class="col-xl-6 col-md-8 col-sm-12 mx-auto input-group">
           <message-input
             :send="send"
-            :paste="handlePaste"
+            :paste="handle_paste"
             :keyup="handleKeyUp"
             :emojis="$root.$data.custom_emojis"
             :typingCallback="typing_callback"
@@ -276,7 +276,11 @@ export default {
         })
         .catch(this.handle_api_error);
     },
-    handlePaste() {},
+    handle_paste(data) {
+      if (data.clipboardData.files.length > 0) {
+        this.files.push(data.clipboardData.files[0]);
+      }
+    },
     handleKeyUp() {},
     typing_callback() {
       var msg = {
