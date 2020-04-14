@@ -3,7 +3,7 @@
  </p>
 
 ![Python](https://img.shields.io/badge/python-v3.6+-blue.svg)
-[![Build Status](https://travis-ci.org/iPieter/chat.svg?branch=master)](https://travis-ci.org/iPieter/chat)
+[![Build Status](https://travis-ci.org/iPieter/Jerboa.svg?branch=master)](https://travis-ci.org/iPieter/chat)
 ![Contributions welcome](https://img.shields.io/badge/contributions-welcome-orange.svg)
 
 A **self-deployable chat application** built on the idea that your messages should be yours to manage. It features:
