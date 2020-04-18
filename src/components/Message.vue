@@ -282,7 +282,7 @@
             :send="handleSubmit"
             :paste="handlePaste"
             :escape="() => this.$refs.modal.hide()"
-            :emojis="emojis"
+            :emojis="$root.$data.custom_emojis"
             id="message-input"
             ref="replyInput"
           ></MessageInput>
