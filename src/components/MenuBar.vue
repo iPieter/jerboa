@@ -314,14 +314,13 @@ export default {
       formData.append("username", this.channel_user_name);
       formData.append("channel_id", this.channel_id);
 
-      let _this = this;
       axios
         .post("channels/add_user", formData, {
           headers: {
             "Content-Type": "multipart/form-data",
           },
         })
-        .then(function(response) {
+        .then(function() {
           //TODO refresh table
           //this.messages.push(msg);
         })
