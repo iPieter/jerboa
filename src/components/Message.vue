@@ -372,7 +372,7 @@ export default {
     },
     filesAreImages() {
       /*
-      Returns true if the message contains files and those 
+      Returns true if the message contains files and those
       are all images, false otherwise.
       */
       if (
@@ -456,16 +456,23 @@ export default {
       return data;
     },
     postMessageRender(htmlData) {
-      var re = /:([A-z0-9-]+(:{2}\S+)?):/g;
+      let re = /:([A-z0-9-]+(:{2}\S+)?):/g;
 
-      htmlData = htmlData.replace(
+      let data = htmlData.replace(
         new RegExp(re),
         "<img class='emoji' src='" +
           process.env.VUE_APP_SERVER_BASE +
           "emoji/$1'/ alt=':$1:' alt='$1'>"
       );
 
-      return htmlData;
+      //check if there is something left, otherwise insert h1 tag
+      let text = htmlData
+        .substring(3, htmlData.length - 5)
+        .replace(new RegExp(re), "")
+        .trim();
+      if (!text) data = "<h1>" + data + "</h1>";
+
+      return data;
     },
     formatBytes(bytes) {
       if (bytes == 0) {
