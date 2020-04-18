@@ -19,13 +19,13 @@ const router = new VueRouter({
       path: "/channel/:channel_id",
       component: MainView,
       name: "chat",
-      props: true
+      props: true,
     },
     {
       path: "/",
       component: MainView,
       name: "chat",
-      props: true
+      props: true,
     },
     { path: "/admin", component: AdminView, props: true, name: "admin" },
     { path: "/login", component: LoginView, props: true, name: "login" },
@@ -34,9 +34,9 @@ const router = new VueRouter({
       path: "/settings",
       component: SettingsView,
       props: true,
-      name: "settings"
-    }
-  ]
+      name: "settings",
+    },
+  ],
 });
 
 var data = {
@@ -50,7 +50,7 @@ var data = {
   notifications: [],
   user: {},
   users: [],
-  custom_emojis: []
+  custom_emojis: [],
 };
 
 // 4. Create extended base Vue with router injected here (all
@@ -58,8 +58,12 @@ var data = {
 new Vue({
   router,
   el: "#app",
-  render: h => h(App),
+  render: (h) => h(App),
+  created() {
+    // Prevent blank screen in Electron builds
+    this.$router.push("/");
+  },
   data() {
     return data;
-  }
+  },
 });
