@@ -5,6 +5,7 @@
  *  - Handle connection changes and keep the message up to date
  * */
 import axios from "axios";
+import io from "socket.io-client";
 
 export default class MessageHandler {
   // @param url: ws url
@@ -136,7 +137,7 @@ export default class MessageHandler {
       console.log("Error connecting");
       console.log(error);
     });
-    this.root_data.socket.on("disconnect", (msg) => {
+    this.root_data.socket.on("disconnect", () => {
       this.handleConnection(false);
     });
     this.root_data.socket.on("msg", (msg) => {
