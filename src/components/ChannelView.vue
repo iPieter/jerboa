@@ -15,6 +15,7 @@
     <div
       class="text-muted message-container"
       v-for="(message, index) in unacked_messages"
+      v-bind:key="index"
     >
       <img
         class="avatar"
@@ -73,7 +74,7 @@ import VueMarkdown from "vue-markdown";
 Vue.use(VueMarkdown);
 import Message from "./Message";
 
-var MessageClass = Vue.extend(Message);
+Vue.extend(Message);
 
 export default {
   components: { Message, VueMarkdown },
@@ -81,18 +82,18 @@ export default {
   data: function() {
     return {
       custom_emojis: [],
-      base: "/"
+      base: "/",
     };
   },
   props: {
     messages: {
-      type: Array
+      type: Array,
     },
-    unacked_messages: {}
+    unacked_messages: {},
   },
   beforeMount() {
     this.base = process.env.VUE_APP_SERVER_BASE;
-  }
+  },
 };
 </script>
 

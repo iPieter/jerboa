@@ -91,7 +91,7 @@
                 >Upload file</b-dropdown-item
               >
               <b-dropdown-divider v-if="files.length > 0" />
-              <b-dropdown-item v-for="(file, key) in files">
+              <b-dropdown-item v-for="(file, key) in files" v-bind:key="key">
                 {{ file.name }}
                 <span
                   class="text-muted ml-1 float-right"
@@ -304,12 +304,11 @@ export default {
         if (Notification.permission == "granted") {
           var body = message.message;
           if (message.message_type == "FILES_MESSAGE") {
+            var title =
+              message.sender + " shared " + body.files.length + " file";
             if (body.files.length > 1)
-              var title =
+              title =
                 message.sender + " shared " + body.files.length + " files";
-            else
-              var title =
-                message.sender + " shared " + body.files.length + " file";
             new Notification(title, { body: body.message });
           } else {
             new Notification(message.sender + "", {

@@ -36,7 +36,7 @@
         class="form-control"
         placeholder="Password"
         v-model="password"
-        :state="password.length >  6 "
+        :state="password.length > 6"
         required
       />
       <label for="inputPassword" class="sr-only">Retype password</label>
@@ -54,9 +54,20 @@
         type="button"
         v-on:click="signup"
         v-if="signing_up"
-      >Sign up</button>
-      <button class="btn btn-lg btn-primary btn-block" type="button" disabled v-else>
-        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+      >
+        Sign up
+      </button>
+      <button
+        class="btn btn-lg btn-primary btn-block"
+        type="button"
+        disabled
+        v-else
+      >
+        <span
+          class="spinner-border spinner-border-sm"
+          role="status"
+          aria-hidden="true"
+        ></span>
         <span class="sr-only">Loading...</span>
       </button>
       <p class="mt-5 mb-3 text-muted">random plaats voor random tekst</p>
@@ -64,9 +75,7 @@
   </div>
 </template>
 
-
 <script>
-import Vue from "vue";
 import axios from "axios";
 
 export default {
@@ -77,7 +86,7 @@ export default {
       email: "",
       name: "",
       password: "",
-      password2: ""
+      password2: "",
     };
   },
   components: {},
@@ -90,7 +99,7 @@ export default {
       console.log({
         email: _this.email,
         name: _this.name,
-        password: _this.password
+        password: _this.password,
       });
 
       var bodyFormData = new FormData();
@@ -104,7 +113,7 @@ export default {
         method: "post",
         headers: { "Content-Type": "multipart/form-data" },
         url: "signup",
-        data: bodyFormData
+        data: bodyFormData,
       })
         .then(function(response) {
           // handle success
@@ -116,8 +125,8 @@ export default {
           console.log(error);
           _this.signing_up = true;
         });
-    }
-  }
+    },
+  },
 };
 </script>
 

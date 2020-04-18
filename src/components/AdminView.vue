@@ -96,7 +96,7 @@
               <!---->
               <tbody role="rowgroup" class>
                 <!---->
-                <tr role="row" class v-for="user in users">
+                <tr role="row" class v-for="user in users" v-bind:key="user.id">
                   <td role="cell" aria-colindex="1" class>
                     {{ user.display_name }}
                   </td>
@@ -212,15 +212,19 @@
               <!---->
               <tbody role="rowgroup" class>
                 <!---->
-                <tr role="row" class v-for="e in emoji">
+                <tr role="row" class v-for="e in emoji" v-bind:key="e.name">
                   <td role="cell" aria-colindex="1" class>
                     <img :src="base + e.imageUrl" class width="26px" />
                   </td>
                   <td role="cell" aria-colindex="2" class>{{ e.name }}</td>
                   <td role="cell" aria-colindex="3" class>
-                    <b-badge pill variant="primary" v-for="k in e.keywords">{{
-                      k
-                    }}</b-badge>
+                    <b-badge
+                      pill
+                      variant="primary"
+                      v-for="k in e.keywords"
+                      v-bind:key="k"
+                      >{{ k }}</b-badge
+                    >
                   </td>
                   <td role="cell" aria-colindex="4" class="text-right">
                     <b-button-group>
@@ -245,32 +249,32 @@
             <h2>Messages</h2>
             Download all messages as
             <b-button-group>
-              <b-button variant="outline-primary btn-sm" v-on:click
+              <b-button variant="outline-primary btn-sm" v-on:click="() => {}"
                 >csv</b-button
               >
-              <b-button variant="outline-primary btn-sm" v-on:click
+              <b-button variant="outline-primary btn-sm" v-on:click="() => {}"
                 >JSON</b-button
               >
-              <b-button variant="outline-primary btn-sm" v-on:click
+              <b-button variant="outline-primary btn-sm" v-on:click="() => {}"
                 >txt (no metadata)</b-button
               >
             </b-button-group>
             <br class="mb-3" />Download messages grouped per channel as
             <b-button-group>
-              <b-button variant="outline-primary btn-sm" v-on:click
+              <b-button variant="outline-primary btn-sm" v-on:click="() => {}"
                 >csv</b-button
               >
-              <b-button variant="outline-primary btn-sm" v-on:click
+              <b-button variant="outline-primary btn-sm" v-on:click="() => {}"
                 >JSON</b-button
               >
-              <b-button variant="outline-primary btn-sm" v-on:click
+              <b-button variant="outline-primary btn-sm" v-on:click="() => {}"
                 >txt (no metadata)</b-button
               >
             </b-button-group>
             <h2>Files</h2>
             Download files as
             <b-button-group>
-              <b-button variant="outline-primary btn-sm" v-on:click
+              <b-button variant="outline-primary btn-sm" v-on:click="() => {}"
                 >zip</b-button
               >
             </b-button-group>
@@ -330,7 +334,7 @@ export default {
       file: "",
       emojiName: "",
       version: process.env.VUE_APP_VERSION,
-      base: process.env.VUE_APP_SERVER_BASE
+      base: process.env.VUE_APP_SERVER_BASE,
     };
   },
   components: { StatsTile },
@@ -418,7 +422,7 @@ export default {
         method: "post",
         headers: { "Content-Type": "multipart/form-data" },
         url: "users/status",
-        data: bodyFormData
+        data: bodyFormData,
       })
         .then(function(response) {
           console.log(response);
@@ -430,7 +434,7 @@ export default {
       let _this = this;
       axios({
         method: "delete",
-        url: "emoji/" + title
+        url: "emoji/" + title,
       })
         .then(function(response) {
           console.log(response);
@@ -438,11 +442,11 @@ export default {
         })
         .catch(this.handleError);
     },
-    deleteAllEmoji(title) {
+    deleteAllEmoji() {
       let _this = this;
       axios({
         method: "delete",
-        url: "emojis"
+        url: "emojis",
       })
         .then(function(response) {
           console.log(response);
@@ -464,12 +468,11 @@ export default {
           Make the request to the POST /select-files URL
         */
 
-      let _this = this;
       axios
         .post("emojis/list", formData, {
           headers: {
-            "Content-Type": "multipart/form-data"
-          }
+            "Content-Type": "multipart/form-data",
+          },
         })
         .then(function(response) {
           console.log("SUCCESS!!");
@@ -497,12 +500,11 @@ export default {
           Make the request to the POST /select-files URL
         */
 
-      let _this = this;
       axios
         .post("emoji", formData, {
           headers: {
-            "Content-Type": "multipart/form-data"
-          }
+            "Content-Type": "multipart/form-data",
+          },
         })
         .then(function(response) {
           console.log("SUCCESS!!");
@@ -565,7 +567,7 @@ export default {
       tmptotal = tmptotal.toString().replace(/\.0\$/, "");
 
       return tmptotal + " " + new_format_out;
-    }
+    },
   },
   computed: {
     sum_messages() {
@@ -573,8 +575,8 @@ export default {
     },
     sum_files() {
       return this.files.reduce((a, c) => c.sum + a, 0);
-    }
-  }
+    },
+  },
 };
 </script>
 

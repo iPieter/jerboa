@@ -164,7 +164,10 @@
       <div class="row">
         <table class="table table-hover" v-if="'users' in getChannel()">
           <tbody>
-            <tr v-for="member in getChannel().users">
+            <tr
+              v-for="member in getChannel().users"
+              v-bind:key="member.username"
+            >
               <th scope="row">@{{ member.username }}</th>
               <td>{{ member.first_name }}</td>
               <td>
@@ -204,7 +207,7 @@
       <div class="row">
         <table class="table table-hover">
           <tbody>
-            <tr v-for="message in query_results">
+            <tr v-for="message in query_results" v-bind:key="message.id">
               <th scope="row">
                 {{ result }}
                 <message
@@ -232,7 +235,7 @@ import VueMarkdown from "vue-markdown";
 import axios from "axios";
 import Message from "./Message";
 
-var MessageClass = Vue.extend(Message);
+Vue.extend(Message);
 Vue.use(VueMarkdown);
 
 export default {
@@ -244,12 +247,12 @@ export default {
       channel_form: {},
       channel_user_name: "",
       query: "",
-      query_results: []
+      query_results: [],
     };
   },
 
   watch: {
-    "$root.$data.token": function() {}
+    "$root.$data.token": function() {},
   },
   methods: {
     show_notifications() {
@@ -265,8 +268,8 @@ export default {
       axios
         .post("channels/search", formData, {
           headers: {
-            "Content-Type": "multipart/form-data"
-          }
+            "Content-Type": "multipart/form-data",
+          },
         })
         .then(function(response) {
           //TODO refresh table
@@ -289,13 +292,13 @@ export default {
       axios
         .post("channels", formData, {
           headers: {
-            "Content-Type": "multipart/form-data"
-          }
+            "Content-Type": "multipart/form-data",
+          },
         })
         .then(function(response) {
           _this.$router.push({
             name: "chat",
-            params: { channel_id: response.data.id }
+            params: { channel_id: response.data.id },
           });
 
           //this.messages.push(msg);
@@ -315,8 +318,8 @@ export default {
       axios
         .post("channels/add_user", formData, {
           headers: {
-            "Content-Type": "multipart/form-data"
-          }
+            "Content-Type": "multipart/form-data",
+          },
         })
         .then(function(response) {
           //TODO refresh table
@@ -337,7 +340,7 @@ export default {
       } else {
         return { name: "No channel", users: [] };
       }
-    }
+    },
   },
   mounted() {
     console.log("watcher token");
@@ -355,7 +358,7 @@ export default {
       .catch(function(error) {
         console.log(error);
       });
-  }
+  },
 };
 </script>
 <style lang="scss">
