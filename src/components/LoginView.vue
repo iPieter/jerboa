@@ -57,7 +57,6 @@
 </template>
 
 <script>
-import Vue from "vue";
 import axios from "axios";
 
 axios.defaults.baseURL = process.env.VUE_APP_SERVER_BASE;
@@ -68,7 +67,7 @@ export default {
     return {
       logging_in: true,
       email: "",
-      password: ""
+      password: "",
     };
   },
   components: {},
@@ -80,7 +79,7 @@ export default {
       var _this = this;
       console.log({
         username: _this.email,
-        password: _this.password
+        password: _this.password,
       });
       axios({
         method: "get",
@@ -88,8 +87,8 @@ export default {
         url: "login",
         auth: {
           username: _this.email,
-          password: _this.password
-        }
+          password: _this.password,
+        },
       })
         .then(function(response) {
           // handle success
@@ -103,8 +102,8 @@ export default {
           console.log(error);
           _this.logging_in = true;
         });
-    }
-  }
+    },
+  },
 };
 </script>
 

@@ -67,6 +67,7 @@
           <div
             class="preview mb-2"
             v-for="(file, index) in messages[messages.length - 1].message.files"
+            v-bind:key="index"
           >
             <a href="#" v-on:click="showFullImage(index)">
               <img
@@ -296,7 +297,6 @@
 import Vue from "vue";
 import VueMarkdown from "vue-markdown";
 import moment from "moment";
-import Emoji from "emoji-mart-vue";
 import MessageInput from "./MessageInput";
 
 Vue.use(VueMarkdown);
@@ -311,39 +311,39 @@ export default {
       edited: false,
       messages: [],
       hovered: false,
-      modal_id: -1
+      modal_id: -1,
     };
   },
   components: {
     VueMarkdown,
-    MessageInput
+    MessageInput,
   },
   props: {
     id: {
       type: Number,
-      required: true
+      required: true,
     },
     incremental: {
-      type: Boolean
+      type: Boolean,
     },
     messagesProp: {
       type: Array,
-      required: true
+      required: true,
     },
     emojis: {
-      type: Array
+      type: Array,
     },
     token: {
-      required: true
+      required: true,
     },
     sender: {
-      required: true
-    }
+      required: true,
+    },
   },
   beforeMount() {
     this.base = process.env.VUE_APP_SERVER_BASE;
     this.messages.splice(0, this.messages.length);
-    this.messagesProp.forEach(m => this.messages.push(m));
+    this.messagesProp.forEach((m) => this.messages.push(m));
     this.edited = this.messages.length > 1;
   },
   watch: {
@@ -351,11 +351,11 @@ export default {
       handler() {
         this.edited = true;
         this.messages.splice(0, this.messages.length);
-        this.messagesProp.forEach(m => this.messages.push(m));
+        this.messagesProp.forEach((m) => this.messages.push(m));
       },
       deep: true,
-      immediate: true
-    }
+      immediate: true,
+    },
   },
   methods: {
     togglePreview(url) {
@@ -410,7 +410,7 @@ export default {
         sent_time: new Date(),
         signature: "na",
         previous_message: this.id,
-        nonce: ""
+        nonce: "",
       };
 
       this.editMode = false;
@@ -432,11 +432,11 @@ export default {
         channel: "1",
         message: {
           source: this.messages[this.messages.length - 1],
-          message: message
+          message: message,
         },
         nonce: "",
         sent_time: new Date(),
-        signature: "na"
+        signature: "na",
       };
 
       this.$root.$data.socket.emit("msg", JSON.stringify(msg));
@@ -457,7 +457,7 @@ export default {
       return data;
     },
     postMessageRender(htmlData) {
-      var re = /:([A-z0-9\-]+(:{2}\S+)?):/g;
+      var re = /:([A-z0-9-]+(:{2}\S+)?):/g;
 
       htmlData = htmlData.replace(
         new RegExp(re),
@@ -518,7 +518,7 @@ export default {
       tmptotal = tmptotal.toString().replace(/\.0\$/, "");
 
       return tmptotal + " " + new_format_out;
-    }
+    },
   },
   computed: {
     time: function() {
@@ -531,8 +531,8 @@ export default {
       return moment(
         new Date(this.messages[this.messages.length - 1].sent_time * 1000)
       ).format("HH:mm");
-    }
-  }
+    },
+  },
 };
 </script>
 

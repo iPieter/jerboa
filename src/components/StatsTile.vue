@@ -37,43 +37,41 @@
           </g>
         </svg>
       </div>
-      <h1 class="p-centered">{{value}}</h1>
+      <h1 class="p-centered">{{ value }}</h1>
     </div>
 
     <div class="sub-tile">
-      <h5>{{title}}</h5>
-      <h4 class>{{secondValue}}</h4>
+      <h5>{{ title }}</h5>
+      <h4 class>{{ secondValue }}</h4>
     </div>
   </div>
 </template>
 <script>
-import Vue from "vue";
-
 export default {
   name: "stats-tile",
   props: {
     title: {
       type: String,
-      required: true
+      required: true,
     },
     value: {
       type: String,
-      required: true
+      required: true,
     },
     secondValue: {
       type: String,
-      required: true
+      required: true,
     },
     color: {
       type: String,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {};
   },
   mounted() {},
-  methods: {}
+  methods: {},
 };
 </script>
 <style scoped>

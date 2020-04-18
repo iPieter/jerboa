@@ -30,6 +30,7 @@
           <li
             class="list-group-item d-flex justify-content-between lh-condensed"
             v-for="s in sessions"
+            v-bind:key="s.id"
           >
             <div>
               <h6 class="my-0">{{ s.client }} on {{ s.device }}</h6>
@@ -294,7 +295,7 @@ export default {
     return {
       file: "",
       user: [],
-      sessions: []
+      sessions: [],
     };
   },
   components: {},
@@ -353,12 +354,11 @@ export default {
       axios
         .post("files", formData, {
           headers: {
-            "Content-Type": "multipart/form-data"
-          }
+            "Content-Type": "multipart/form-data",
+          },
         })
         .then(function(response) {
           console.log(response.data);
-          var text = _this.message;
 
           let profile_url = response.data[0].file;
 
@@ -371,7 +371,7 @@ export default {
             method: "post",
             headers: { "Content-Type": "multipart/form-data" },
             url: "users/picture",
-            data: bodyFormData
+            data: bodyFormData,
           })
             .then(function(response) {
               console.log(response);
@@ -399,7 +399,7 @@ export default {
         url: "user",
         method: "post",
         headers: { "Content-Type": "multipart/form-data" },
-        data: bodyFormData
+        data: bodyFormData,
       })
         .then(function(response) {
           console.log(response);
@@ -414,14 +414,14 @@ export default {
       let _this = this;
       axios({
         url: "users/sessions/" + id,
-        method: "delete"
+        method: "delete",
       })
-        .then(function(response) {
+        .then(function() {
           _this.get_sessions();
         })
         .catch(_this.handleError);
-    }
-  }
+    },
+  },
 };
 </script>
 

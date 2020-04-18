@@ -91,7 +91,7 @@
                 >Upload file</b-dropdown-item
               >
               <b-dropdown-divider v-if="files.length > 0" />
-              <b-dropdown-item v-for="(file, key) in files">
+              <b-dropdown-item v-for="(file, key) in files" v-bind:key="key">
                 {{ file.name }}
                 <span
                   class="text-muted ml-1 float-right"
@@ -137,20 +137,20 @@ export default {
       messages: [],
       scrolling: false,
       dragging: false,
-      typing: {}
+      typing: {},
     };
   },
   props: {
     channel_id: {
-      default: "1"
-    }
+      default: "1",
+    },
   },
   watch: {
     channel_id: function(new_channel_id) {
       console.log("changing channels to id = " + new_channel_id);
       this.messages = [];
       this.messagehandler.switchChannels(new_channel_id);
-    }
+    },
   },
   methods: {
     list_messages() {
@@ -167,12 +167,12 @@ export default {
       this.messagehandler = new MessageHandler(
         this.channel_id,
         this.$root.$data.token,
-        m => {
+        (m) => {
           _this.messages = m;
 
           if (!_this.scrolling) _this.scroll_down();
         },
-        connection => {
+        (connection) => {
           this.connected = connection;
         },
         () => {
@@ -214,7 +214,7 @@ export default {
             message: message,
             sent_time: new Date(),
             signature: "na",
-            nonce: nonce
+            nonce: nonce,
           };
 
           if (!(this.channel_id in this.$root.$data.unacked_messages)) {
@@ -287,7 +287,7 @@ export default {
         message_type: "USER_TYPING",
         sender: this.$root.$data.token,
         channel: this.channel_id,
-        sent_time: new Date()
+        sent_time: new Date(),
       };
 
       this.messagehandler.sendMessage(msg);
@@ -304,16 +304,15 @@ export default {
         if (Notification.permission == "granted") {
           var body = message.message;
           if (message.message_type == "FILES_MESSAGE") {
+            var title =
+              message.sender + " shared " + body.files.length + " file";
             if (body.files.length > 1)
-              var title =
+              title =
                 message.sender + " shared " + body.files.length + " files";
-            else
-              var title =
-                message.sender + " shared " + body.files.length + " file";
             new Notification(title, { body: body.message });
           } else {
             new Notification(message.sender + "", {
-              body: body
+              body: body,
             });
           }
         }
@@ -345,11 +344,11 @@ export default {
         channel: this.channel_id,
         message: {
           message: message,
-          files: []
+          files: [],
         },
         sent_time: new Date(),
         signature: "na",
-        nonce: nonce
+        nonce: nonce,
       };
 
       if (!(this.channel_id in this.$root.$data.unacked_messages)) {
@@ -365,7 +364,7 @@ export default {
       axios
         .post("files", formData, {
           headers: {
-            "Content-Type": "multipart/form-data"
+            "Content-Type": "multipart/form-data",
           },
           onUploadProgress: function(progressEvent) {
             Vue.set(
@@ -375,7 +374,7 @@ export default {
                 Math.round((progressEvent.loaded * 100) / progressEvent.total)
               )
             );
-          }.bind(this)
+          }.bind(this),
         })
         .then(function(response) {
           console.log("successfully uploaded file(s).");
@@ -425,7 +424,7 @@ export default {
       if (error.response.status === 401) {
         this.$router.push({ name: "login" });
       }
-    }
+    },
   },
   created() {
     // When the main component is created, we get everything from local storage
@@ -449,7 +448,7 @@ export default {
     // add listeners
     window.addEventListener("scroll", this.handle_scroll);
 
-    document.getElementById("drop").addEventListener("drop", event => {
+    document.getElementById("drop").addEventListener("drop", (event) => {
       event.preventDefault();
       this.dragging = false;
 
@@ -458,7 +457,7 @@ export default {
       }
     });
 
-    window.addEventListener("dragenter", event => {
+    window.addEventListener("dragenter", (event) => {
       //this.dragging++;
       this.dragging = true;
 
@@ -466,14 +465,14 @@ export default {
       event.preventDefault();
     });
 
-    window.addEventListener("dragover", event => {
+    window.addEventListener("dragover", (event) => {
       this.dragging = true;
 
       event.stopPropagation();
       event.preventDefault();
     });
 
-    window.addEventListener("dragleave", event => {
+    window.addEventListener("dragleave", (event) => {
       //this.dragging--;
       //if (this.dragging === 0) {
       this.dragging = false;
@@ -495,7 +494,7 @@ export default {
     window.removeEventListener("dragover");
     window.removeEventListener("dragleave");
     document.getElementById("drop").removeEventListener("drop");
-  }
+  },
 };
 </script>
 

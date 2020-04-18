@@ -61,6 +61,7 @@ export default class MessageHandler {
         msg.message_type == "TEXT_MESSAGE" ||
         msg.message_type == "FILES_MESSAGE"
       ) {
+        // TODO implement notifications here
       }
       //this.root_data.notifications.push("new message");
     } else {
@@ -88,7 +89,7 @@ export default class MessageHandler {
           id: msg.id,
           previousMessageDate: new Date(),
           incremental: incremental,
-          sender: msg.sender
+          sender: msg.sender,
         });
         if (!silent) this.handleNotification(msg);
       } else if (msg.message_type === "TEXT_MESSAGE_UPDATE") {
@@ -103,7 +104,7 @@ export default class MessageHandler {
           id: msg.id,
           previousMessageDate: new Date(),
           incremental: false,
-          sender: msg.sender
+          sender: msg.sender,
         });
       } else if (msg["message_type"] == "USER_TYPING") {
         this.handleTyping(msg);
@@ -113,14 +114,14 @@ export default class MessageHandler {
     }
   };
 
-  sendMessage = async msg => {
+  sendMessage = async (msg) => {
     this.root_data.socket.emit("msg", JSON.stringify(msg));
   };
 
   setupConnection = async () => {
     console.log("Making connection");
     this.root_data.socket = io(process.env.VUE_APP_SERVER_BASE_WS, {
-      origins: "*"
+      origins: "*",
     });
 
     this.root_data.socket.on("connect", () => {
@@ -131,23 +132,23 @@ export default class MessageHandler {
 
       this.connected = true;
     });
-    this.root_data.socket.on("connect_error", error => {
+    this.root_data.socket.on("connect_error", (error) => {
       console.log("Error connecting");
       console.log(error);
     });
-    this.root_data.socket.on("disconnect", msg => {
+    this.root_data.socket.on("disconnect", (msg) => {
       this.handleConnection(false);
     });
-    this.root_data.socket.on("msg", msg => {
+    this.root_data.socket.on("msg", (msg) => {
       this.handleMessage(msg);
     });
-    this.root_data.socket.on("error", e => {
+    this.root_data.socket.on("error", (e) => {
       console.log("ERROR");
       console.log(e);
     });
   };
 
-  switchChannels = async new_channel_id => {
+  switchChannels = async (new_channel_id) => {
     console.log("Switching channels");
     this.channel_id = new_channel_id;
     this.messages = [];
@@ -157,12 +158,12 @@ export default class MessageHandler {
   loadMessages = async () => {
     const params = {
       channel: this.channel_id,
-      initial_msg_id: 0
+      initial_msg_id: 0,
     };
 
     try {
       let response = await axios.get("messages", {
-        params: params
+        params: params,
       });
 
       if (response.status == 401) {
