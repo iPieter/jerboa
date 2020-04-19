@@ -462,7 +462,7 @@ export default {
         new RegExp(re),
         "<img class='emoji' src='" +
           process.env.VUE_APP_SERVER_BASE +
-          "emoji/$1'/ alt=':$1:' alt='$1'>"
+          "emoji/$1'/ alt=':$1:'/>"
       );
 
       //check if there is something left, otherwise insert h1 tag
