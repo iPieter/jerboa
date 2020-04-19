@@ -312,6 +312,7 @@ export default {
       messages: [],
       hovered: false,
       modal_id: -1,
+      scroll_position: 0,
     };
   },
   components: {
@@ -369,11 +370,15 @@ export default {
       this.editMode = true;
     },
     showFullImage(id) {
+      console.log(window.scrollY);
+      if (id >= 0) this.scroll_position = window.scrollY;
+
       this.modal_id = id;
+      window.scrollTo(window.scrollX, this.scroll_position);
     },
     filesAreImages() {
       /*
-      Returns true if the message contains files and those 
+      Returns true if the message contains files and those
       are all images, false otherwise.
       */
       if (
