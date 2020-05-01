@@ -326,7 +326,7 @@ import Vue from "vue";
 import axios from "axios";
 import BootstrapVue from "bootstrap-vue";
 import StatsTile from "./StatsTile";
-import MessageChart from "./MessageChart";
+import MessageChart from "./MessageChart.js";
 
 Vue.use(BootstrapVue);
 
