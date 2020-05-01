@@ -216,6 +216,7 @@ class Database:
             select count(*) as "Count", users.display_name as "Username", to_char(date_trunc('day', to_timestamp(m.sent_time)), 'DD/MM/YYYY') as "Date" 
             from messages as m
             INNER JOIN users ON m.sender = users.id 
+            where date_trunc('day', to_timestamp(m.sent_time)) >  CURRENT_DATE - INTERVAL '1 month'
             group by users.display_name, date_trunc('day', to_timestamp(m.sent_time))
             order by date_trunc('day', to_timestamp(m.sent_time))"""
         )
