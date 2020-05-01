@@ -326,7 +326,7 @@ import Vue from "vue";
 import axios from "axios";
 import BootstrapVue from "bootstrap-vue";
 import StatsTile from "./StatsTile";
-import MessageChart from "./MessageChart.js";
+import MessageChart from "./MessageChart";
 
 Vue.use(BootstrapVue);
 
@@ -386,7 +386,7 @@ export default {
         _this.status = response.data;
       })
       .catch(this.handleError);
-   
+
     this.loadUsers();
 
     axios
