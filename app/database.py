@@ -213,7 +213,7 @@ class Database:
     def get_daily_message_count(self):
         return self.sql_to_dict(
             """
-            select count(*) as "Count", users.display_name as "Username", date_trunc('day', to_timestamp(m.sent_time)) as "Date" 
+            select count(*) as "Count", users.display_name as "Username", to_char(date_trunc('day', to_timestamp(m.sent_time)), 'DD/MM/YYYY') as "Date" 
             from messages as m
             INNER JOIN users ON m.sender = users.id 
             group by users.display_name, date_trunc('day', to_timestamp(m.sent_time))
