@@ -187,6 +187,12 @@ def messages():
     return json.dumps(result)
 
 
+@app.route("/messages/count")
+@multi_auth.login_required
+def count_messages():
+    return json.dumps(database.get_daily_message_count())
+
+
 @app.route("/")
 @multi_auth.login_required
 def index():
