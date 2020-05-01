@@ -210,6 +210,16 @@ class Database:
         )
         return result[0] if len(result) == 1 else None
 
+    def get_daily_message_count(self):
+        return self.sql_to_dict(
+            """
+            select count(*) as "Count", users.display_name as "Username", date_trunc('day', to_timestamp(m.sent_time)) as "Date" 
+            from messages as m
+            INNER JOIN users ON m.sender = users.id 
+            group by users.display_name, date_trunc('day', to_timestamp(m.sent_time))
+            order by date_trunc('day', to_timestamp(m.sent_time))"""
+        )
+
     def get_channel_count(self):
         return self.sql_to_dict(
             """
