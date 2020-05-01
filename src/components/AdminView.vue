@@ -245,6 +245,13 @@
           <b-tab title="Files">
             <b-table striped hover :items="files"></b-table>
           </b-tab>
+          <b-tab title="Usage" active>
+            <MessageChart
+              :data="dailyMessages"
+              label="Messages"
+              :users="users"
+            />
+          </b-tab>
           <b-tab title="Data export" class="p-2">
             <h2>Messages</h2>
             Download all messages as
@@ -319,6 +326,7 @@ import Vue from "vue";
 import axios from "axios";
 import BootstrapVue from "bootstrap-vue";
 import StatsTile from "./StatsTile";
+import MessageChart from "./MessageChart.js";
 
 Vue.use(BootstrapVue);
 
@@ -333,11 +341,12 @@ export default {
       status: {},
       file: "",
       emojiName: "",
+      dailyMessages: [],
       version: process.env.VUE_APP_VERSION,
       base: process.env.VUE_APP_SERVER_BASE,
     };
   },
-  components: { StatsTile },
+  components: { StatsTile, MessageChart },
   created() {
     // When the main component is created, we get everything from local storage
     this.$root.$data.token = localStorage.token;
@@ -377,8 +386,17 @@ export default {
         _this.status = response.data;
       })
       .catch(this.handleError);
-
+   
     this.loadUsers();
+
+    axios
+      .get("messages/count", {})
+      .then(function(response) {
+        console.log(response);
+        _this.dailyMessages = response.data;
+      })
+      .catch(this.handleError);
+
     this.loadEmoji();
   },
   props: {},
