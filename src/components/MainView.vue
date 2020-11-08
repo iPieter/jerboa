@@ -55,8 +55,8 @@
           </div>
         </div>
       </div>
-      <div class="row composer-row">
-        <div class="col-xl-6 col-md-8 col-sm-12 mx-auto input-group">
+      <div class="row composer-row" >
+        <div :class="file_preview == '' ? 'col-xl-6 col-md-8 col-sm-12 input-group mx-auto' : 'col-sm-4 input-group'">
           <message-input
             :send="send"
             :paste="handle_paste"
