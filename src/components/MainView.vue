@@ -1,27 +1,20 @@
 <template>
-  <div id="drop">
-    <MenuBar :channel_id="channel_id" />
-    <!-- MAIN BODY -->
-    <div :class="file_preview == '' ? '' : 'row mx-0'">
-      <div :class="file_preview == '' ? '' : 'col-md-4'">
-        <ChannelView
-          v-if="connected"
-          :messages="messages"
-          :unacked_messages="$root.$data.unacked_messages[channel_id]"
-          id="messages"
-        />
-        <div class="info" v-else>
-          <div class="text-center pt-5">
-            <b-spinner label="Spinning"></b-spinner>
-            <p class="mt-2">Sending bits to the server...</p>
-          </div>
+  <div :class="file_preview == '' ? '' : 'row mx-0'">
+    <div id="drop" :class="file_preview == '' ? '' : 'col-md-4'">
+      <MenuBar :channel_id="channel_id" />
+      <!-- MAIN BODY -->
+      <ChannelView
+        v-if="connected"
+        :messages="messages"
+        :unacked_messages="$root.$data.unacked_messages[channel_id]"
+        id="messages"
+      />
+      <div class="info" v-else>
+        <div class="text-center pt-5">
+          <b-spinner label="Spinning"></b-spinner>
+          <p class="mt-2">Sending bits to the server...</p>
         </div>
       </div>
-      <iframe
-        class="file_preview col-md-8"
-        v-if="file_preview != ''"
-        :src="file_preview"
-      ></iframe>
     </div>
 
     <transition name="fade">
@@ -123,6 +116,11 @@
         </div>
       </div>
     </div>
+    <iframe
+      class="file_preview col-md-8"
+      v-if="file_preview != ''"
+      :src="file_preview"
+    ></iframe>
   </div>
 </template>
 
