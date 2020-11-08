@@ -642,5 +642,7 @@ export default {
   padding-right: 0;
   border: none;
   margin-right: -30px;
+  position: fixed;
+  right: 0;
 }
 </style>
