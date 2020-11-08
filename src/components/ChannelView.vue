@@ -1,5 +1,5 @@
 <template>
-  <div class="col-xl-6 col-md-8 col-sm-12 mx-auto " v-if="messages.length > 0">
+  <div :class="$parent.file_preview == '' ? 'col-xl-6 col-md-8 col-sm-12 mx-auto' : 'col-sm-12'" v-if="messages.length > 0">
     <message
       v-for="message in messages"
       :messagesProp="message.messages"
