@@ -359,10 +359,10 @@ export default {
   },
   methods: {
     togglePreview(url) {
-      if (this.$parent.$data.file_preview == "") {
-        this.$parent.$data.file_preview = url;
+      if (this.$parent.$parent.$data.file_preview == "") {
+        this.$parent.$parent.$data.file_preview = url;
       } else {
-        this.$parent.$data.file_preview = "";
+        this.$parent.$parent.$data.file_preview = "";
       }
     },
     toggleEdit() {
