@@ -49,7 +49,7 @@
               :value="message.uploadPercentage"
               max="100"
               class="mb-0"
-              :label="`${((value / max) * 100).toFixed(2)}%`"
+              :label="`${((message.uploadPercentage ) * 100).toFixed(2)}%`"
             ></b-progress>
           </b-card>
         </div>

@@ -2,17 +2,26 @@
   <div id="drop">
     <MenuBar :channel_id="channel_id" />
     <!-- MAIN BODY -->
-    <ChannelView
-      v-if="connected"
-      :messages="messages"
-      :unacked_messages="$root.$data.unacked_messages[channel_id]"
-      id="messages"
-    />
-    <div class="info" v-else>
-      <div class="text-center pt-5">
-        <b-spinner label="Spinning"></b-spinner>
-        <p class="mt-2">Sending bits to the server...</p>
+    <div :class="file_preview == '' ? '' : 'row mx-0'">
+      <div :class="file_preview == '' ? '' : 'col-md-4'">
+        <ChannelView
+          v-if="connected"
+          :messages="messages"
+          :unacked_messages="$root.$data.unacked_messages[channel_id]"
+          id="messages"
+        />
+        <div class="info" v-else>
+          <div class="text-center pt-5">
+            <b-spinner label="Spinning"></b-spinner>
+            <p class="mt-2">Sending bits to the server...</p>
+          </div>
+        </div>
       </div>
+      <iframe
+        class="file_preview col-md-8"
+        v-if="file_preview != ''"
+        :src="file_preview"
+      ></iframe>
     </div>
 
     <transition name="fade">
@@ -138,6 +147,7 @@ export default {
       scrolling: false,
       dragging: false,
       typing: {},
+      file_preview: "",
     };
   },
   props: {
@@ -626,5 +636,13 @@ export default {
     background: white;
     animation: breathing 2s linear infinite;
   }
+}
+
+.file_preview {
+  height: 100vh;
+  padding-left: 0;
+  padding-right: 0;
+  border: none;
+  margin-right: -30px;
 }
 </style>
