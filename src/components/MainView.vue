@@ -1,6 +1,6 @@
 <template>
-  <div :class="file_preview == '' ? '' : 'row mx-0'">
-    <div id="drop" :class="file_preview == '' ? '' : 'col-md-4'">
+  <div id="drop" :class="file_preview == '' ? '' : 'row mx-0'">
+    <div :class="file_preview == '' ? '' : 'col-md-4'">
       <MenuBar :channel_id="channel_id" />
       <!-- MAIN BODY -->
       <ChannelView
