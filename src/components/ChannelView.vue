@@ -27,11 +27,10 @@
           <b-spinner small label="Small Spinner" type="grow"></b-spinner>
         </span>
         <div class="content" v-if="message.message_type == 'TEXT_MESSAGE'">
-          <vue-markdown
-            :emoji="true"
+          <message-markdown
             class="content-msg"
             :source="message.message"
-          ></vue-markdown>
+          ></message-markdown>
         </div>
         <div class="content" v-else>
           {{ message.message.message }}
@@ -69,15 +68,13 @@
 
 <script>
 import Vue from "vue";
-import VueMarkdown from "vue-markdown";
-
-Vue.use(VueMarkdown);
 import Message from "./Message";
+import MessageMarkdown from "./MessageMarkdown";
 
 Vue.extend(Message);
 
 export default {
-  components: { Message, VueMarkdown },
+  components: { Message, MessageMarkdown },
 
   data: function() {
     return {

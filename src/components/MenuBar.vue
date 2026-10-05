@@ -231,12 +231,10 @@
 </template>
 <script>
 import Vue from "vue";
-import VueMarkdown from "vue-markdown";
 import axios from "axios";
 import Message from "./Message";
 
 Vue.extend(Message);
-Vue.use(VueMarkdown);
 
 export default {
   name: "menu-bar",
