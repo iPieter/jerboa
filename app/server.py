@@ -6,7 +6,7 @@ import pandas as pd
 import simplejson as json
 import time
 from flask_httpauth import HTTPBasicAuth, HTTPTokenAuth, MultiAuth
-from werkzeug import secure_filename
+from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash, safe_str_cmp
 import pika
 from itsdangerous import TimedJSONWebSignatureSerializer as JWS
@@ -28,7 +28,7 @@ app = Flask(__name__)
 CORS(app)
 app.config["SECRET_KEY"] = os.environ["flask_secret"]
 app.config["EXPIRES"] = 7 * 24 * 3600
-socketio = SocketIO(app, cors_allowed_origins="*", engineiologger=True, logger=True)
+socketio = SocketIO(app, cors_allowed_origins="*", engineiologger=True, logger=True, ping_timeout=10, ping_interval=5)
 jws = JWS(app.config["SECRET_KEY"], expires_in=app.config["EXPIRES"])
 database = Database(os.environ["db_pass"])
 
