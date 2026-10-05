@@ -1,0 +1,4 @@
+# shellcheck settings for deploy/. Resolve "# shellcheck source=..." relative to
+# each script, so `shellcheck deploy/*.sh` works from any directory.
+source-path=SCRIPTDIR
+external-sources=true

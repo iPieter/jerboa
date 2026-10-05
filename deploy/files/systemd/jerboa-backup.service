@@ -1,0 +1,16 @@
+# Installed by deploy/backup.sh. Runs /usr/local/sbin/jerboa-backup once.
+# Manual run:  systemctl start jerboa-backup
+# Output:      journalctl -u jerboa-backup --since today
+[Unit]
+Description=Jerboa backup (Postgres dump + uploads snapshot)
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/jerboa-backup
+# The first uploads snapshot copies a few GB; give it time.
+TimeoutStartSec=3h
+# Stay out of the way of the chat on a 1 vCPU box.
+Nice=10
+IOSchedulingClass=idle

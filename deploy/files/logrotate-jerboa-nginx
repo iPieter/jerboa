@@ -1,0 +1,18 @@
+# /etc/logrotate.d/jerboa-nginx, written by deploy/ops_hygiene.sh.
+# The chat's nginx logs live in /root/chat/logs (see the server block), outside
+# /var/log/nginx, so Ubuntu's own /etc/logrotate.d/nginx never rotated them.
+# Rotated daily by /etc/cron.daily/logrotate; 14 days kept, gzipped.
+/root/chat/logs/nginx_access.log /root/chat/logs/nginx_error.log {
+    daily
+    rotate 14
+    missingok
+    notifempty
+    compress
+    delaycompress
+    dateext
+    create 0640 www-data adm
+    sharedscripts
+    postrotate
+        invoke-rc.d nginx rotate >/dev/null 2>&1 || true
+    endscript
+}
