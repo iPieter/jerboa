@@ -1,5 +1,7 @@
 import os
 import shutil
+import ipaddress
+import socket
 from flask import Flask, g, request, abort, Response, jsonify
 from flask_cors import CORS
 import pandas as pd
@@ -10,12 +12,14 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash, safe_str_cmp
 import pika
 from itsdangerous import TimedJSONWebSignatureSerializer as JWS
-from itsdangerous import SignatureExpired
+from itsdangerous import SignatureExpired, BadSignature
 import secrets
 from flask_socketio import SocketIO
 from flask_socketio import send, emit, join_room
 import magic
 import urllib.request
+import urllib.parse
+import urllib.error
 from app.database import Database
 from datetime import datetime
 
@@ -36,11 +40,120 @@ basic_auth = HTTPBasicAuth()
 token_auth = HTTPTokenAuth("Bearer")
 multi_auth = MultiAuth(basic_auth, token_auth)
 
+# States that are allowed to use the API. REQUESTED (awaiting approval) and
+# DISABLED accounts must not be able to authenticate.
+ACTIVE_STATES = ("USER", "ADMIN")
+
+# Stored mimetypes we are willing to serve inline. Everything else (notably
+# text/html and image/svg+xml, which can carry script) is forced to download.
+INLINE_MIME_TYPES = frozenset(
+    [
+        "image/png",
+        "image/jpeg",
+        "image/gif",
+        "image/webp",
+        "image/bmp",
+        "image/x-icon",
+        "image/vnd.microsoft.icon",
+        "image/tiff",
+        "application/pdf",
+    ]
+)
+
+
+def _is_active_user(user):
+    return bool(user) and user.get("state") in ACTIVE_STATES
+
+
+def current_user_is_admin():
+    """True if the authenticated user (``g.user``) is an ADMIN."""
+    if not getattr(g, "user", None):
+        return False
+    user = database.get_public_user(g.user)
+    return bool(user) and user.get("state") == "ADMIN"
+
+
+def _safe_emoji_name(name):
+    """Returns ``name`` if it is a safe single filename inside ``emojis/``.
+
+    Rejects anything that would let a name escape the emoji directory (path
+    separators, ``..``, leading dots, absolute paths). Keeps names like
+    ``+1`` or ``party_parrot`` untouched so existing emoji keep working.
+    """
+    if not name or "/" in name or "\\" in name or "\0" in name:
+        return None
+    if name in (".", "..") or name.startswith("."):
+        return None
+    emoji_dir = os.path.abspath("emojis")
+    resolved = os.path.abspath(os.path.join(emoji_dir, name))
+    if os.path.dirname(resolved) != emoji_dir:
+        return None
+    return name
+
+
+def _host_is_public(host):
+    """True only if every address a host resolves to is a public IP.
+
+    Blocks loopback, private, link-local, reserved and multicast ranges so a
+    user-supplied URL cannot reach the server itself or the internal network.
+    """
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return False
+    for info in infos:
+        try:
+            ip = ipaddress.ip_address(info[4][0])
+        except ValueError:
+            return False
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            return False
+    return True
+
+
+def _download_remote_image(url, dest):
+    """Fetches an http(s) URL from a public host into ``dest``.
+
+    Only http/https are handled (so ``file://``/``ftp://`` cannot be read) and
+    the host must resolve to a public address (so localhost and the internal
+    network are unreachable). Redirects are not followed, which removes the
+    redirect-to-internal bypass. Raises ``ValueError`` if the URL is not
+    allowed.
+    """
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("unsupported URL scheme")
+    if not parsed.hostname or not _host_is_public(parsed.hostname):
+        raise ValueError("host not allowed")
+
+    # An opener built from only HTTP(S) handlers: no FileHandler/FTPHandler and
+    # no redirect handler, so nothing but a direct http(s) 200 can be read.
+    opener = urllib.request.OpenerDirector()
+    opener.add_handler(urllib.request.ProxyHandler({}))
+    opener.add_handler(urllib.request.HTTPHandler())
+    opener.add_handler(urllib.request.HTTPSHandler())
+    opener.add_handler(urllib.request.HTTPErrorProcessor())
+
+    with opener.open(url, timeout=10) as response:
+        if getattr(response, "status", 200) != 200:
+            raise ValueError("unexpected response status")
+        with open(dest, "wb") as fp:
+            shutil.copyfileobj(response, fp, 65536)
+
 
 @socketio.on("connect")
 def test_connect():
+    # Do NOT join any room here: the socket is unauthenticated at this point.
+    # The client authenticates and joins its channels via the `join_rooms`
+    # event once it has a token.
     print("connected")
-    join_room("1")
 
 
 @socketio.on("disconnect")
@@ -48,33 +161,66 @@ def test_disconnect():
     print("Client disconnected")
 
 
+def _authenticate_socket_token(token):
+    """Validates a socket token the way token auth validates HTTP requests.
+
+    Returns the ``users`` row on success, ``None`` if the session is revoked
+    or the account is not active. Raises ``SignatureExpired`` for an expired
+    token (so the caller can tell the client to renew) and ``BadSignature``
+    for a forged one.
+    """
+    metadata = jws.loads(token)
+    username = metadata.get("user")
+    user = database.get_user(username) if username else None
+    if not _is_active_user(user):
+        return None
+    session = database.get_session(metadata.get("token"))
+    if session is None or session["active"] not in (True, 1):
+        return None
+    if session["user_id"] != user["id"] and user["state"] != "ADMIN":
+        return None
+    return user
+
+
 @socketio.on("join_rooms")
 def handle_join(token):
-    metadata = jws.loads(token)
-    channels = database.get_channels(metadata["user"])
     try:
+        user = _authenticate_socket_token(token)
+        if user is None:
+            return
+        channels = database.get_channels(user["username"])
         for channel in channels:
-            join_room(channel["id"])
+            # Room names are normalised to strings so a join always matches the
+            # room a `msg` is emitted to (see `handle_message`).
+            join_room(str(channel["id"]))
+    except SignatureExpired:
+        emit("error", "Signature expired")
     except Exception as e:
-        pass
+        print(e)
 
 
 @socketio.on("msg")
 def handle_message(message):
     try:
-        print("received message: " + message)
-        print(request.sid)
-        # emit("msg", message, room=request.sid)
         msg_parsed = json.loads(message)
-        # (msg_parsed["sender"])
 
-        metadata = jws.loads(msg_parsed["sender"])
+        user = _authenticate_socket_token(msg_parsed["sender"])
+        if user is None:
+            emit("error", "Not authorized")
+            return 0
+
+        username = user["username"]
+        channel = msg_parsed["channel"]
+        room = str(channel)
+
+        # Only members of a channel may post to it or see it live.
+        if not database.is_channel_member(channel, username):
+            emit("error", "Not authorized")
+            return 0
 
         previous_message = None
         if "previous_message" in msg_parsed:
             previous_message = msg_parsed["previous_message"]
-
-        user = database.get_user(metadata["user"])
 
         if msg_parsed["message_type"] == "TEXT_MESSAGE_UPDATE":
             previous_message_row = database.get_message(msg_parsed["previous_message"])
@@ -88,18 +234,52 @@ def handle_message(message):
         elif msg_parsed["message_type"] == "USER_TYPING":
             # when we reveive a user_typing msg, we don't save it.
             msg = {}
-            msg["sender"] = user["username"]
+            msg["sender"] = username
             msg["message_type"] = msg_parsed["message_type"]
             msg["sent_time"] = msg_parsed["sent_time"]
-            msg["channel"] = msg_parsed["channel"]
+            msg["channel"] = channel
 
-            emit("msg", msg, room=msg_parsed["channel"])
+            emit("msg", msg, room=room)
             return 0
 
+        # Shares must quote a real message. Rebuild the quoted `source`
+        # server-side from its id so a client cannot forge who said what.
+        message_body = msg_parsed["message"]
+        if msg_parsed["message_type"] == "SHARE_MESSAGE":
+            source = message_body.get("source") if isinstance(message_body, dict) else None
+            source_id = source.get("id") if isinstance(source, dict) else None
+            quoted = (
+                database.get_message_with_sender(source_id)
+                if source_id is not None
+                else None
+            )
+            if quoted is None or not database.is_channel_member(
+                quoted["channel"], username
+            ):
+                emit("error", "Unknown quoted message")
+                return 0
+            safe_source = {
+                "id": quoted["id"],
+                "sender": quoted["username"],
+                "message_type": quoted["message_type"],
+                "message": json.loads(quoted["message"])
+                if quoted["message"] is not None
+                else None,
+                "sent_time": int(quoted["sent_time"])
+                if quoted["sent_time"] is not None
+                else None,
+                "previous_message": quoted["previous_message"],
+                "channel": quoted["channel"],
+            }
+            message_body = {
+                "source": safe_source,
+                "message": message_body.get("message"),
+            }
+
         row = database.insert_message(
-            metadata["user"],
-            msg_parsed["channel"],
-            json.dumps(msg_parsed["message"]),
+            username,
+            channel,
+            json.dumps(message_body),
             msg_parsed["message_type"],
             int(datetime.now().timestamp()),
             previous_message,
@@ -108,14 +288,14 @@ def handle_message(message):
         if row is not None:
             msg = {}
             msg["id"] = row["id"]
-            msg["sender"] = user["username"]
+            msg["sender"] = username
             msg["message_type"] = row["message_type"]
             msg["message"] = json.loads(row["message"])
             msg["sent_time"] = int(row["sent_time"])
             msg["previous_message"] = row["previous_message"]
             msg["nonce"] = msg_parsed["nonce"]
-            msg["channel"] = msg_parsed["channel"]
-            emit("msg", msg, room=msg_parsed["channel"])
+            msg["channel"] = channel
+            emit("msg", msg, room=room)
         else:
             emit("error", "Wrong message")
     except SignatureExpired as e:
@@ -129,8 +309,12 @@ def handle_message(message):
 @basic_auth.verify_password
 def verify_password(username, password):
     g.user = None
-    user = database.get_user(username)
-    if user and check_password_hash(user["password"], password):
+    user = database.get_user_credentials(username)
+    if (
+        user
+        and _is_active_user(user)
+        and check_password_hash(user["password"], password)
+    ):
         g.user = username
         return True
     return False
@@ -169,6 +353,10 @@ def messages():
 
     channel = request.args.get("channel")
     initial_msg_id = int(request.args.get("initial_msg_id"))
+
+    # Only members of a channel may read its history.
+    if not database.is_channel_member(channel, g.user):
+        return "Not a member of this channel", 403
 
     result = []
     for i, row in enumerate(database.get_messages(channel, initial_msg_id)):
@@ -231,6 +419,10 @@ def add_user_to_channel():
     channel_id = request.form["channel_id"]
     username = request.form["username"]
 
+    # Only existing members of a channel may add other users to it.
+    if not database.is_channel_member(channel_id, g.user):
+        return "Not a member of this channel", 403
+
     database.insert_channel_member(channel_id, username)
 
     return "ok", 200
@@ -242,7 +434,10 @@ def search_in_channel():
 
     channel = request.form["channel_id"]
     query = request.form["query"]
-    query = query.replace(" ", " & ")
+
+    # Only members of a channel may search it.
+    if not database.is_channel_member(channel, g.user):
+        return "Not a member of this channel", 403
 
     results = database.search(query, channel)
 
@@ -300,6 +495,14 @@ def get_file():
         return "File could not be uniquely identified.", 404
 
     file_path = "data/" + result["file"] + "_" + result["full_name"]
+
+    # Only known-safe types may render inline; anything that could carry script
+    # (HTML, SVG, ...) is always sent as an attachment, and `nosniff` stops the
+    # browser from second-guessing the declared type. This prevents a file
+    # uploaded to the app's own origin from executing as a page.
+    inline = bool(show) and result["type"] in INLINE_MIME_TYPES
+    disposition = "inline" if inline else "attachment"
+
     with open(file_path, mode="rb") as fp:
         f = fp.read()
         return Response(
@@ -307,8 +510,9 @@ def get_file():
             mimetype=result["type"],
             headers={
                 "Cache-Control": "public, max-age=3600",
+                "X-Content-Type-Options": "nosniff",
                 "Content-disposition": "{}; filename={}".format(
-                    "inline" if show else "attachment", result["full_name"]
+                    disposition, result["full_name"]
                 ),
             },
         )
@@ -333,8 +537,19 @@ def upload_slack_emojis():
         emoji = json.load(f)["emoji"]
         for e in emoji:
             if not emoji[e].startswith("alias:"):
-                urllib.request.urlretrieve(emoji[e], "emojis/{}".format(e))
-                database.insert_emoji(g.user, e, e, datetime.now().timestamp())
+                safe_name = _safe_emoji_name(e)
+                if safe_name is None:
+                    continue
+                try:
+                    _download_remote_image(
+                        emoji[e], os.path.join("emojis", safe_name)
+                    )
+                except (ValueError, OSError, urllib.error.URLError):
+                    # Skip emoji whose URL is not allowed or cannot be fetched.
+                    continue
+                database.insert_emoji(
+                    g.user, safe_name, safe_name, datetime.now().timestamp()
+                )
     return "ok", 200
 
 
@@ -344,16 +559,19 @@ def upload_emoji():
     "Add one emoji from a post request to the database and store it in `/emojis`."
 
     e = request.form["name"]
+    safe_name = _safe_emoji_name(e)
+    if safe_name is None:
+        return "Invalid emoji name", 400
 
     if not os.path.exists("emojis/"):
         os.makedirs("emojis/")
 
     f = request.files["file"]
 
-    path = os.path.join("emojis", e)
+    path = os.path.join("emojis", safe_name)
     f.save(path)
 
-    database.insert_emoji(g.user, e, e, datetime.now().timestamp())
+    database.insert_emoji(g.user, safe_name, safe_name, datetime.now().timestamp())
 
     return "ok", 200
 
@@ -381,9 +599,16 @@ def get_emoji_list():
 def get_emoji(file_identifier):
     if file_identifier == "alias":
         emoji = request.args.get("e")[1:-1]
-        file_identifier = database.get_emoji(emoji)
+        resolved = database.get_emoji(emoji)
+        if not resolved:
+            return "Error", 404
+        file_identifier = resolved["file"]
 
-    file_path = "emojis/{}".format(file_identifier)
+    safe_name = _safe_emoji_name(file_identifier)
+    if safe_name is None:
+        return "Error", 404
+
+    file_path = "emojis/{}".format(safe_name)
     try:
         with open(file_path, mode="rb") as fp:
             f = fp.read()
@@ -392,8 +617,9 @@ def get_emoji(file_identifier):
                 mimetype="image/png",
                 headers={
                     "Cache-Control": "public, max-age=3600",
+                    "X-Content-Type-Options": "nosniff",
                     "Content-disposition": "attachment; filename={}".format(
-                        file_identifier
+                        safe_name
                     ),
                 },
             )
@@ -402,32 +628,50 @@ def get_emoji(file_identifier):
 
 
 @app.route("/emoji/<file_identifier>", methods=["DELETE"])
+@multi_auth.login_required
 def delete_emoji(file_identifier):
+    if not current_user_is_admin():
+        return "Admin privileges required", 403
+
     if file_identifier == "alias":
         emoji = request.args.get("e")[1:-1]
-        file_identifier = database.get_emoji(emoji)
+        resolved = database.get_emoji(emoji)
+        if not resolved:
+            return "ok", 200
+        file_identifier = resolved["file"]
 
-    file_path = "emojis/{}".format(file_identifier)
+    safe_name = _safe_emoji_name(file_identifier)
+    if safe_name is None:
+        return "Invalid emoji name", 400
 
-    print("deleting emoji {}".format(file_identifier))
+    file_path = "emojis/{}".format(safe_name)
+
+    print("deleting emoji")
     try:
 
         os.remove(file_path)
-    except:
+    except OSError:
         print("Emoji file not found during removal.")
 
-    database.delete_emoji(file_identifier)
+    database.delete_emoji(safe_name)
     return "ok", 200
 
 
 @app.route("/emojis", methods=["DELETE"])
+@multi_auth.login_required
 def delete_emojis():
+    if not current_user_is_admin():
+        return "Admin privileges required", 403
 
     print("deleting all emoji")
 
     try:
-        shutil.rmtree("/emoji")
-    except:
+        if os.path.isdir("emojis"):
+            for name in os.listdir("emojis"):
+                emoji_path = os.path.join("emojis", name)
+                if os.path.isfile(emoji_path):
+                    os.remove(emoji_path)
+    except OSError:
         pass
 
     database.delete_all_emoji()
@@ -444,7 +688,7 @@ def get_users():
 @app.route("/user/<username>")
 @multi_auth.login_required
 def get_user(username: str):
-    return json.dumps(database.get_user(username))
+    return json.dumps(database.get_public_user(username))
 
 
 @app.route("/user")
@@ -475,13 +719,21 @@ def set_status():
     - `USER`
     - `DISABLED`
     - `REQUESTED`
+
+    Admin only.
     """
+
+    if not current_user_is_admin():
+        return "Admin privileges required", 403
 
     required = ["username", "status"]
 
     for var in required:
         if var not in request.form:
             return "Key required: {}".format(var), 400
+
+    if request.form["status"] not in ("ADMIN", "USER", "DISABLED", "REQUESTED"):
+        return "Invalid status", 400
 
     database.set_user_status(request.form["username"], request.form["status"])
 
@@ -498,7 +750,17 @@ def get_sessions():
 @app.route("/users/sessions/<id>", methods=["DELETE"])
 @multi_auth.login_required
 def delete_session(id: int):
-    """Sets the provided session id on disabled if it is done by the owner of the session or an admin"""
+    """Disables the given session id, but only for its owner or an admin."""
+
+    session = database.get_session(id)
+    if session is None:
+        return "ok", 200
+
+    me = database.get_public_user(g.user)
+    if me is None or (
+        session["user_id"] != me["id"] and me["state"] != "ADMIN"
+    ):
+        return "Not authorized", 403
 
     database.disable_session(id)
 
@@ -516,7 +778,7 @@ def set_picture():
         if var not in request.form:
             return "Key required: {}".format(var), 400
 
-    print("update {} to picture {}".format(g.user, request.form["file_identifier"]))
+    print("update picture")
 
     database.set_user_picture(g.user, request.form["file_identifier"])
 
@@ -537,7 +799,7 @@ def signup():
         if var not in request.form:
             return "Key required: {}".format(var), 400
 
-    print("Request: {}".format(request.form["email"]))
+    print("Signup request received")
     result = database.insert_user(
         request.form["email"],
         generate_password_hash(request.form["password"]),
