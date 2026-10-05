@@ -131,6 +131,7 @@ import ChannelView from "./ChannelView";
 import MessageHandler from "../messageHandler";
 import MessageInput from "./MessageInput";
 import axios from "axios";
+import { channelId } from "../channel";
 
 export default {
   name: "mainview",
@@ -151,6 +152,12 @@ export default {
   props: {
     channel_id: {
       default: "1",
+    },
+  },
+  computed: {
+    // channel_id is a string after a reload; the server needs a Number.
+    channel() {
+      return channelId(this.channel_id);
     },
   },
   watch: {
@@ -218,7 +225,7 @@ export default {
           msg = {
             message_type: "TEXT_MESSAGE",
             sender: this.$root.$data.token,
-            channel: this.channel_id,
+            channel: this.channel,
             message: message,
             sent_time: new Date(),
             signature: "na",
@@ -294,7 +301,7 @@ export default {
       var msg = {
         message_type: "USER_TYPING",
         sender: this.$root.$data.token,
-        channel: this.channel_id,
+        channel: this.channel,
         sent_time: new Date(),
       };
 
@@ -349,7 +356,7 @@ export default {
       let msg = {
         message_type: "FILES_MESSAGE",
         sender: this.$root.$data.token,
-        channel: this.channel_id,
+        channel: this.channel,
         message: {
           message: message,
           files: [],

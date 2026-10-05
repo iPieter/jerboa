@@ -279,6 +279,7 @@
 import moment from "moment";
 import MessageInput from "./MessageInput";
 import MessageMarkdown from "./MessageMarkdown";
+import { channelId } from "../channel";
 
 moment.locale("nl-be");
 
@@ -390,7 +391,7 @@ export default {
       var msg = {
         message_type: "TEXT_MESSAGE_UPDATE",
         sender: this.token,
-        channel: "1",
+        channel: this.currentChannel,
         message: content,
         sent_time: new Date(),
         signature: "na",
@@ -414,7 +415,7 @@ export default {
       var msg = {
         message_type: "SHARE_MESSAGE",
         sender: this.token,
-        channel: "1",
+        channel: this.currentChannel,
         message: {
           source: this.messages[this.messages.length - 1],
           message: message,
@@ -488,6 +489,10 @@ export default {
     },
   },
   computed: {
+    // The channel being viewed: edits and shares belong there.
+    currentChannel() {
+      return channelId(this.$route.params.channel_id);
+    },
     time: function() {
       return moment(
         new Date(this.messages[this.messages.length - 1].sent_time * 1000)
