@@ -7,6 +7,7 @@
 <script>
 import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap-vue/dist/bootstrap-vue.css";
+import "katex/dist/katex.min.css";
 import "./style.scss";
 
 export default {
