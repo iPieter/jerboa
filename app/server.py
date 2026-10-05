@@ -617,7 +617,6 @@ def get_emoji(file_identifier):
                 mimetype="image/png",
                 headers={
                     "Cache-Control": "public, max-age=3600",
-                    "X-Content-Type-Options": "nosniff",
                     "Content-disposition": "attachment; filename={}".format(
                         safe_name
                     ),
