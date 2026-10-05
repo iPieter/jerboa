@@ -144,9 +144,18 @@ export default class MessageHandler {
       this.handleMessage(msg);
     });
     this.root_data.socket.on("error", (e) => {
-      console.log("ERROR");
-      console.log(e);
+      console.log("Socket error", e);
+      // Sent by the server when our token has expired. Live updates stop
+      // working from then on, so send the user back to the login page.
+      if (e === "Signature expired") {
+        this.handleAuthError();
+      }
     });
+  };
+
+  close = () => {
+    this.root_data.socket.off();
+    this.root_data.socket.disconnect();
   };
 
   switchChannels = async (new_channel_id) => {
@@ -167,12 +176,6 @@ export default class MessageHandler {
         params: params,
       });
 
-      if (response.status == 401) {
-        console.log("Authorization error when fetching messages");
-        this.handleAuthError();
-        return;
-      }
-
       let responseJson = response.data;
       responseJson = responseJson.reverse();
       for (var i in responseJson) {
@@ -181,6 +184,11 @@ export default class MessageHandler {
       this.handleConnection(true);
     } catch (e) {
       console.log(e);
+      // axios rejects on a 401, so this is where an expired token shows up.
+      if (e.response && e.response.status === 401) {
+        console.log("Authorization error when fetching messages");
+        this.handleAuthError();
+      }
     }
   };
 }
