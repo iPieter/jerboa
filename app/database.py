@@ -1,48 +1,126 @@
 import psycopg2
+import psycopg2.pool
 import atexit
 import os
 import logging
+from contextlib import contextmanager
+
+
+logger = logging.getLogger(__name__)
+
+# Columns of `users` that any logged-in user may see about any other user.
+PUBLIC_USER_COLUMNS = (
+    "id",
+    "username",
+    "display_name",
+    "first_name",
+    "last_name",
+    "profile_image",
+    "state",
+    "title",
+)
+
+# Columns a user may see about themselves: everything except the password hash.
+SELF_USER_COLUMNS = PUBLIC_USER_COLUMNS + (
+    "email",
+    "timezone",
+    "update_timezone",
+    "language",
+)
+
+
+def connection_kwargs(password, environ=None):
+    """Builds the psycopg2 connection arguments.
+
+    `db_user` (default "postgres"), `db_host` (default "127.0.0.1") and
+    `db_name` (default: unset, so libpq picks its default database) are read
+    from the environment. With none of them set this is exactly what the app
+    has always used.
+    """
+    if environ is None:
+        environ = os.environ
+    kwargs = {
+        "user": environ.get("db_user") or "postgres",
+        "password": password,
+        "host": environ.get("db_host") or "127.0.0.1",
+    }
+    if environ.get("db_name"):
+        kwargs["dbname"] = environ["db_name"]
+    return kwargs
 
 
 class Database:
-    def __init__(self, password):
-        self.conn = psycopg2.connect(
-            user="postgres", password=password, host="127.0.0.1"
+    def __init__(self, password, minconn=1, maxconn=10):
+        self.pool = psycopg2.pool.ThreadedConnectionPool(
+            minconn, maxconn, **connection_kwargs(password)
         )
-        self.cursor = self.conn.cursor()
         atexit.register(self.cleanup)
 
     def cleanup(self):
-        self.cursor.close()
-        self.conn.close()
+        try:
+            self.pool.closeall()
+        except psycopg2.pool.PoolError:
+            pass
+
+    @contextmanager
+    def cursor(self):
+        """Yields a fresh cursor on a pooled connection.
+
+        The transaction is committed when the block succeeds and rolled back
+        when it raises, so one failing statement can't leave the connection
+        stuck in an aborted transaction. Broken connections (server restart,
+        network drop) are discarded so the next call reconnects.
+        """
+        conn = self.pool.getconn()
+        broken = False
+        try:
+            with conn.cursor() as cur:
+                yield cur
+            conn.commit()
+        except (psycopg2.OperationalError, psycopg2.InterfaceError):
+            broken = True
+            raise
+        except Exception:
+            try:
+                conn.rollback()
+            except (psycopg2.OperationalError, psycopg2.InterfaceError):
+                broken = True
+            raise
+        finally:
+            self.pool.putconn(conn, close=broken or bool(conn.closed))
 
     def status(self):
-        if self.conn.closed:
-            return -1, "Connection closed."
+        try:
+            with self.cursor() as cur:
+                cur.execute("SELECT 1")
+                cur.fetchone()
+        except psycopg2.Error as e:
+            return -1, "Connection error: {}".format(type(e).__name__)
+        return 0, 1
 
-        return 0, self.conn.status
+    def execute(self, query, values=None):
+        """Runs a statement and returns its rowcount."""
+        with self.cursor() as cur:
+            cur.execute(query, values if values is not None else {})
+            return cur.rowcount
 
-    def sql_to_dict(self, query, values={}):
-        result = []
-        self.cursor.execute(query, values)
-        for row in self.cursor.fetchall():
-
-            obj = {}
-            names = list(map(lambda x: x[0], self.cursor.description))
-            for pair in zip(names, row):
-                obj[pair[0]] = pair[1]
-            result.append(obj)
-
-        return result
+    def sql_to_dict(self, query, values=None):
+        with self.cursor() as cur:
+            cur.execute(query, values if values is not None else {})
+            if cur.description is None:
+                return []
+            names = [column[0] for column in cur.description]
+            return [dict(zip(names, row)) for row in cur.fetchall()]
 
     def insert_user(self, username, password, display_name, state):
-        self.cursor.execute(
-            """INSERT INTO users (username, password, display_name, state)
-            VALUES(%s, %s, %s, %s)""",
-            (username, password, display_name, state),
-        )
-        result = self.cursor.rowcount
-        self.conn.commit()
+        try:
+            result = self.execute(
+                """INSERT INTO users (username, password, display_name, state)
+                VALUES(%s, %s, %s, %s)""",
+                (username, password, display_name, state),
+            )
+        except psycopg2.IntegrityError:
+            return False
         return result == 1
 
     def insert_session(self, username, last_seen, device, client, expires):
@@ -62,7 +140,6 @@ class Database:
                 "username": username,
             },
         )
-        self.conn.commit()
         return result[0]
 
     def get_sessions(self, username):
@@ -82,7 +159,7 @@ class Database:
             """
             select *
             from active_logins
-            where 
+            where
               id = %(session_id)s
             """,
             {"session_id": session_id},
@@ -91,25 +168,48 @@ class Database:
 
     def disable_session(self, session_id):
 
-        self.cursor.execute(
+        self.execute(
             """
             UPDATE active_logins
-            SET 
+            SET
               active = 0
-            WHERE 
+            WHERE
               id = %(session_id)s
             """,
             {"session_id": session_id},
         )
-        self.conn.commit()
 
     def get_users(self):
-        return self.sql_to_dict("SELECT * FROM users")
+        """All users, without private columns."""
+        return self.sql_to_dict(
+            "SELECT {} FROM users ORDER BY id".format(", ".join(PUBLIC_USER_COLUMNS))
+        )
+
+    def get_public_user(self, username: str):
+        """One user as other users may see them, or `None`."""
+        result = self.sql_to_dict(
+            "SELECT {} FROM users WHERE username = %(username)s".format(
+                ", ".join(PUBLIC_USER_COLUMNS)
+            ),
+            {"username": username},
+        )
+        return result[0] if len(result) == 1 else None
 
     def get_user(self, username: str):
+        """One user with every column except the password hash, or `None`."""
+        result = self.sql_to_dict(
+            "SELECT {} FROM users WHERE username = %(username)s".format(
+                ", ".join(SELF_USER_COLUMNS)
+            ),
+            {"username": username},
+        )
+        return result[0] if len(result) == 1 else None
+
+    def get_user_credentials(self, username: str):
+        """`id`, `username`, `state` and the password hash, for logging in only."""
         result = self.sql_to_dict(
             """
-            SELECT * FROM users
+            SELECT id, username, state, password FROM users
             WHERE username = %(username)s""",
             {"username": username},
         )
@@ -117,8 +217,8 @@ class Database:
 
     def update_user(self, user):
         """
-        Updates the user record based on the field `username` in the user object. 
-        
+        Updates the user record based on the field `username` in the user object.
+
         The following fields are set:
         - `title`
         - `first_name`
@@ -126,24 +226,23 @@ class Database:
         - `email`
         - `language`
         """
-        self.cursor.execute(
+        self.execute(
             """
             UPDATE users
-            SET 
+            SET
               title = %(title)s,
               first_name = %(first_name)s,
               last_name = %(last_name)s,
               email = %(email)s,
               language = %(language)s
-            WHERE 
+            WHERE
               username = %(username)s
             """,
             user,
         )
-        self.conn.commit()
 
     def set_user_status(self, username, status):
-        self.cursor.execute(
+        return self.execute(
             """
             UPDATE users
             SET state = %(status)s
@@ -151,10 +250,9 @@ class Database:
             """,
             {"username": username, "status": status},
         )
-        self.conn.commit()
 
     def set_user_picture(self, username, picture):
-        self.cursor.execute(
+        self.execute(
             """
             UPDATE users
             SET profile_image = %(picture)s
@@ -162,7 +260,6 @@ class Database:
             """,
             {"username": username, "picture": picture},
         )
-        self.conn.commit()
 
     def insert_message(
         self, username, channel, message, message_type, sent_time, previous_message=None
@@ -185,17 +282,16 @@ class Database:
                 "previous_message": previous_message,
             },
         )
-        self.conn.commit()
 
-        return result[0]
+        return result[0] if result else None
 
     def get_messages(self, channel, message_id=0):
-        query = """SELECT messages.*, username from messages 
-                   INNER JOIN users ON messages.sender = users.id 
-                   WHERE channel=%(channel)s 
-                   {} 
-                   ORDER BY messages.id DESC 
-                   LIMIT 30 
+        query = """SELECT messages.*, username from messages
+                   INNER JOIN users ON messages.sender = users.id
+                   WHERE channel=%(channel)s
+                   {}
+                   ORDER BY messages.id DESC
+                   LIMIT 30
                 """.format(
             "" if message_id == 0 else "AND messages.id < %(msg_id)s"
         )
@@ -204,18 +300,44 @@ class Database:
     def get_message(self, msg_id):
         result = self.sql_to_dict(
             """
-            SELECT * FROM messages 
+            SELECT * FROM messages
             WHERE id=%(msg_id)s""",
             {"msg_id": msg_id},
         )
         return result[0] if len(result) == 1 else None
 
+    def get_message_with_sender(self, msg_id):
+        """A message joined with its sender's username, or `None`."""
+        result = self.sql_to_dict(
+            """
+            SELECT messages.*, users.username FROM messages
+            INNER JOIN users ON messages.sender = users.id
+            WHERE messages.id = %(msg_id)s""",
+            {"msg_id": msg_id},
+        )
+        return result[0] if len(result) == 1 else None
+
+    def get_latest_edit(self, msg_id, sender_id):
+        """The newest edit of a message by its own author, or `None`."""
+        result = self.sql_to_dict(
+            """
+            SELECT messages.*, users.username FROM messages
+            INNER JOIN users ON messages.sender = users.id
+            WHERE messages.previous_message = %(msg_id)s
+              AND messages.message_type = 'TEXT_MESSAGE_UPDATE'
+              AND messages.sender = %(sender_id)s
+            ORDER BY messages.id DESC
+            LIMIT 1""",
+            {"msg_id": msg_id, "sender_id": sender_id},
+        )
+        return result[0] if result else None
+
     def get_daily_message_count(self):
         return self.sql_to_dict(
             """
-            select count(*) as "Count", users.display_name as "Username", to_char(date_trunc('day', to_timestamp(m.sent_time)), 'DD/MM/YYYY') as "Date" 
+            select count(*) as "Count", users.display_name as "Username", to_char(date_trunc('day', to_timestamp(m.sent_time)), 'DD/MM/YYYY') as "Date"
             from messages as m
-            INNER JOIN users ON m.sender = users.id 
+            INNER JOIN users ON m.sender = users.id
             where date_trunc('day', to_timestamp(m.sent_time)) >  CURRENT_DATE - INTERVAL '1 month'
             group by users.display_name, date_trunc('day', to_timestamp(m.sent_time))
             order by date_trunc('day', to_timestamp(m.sent_time))"""
@@ -224,27 +346,47 @@ class Database:
     def get_channel_count(self):
         return self.sql_to_dict(
             """
-            SELECT channels.name, count(*) FROM messages 
+            SELECT channels.name, count(*) FROM messages
             join channels on cast(channels.id as text) = messages.channel
-            GROUP BY channels.name 
+            GROUP BY channels.name
             order by count(*) DESC"""
         )
 
     def get_channels(self, username):
         return self.sql_to_dict(
             """
-            select channels.*
+            select distinct channels.*
             from channels
             inner join channels_users on channels.id = channels_users.channel_id
             inner join users on users.id = channels_users.user_id
-            where users.username = %(username)s""",
+            where users.username = %(username)s
+            order by channels.id""",
             {"username": username},
         )
+
+    def get_channel(self, channel_id):
+        result = self.sql_to_dict(
+            "SELECT * FROM channels WHERE id = %(channel_id)s",
+            {"channel_id": channel_id},
+        )
+        return result[0] if len(result) == 1 else None
+
+    def is_channel_member(self, channel_id, username):
+        result = self.sql_to_dict(
+            """
+            SELECT 1 FROM channels_users
+            INNER JOIN users ON users.id = channels_users.user_id
+            WHERE channels_users.channel_id = %(channel_id)s
+              AND users.username = %(username)s
+            LIMIT 1""",
+            {"channel_id": channel_id, "username": username},
+        )
+        return len(result) > 0
 
     def get_users_for_channel(self, channel_id):
         return self.sql_to_dict(
             """
-            select users.username, users.id, users.first_name
+            select distinct users.username, users.id, users.first_name
             from channels_users
             inner join users on users.id = channels_users.user_id
             where channels_users.channel_id = %(channel_id)s""",
@@ -252,11 +394,16 @@ class Database:
         )
 
     def search(self, query, channel):
+        """Full-text search in one channel.
+
+        `websearch_to_tsquery` (PostgreSQL 11+) accepts free-form user input,
+        so stray spaces or punctuation can't cause a syntax error.
+        """
         return self.sql_to_dict(
             """
-            SELECT * FROM messages  
-            WHERE channel=%(channel)s 
-              AND messages.message @@ to_tsquery(%(query)s);""",
+            SELECT * FROM messages
+            WHERE channel=%(channel)s
+              AND messages.message @@ websearch_to_tsquery(%(query)s);""",
             {"channel": channel, "query": query},
         )
 
@@ -267,24 +414,24 @@ class Database:
             RETURNING *""",
             {"name": name, "type": channel_type},
         )
-        self.conn.commit()
-
-        print(result)
         return result[0]
 
     def insert_channel_member(self, channel_id, username):
-        self.cursor.execute(
+        """Adds a user (matched on username) to a channel, once."""
+        return self.execute(
             """INSERT INTO channels_users (channel_id, user_id)
             SELECT %(channel_id)s, id
             FROM users
-            WHERE username=%(username)s or email=%(username)s
-            RETURNING *;""",
+            WHERE username=%(username)s
+              AND NOT EXISTS (
+                SELECT 1 FROM channels_users
+                WHERE channel_id = %(channel_id)s AND user_id = users.id
+              );""",
             {"channel_id": channel_id, "username": username},
         )
-        self.conn.commit()
 
     def insert_file(self, file_name, username, file_type, size, full_name):
-        self.cursor.execute(
+        self.execute(
             """INSERT INTO files (file, user_id, type, size, full_name)
             SELECT %(file)s, id, %(type)s, %(size)s, %(full_name)s
             FROM users
@@ -297,7 +444,6 @@ class Database:
                 "full_name": full_name,
             },
         )
-        self.conn.commit()
 
     def get_file(self, file_identifier):
         result = self.sql_to_dict(
@@ -313,7 +459,7 @@ class Database:
         )
 
     def insert_emoji(self, username, name, file_name, date_added):
-        self.cursor.execute(
+        self.execute(
             """INSERT INTO emojis (name, file, user_id, added)
                 SELECT %(name)s, %(file)s, id, %(added)s
                 FROM users
@@ -325,20 +471,17 @@ class Database:
                 "added": date_added,
             },
         )
-        self.conn.commit()
 
     def delete_emoji(self, file_identifier):
-        self.cursor.execute(
+        self.execute(
             """DELETE
                 FROM emojis
                 WHERE name=%(name)s""",
             {"name": file_identifier},
         )
-        self.conn.commit()
 
     def delete_all_emoji(self):
-        self.cursor.execute("""TRUNCATE emojis""")
-        self.conn.commit()
+        self.execute("""TRUNCATE emojis""")
 
     def get_emojis(self):
         return self.sql_to_dict("SELECT * FROM emojis")
@@ -348,3 +491,12 @@ class Database:
             """SELECT file FROM emojis WHERE name = %(emoji)s""", {"emoji": emoji}
         )
         return result[0] if len(result) == 1 else None
+
+    def get_emoji_owners(self, name):
+        """User ids that uploaded an emoji with this name."""
+        return [
+            row["user_id"]
+            for row in self.sql_to_dict(
+                "SELECT user_id FROM emojis WHERE name = %(name)s", {"name": name}
+            )
+        ]
