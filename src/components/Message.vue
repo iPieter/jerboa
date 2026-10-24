@@ -52,7 +52,7 @@
             <i class="fas fa-share icon" v-if="hovered" @click="share"></i>
           </span>
         </div>
-        <div v-else-if="filesAreImages()">
+        <div v-else-if="filesAreMedia()">
           <message-markdown
             v-if="messages[messages.length - 1].message.message.length > 0"
             class="content-msg"
@@ -63,7 +63,16 @@
             v-for="(file, index) in messages[messages.length - 1].message.files"
             v-bind:key="index"
           >
-            <a href="#" v-on:click="showFullImage(index)">
+            <!-- #t=0.001 makes iOS Safari draw the first frame before playing -->
+            <video
+              v-if="isVideo(file)"
+              class="mx-1 my-2"
+              :src="base + 'files?f=' + file.file + '#t=0.001'"
+              controls
+              playsinline
+              preload="metadata"
+            ></video>
+            <a v-else href="#" v-on:click="showFullImage(index)">
               <img
                 class="mx-1 my-2"
                 :src="base + 'files?f=' + file.file"
@@ -151,6 +160,10 @@
                       v-else-if="file.type.startsWith('image/')"
                       class="fas fa-file-image"
                     ></code>
+                    <code
+                      v-else-if="isVideo(file)"
+                      class="fas fa-file-video"
+                    ></code>
                     <code v-else class="fas fa-file"></code>
                   </td>
                   <td>
@@ -218,7 +231,17 @@
             v-on:click="showFullImage(index)"
             v-bind:key="index"
           >
+            <video
+              v-if="isVideo(file)"
+              class="mx-1 my-1"
+              :class="index == modal_id ? 'active' : ''"
+              :src="base + 'files?f=' + file.file + '#t=0.001'"
+              muted
+              playsinline
+              preload="metadata"
+            ></video>
             <img
+              v-else
               class="mx-1 my-1"
               :class="index == modal_id ? 'active' : ''"
               :src="base + 'files?f=' + file.file"
@@ -226,7 +249,20 @@
           </a>
         </div>
       </div>
+      <video
+        v-if="isVideo(messages[messages.length - 1].message.files[modal_id])"
+        class="image"
+        :src="
+          base +
+            'files?f=' +
+            messages[messages.length - 1].message.files[modal_id].file
+        "
+        controls
+        autoplay
+        playsinline
+      ></video>
       <img
+        v-else
         class="image"
         :src="
           base +
@@ -357,10 +393,13 @@ export default {
       this.modal_id = id;
       window.scrollTo(window.scrollX, this.scroll_position);
     },
-    filesAreImages() {
+    isVideo(file) {
+      return file.type.startsWith("video/");
+    },
+    filesAreMedia() {
       /*
       Returns true if the message contains files and those
-      are all images, false otherwise.
+      are all images or videos, false otherwise.
       */
       if (
         this.messages[this.messages.length - 1].message_type != "FILES_MESSAGE"
@@ -368,19 +407,16 @@ export default {
         return false;
       }
 
-      let filesAreImages = true;
+      let filesAreMedia = true;
 
       for (let f in this.messages[this.messages.length - 1].message.files) {
-        console.log("files");
-        filesAreImages =
-          filesAreImages &&
-          this.messages[this.messages.length - 1].message.files[
-            f
-          ].type.startsWith("image/");
+        const file = this.messages[this.messages.length - 1].message.files[f];
+        filesAreMedia =
+          filesAreMedia &&
+          (file.type.startsWith("image/") || this.isVideo(file));
       }
 
-      console.log(filesAreImages);
-      return filesAreImages;
+      return filesAreMedia;
     },
     updateMessage(msg) {
       this.edited = true;
@@ -584,11 +620,17 @@ export default {
     .content .preview {
       display: inline-block;
 
-      img {
+      img,
+      video {
         max-height: 20ex;
         max-width: 90%;
         orientation: landscape;
         padding: 0.5rem;
+      }
+
+      // Videos play inline, so they get room for their controls
+      video {
+        max-height: 40ex;
       }
     }
 
@@ -737,7 +779,8 @@ export default {
         opacity: 0.9;
         z-index: 10001;
 
-        img {
+        img,
+        video {
           width: 60px;
           border: 4px solid #fff;
           border-radius: 5px;
@@ -756,7 +799,8 @@ export default {
 @media screen and (prefers-color-scheme: dark) {
   .message,
   .modal-image {
-    img {
+    img,
+    video {
       background: #868686;
       box-shadow: 0 0.2rem 1.2rem rgba(255, 255, 255, 0.1);
     }
@@ -765,7 +809,8 @@ export default {
 @media screen and (prefers-color-scheme: light) {
   .message,
   .modal-image {
-    img {
+    img,
+    video {
       background: #fff;
       box-shadow: 0 0.2rem 1.2rem rgba(0, 0, 0, 0.1);
     }
