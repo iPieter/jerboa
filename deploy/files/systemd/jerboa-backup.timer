@@ -1,0 +1,13 @@
+# Installed by deploy/backup.sh. Nightly at about 03:15 (the server clock is UTC).
+# Check:  systemctl list-timers jerboa-backup.timer
+[Unit]
+Description=Nightly Jerboa backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+RandomizedDelaySec=15min
+# Run at boot if the droplet was off at 03:15.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
