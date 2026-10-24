@@ -2,7 +2,7 @@ import os
 import shutil
 import ipaddress
 import socket
-from flask import Flask, g, request, abort, Response, jsonify
+from flask import Flask, g, request, abort, Response, jsonify, send_file
 from flask_cors import CORS
 import pandas as pd
 import simplejson as json
@@ -503,20 +503,21 @@ def get_file():
     inline = bool(show) and result["type"] in INLINE_MIME_TYPES
     disposition = "inline" if inline else "attachment"
 
-    with open(file_path, mode="rb") as fp:
-        f = fp.read()
-        return Response(
-            f,
-            mimetype=result["type"],
-            headers={
-                "Cache-Control": "public, max-age=3600",
-                "X-Content-Type-Options": "nosniff",
-                "Content-disposition": "{}; filename={}".format(
-                    disposition, result["full_name"]
-                ),
-            },
-        )
-    return "Error", 500
+    # Streamed from disk, and conditional=True answers Range requests with 206:
+    # Safari only plays video when it can fetch byte ranges, and it lets every
+    # browser seek without downloading the whole file. send_file resolves
+    # relative paths against the package directory, hence abspath.
+    response = send_file(
+        os.path.abspath(file_path),
+        mimetype=result["type"],
+        conditional=True,
+        cache_timeout=3600,
+    )
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Content-disposition"] = "{}; filename={}".format(
+        disposition, result["full_name"]
+    )
+    return response
 
 
 @app.route("/files/count")
