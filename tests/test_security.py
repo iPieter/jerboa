@@ -507,6 +507,25 @@ def test_files_image_can_be_inline(client, db, tmp_path, monkeypatch):
     assert resp.headers["X-Content-Type-Options"] == "nosniff"
 
 
+def test_files_answer_range_requests(client, db, tmp_path, monkeypatch):
+    # Safari only plays <video> from servers that honour Range.
+    monkeypatch.chdir(tmp_path)
+    content = bytes(range(256)) * 4
+    _store_file(db, tmp_path, "mp4id", "clip.mp4", content, "video/mp4")
+    resp = client.get("/files?f=mp4id", headers={"Range": "bytes=100-199"})
+    assert resp.status_code == 206
+    assert resp.data == content[100:200]
+    assert resp.headers["Content-Range"] == "bytes 100-199/1024"
+    assert resp.headers["Content-Type"] == "video/mp4"
+    assert resp.headers["X-Content-Type-Options"] == "nosniff"
+    assert resp.headers["Content-disposition"].startswith("attachment")
+
+    full = client.get("/files?f=mp4id")
+    assert full.status_code == 200
+    assert full.data == content
+    assert full.headers["Cache-Control"] == "public, max-age=3600"
+
+
 # --------------------------------------------------------------------------
 # 12. Token is not printed / leaked in the msg handler
 # --------------------------------------------------------------------------
