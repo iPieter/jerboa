@@ -36,13 +36,10 @@
                 'TEXT_MESSAGE_UPDATE'
           "
         >
-          <vue-markdown
-            :emoji="true"
-            :prerender="preMessageRender"
-            :postrender="postMessageRender"
+          <message-markdown
             class="content-msg"
             :source="messages[messages.length - 1].message"
-          ></vue-markdown>
+          ></message-markdown>
           <span class="font-weight-light text-muted" v-if="edited">
             <i>(edited)</i>
           </span>
@@ -56,14 +53,11 @@
           </span>
         </div>
         <div v-else-if="filesAreImages()">
-          <vue-markdown
+          <message-markdown
             v-if="messages[messages.length - 1].message.message.length > 0"
-            :emoji="true"
-            :prerender="preMessageRender"
-            :postrender="postMessageRender"
             class="content-msg"
             :source="messages[messages.length - 1].message.message"
-          ></vue-markdown>
+          ></message-markdown>
           <div
             class="preview mb-2"
             v-for="(file, index) in messages[messages.length - 1].message.files"
@@ -102,30 +96,21 @@
             }}</b>
             said
             <br />
-            <vue-markdown
-              :emoji="true"
-              :prerender="preMessageRender"
-              :postrender="postMessageRender"
+            <message-markdown
               class="content-msg"
               :source="messages[messages.length - 1].message.source.message"
-            ></vue-markdown>
+            ></message-markdown>
           </blockquote>
-          <vue-markdown
-            :emoji="true"
-            :prerender="preMessageRender"
-            :postrender="postMessageRender"
+          <message-markdown
             class="content-msg"
             :source="messages[messages.length - 1].message.message"
-          ></vue-markdown>
+          ></message-markdown>
         </div>
         <div v-else>
-          <vue-markdown
-            :emoji="true"
-            :prerender="preMessageRender"
-            :postrender="postMessageRender"
+          <message-markdown
             class="content-msg"
             :source="messages[messages.length - 1].message.message"
-          ></vue-markdown>
+          ></message-markdown>
           <b-card class="m-2 files-card">
             <b-card-title
               class="m-3"
@@ -269,12 +254,10 @@
         />
         <b class>{{ sender.first_name }}</b> said
         <br />
-        <vue-markdown
-          :emoji="true"
-          :postrender="postMessageRender"
+        <message-markdown
           class="content-msg"
           :source="messages[messages.length - 1].message"
-        ></vue-markdown>
+        ></message-markdown>
       </blockquote>
       <form ref="form" @submit.stop.prevent="handleSubmit">
         <b-form-group label="Your reply" label-for="message-input">
@@ -293,12 +276,11 @@
 </template>
 
 <script>
-import Vue from "vue";
-import VueMarkdown from "vue-markdown";
 import moment from "moment";
 import MessageInput from "./MessageInput";
+import MessageMarkdown from "./MessageMarkdown";
+import { channelId } from "../channel";
 
-Vue.use(VueMarkdown);
 moment.locale("nl-be");
 
 export default {
@@ -315,7 +297,7 @@ export default {
     };
   },
   components: {
-    VueMarkdown,
+    MessageMarkdown,
     MessageInput,
   },
   props: {
@@ -409,7 +391,7 @@ export default {
       var msg = {
         message_type: "TEXT_MESSAGE_UPDATE",
         sender: this.token,
-        channel: "1",
+        channel: this.currentChannel,
         message: content,
         sent_time: new Date(),
         signature: "na",
@@ -433,7 +415,7 @@ export default {
       var msg = {
         message_type: "SHARE_MESSAGE",
         sender: this.token,
-        channel: "1",
+        channel: this.currentChannel,
         message: {
           source: this.messages[this.messages.length - 1],
           message: message,
@@ -454,31 +436,6 @@ export default {
       this.$refs.modal.show();
     },
     handlePaste() {},
-    preMessageRender(data) {
-      if (data.startsWith(">>>")) {
-        return "<blockquote>" + data.replace(/^(>>>)/, "") + "</blockquote>";
-      }
-      return data;
-    },
-    postMessageRender(htmlData) {
-      let re = /:([A-z0-9-]+(:{2}\S+)?):/g;
-
-      let data = htmlData.replace(
-        new RegExp(re),
-        "<img class='emoji' src='" +
-          process.env.VUE_APP_SERVER_BASE +
-          "emoji/$1'/ alt=':$1:'/>"
-      );
-
-      //check if there is something left, otherwise insert h1 tag
-      let text = htmlData
-        .substring(3, htmlData.length - 5)
-        .replace(new RegExp(re), "")
-        .trim();
-      if (!text) data = "<h1>" + data + "</h1>";
-
-      return data;
-    },
     formatBytes(bytes) {
       if (bytes == 0) {
         return "0 B";
@@ -532,6 +489,10 @@ export default {
     },
   },
   computed: {
+    // The channel being viewed: edits and shares belong there.
+    currentChannel() {
+      return channelId(this.$route.params.channel_id);
+    },
     time: function() {
       return moment(
         new Date(this.messages[this.messages.length - 1].sent_time * 1000)

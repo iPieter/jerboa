@@ -131,6 +131,7 @@ import ChannelView from "./ChannelView";
 import MessageHandler from "../messageHandler";
 import MessageInput from "./MessageInput";
 import axios from "axios";
+import { channelId } from "../channel";
 
 export default {
   name: "mainview",
@@ -151,6 +152,12 @@ export default {
   props: {
     channel_id: {
       default: "1",
+    },
+  },
+  computed: {
+    // channel_id is a string after a reload; the server needs a Number.
+    channel() {
+      return channelId(this.channel_id);
     },
   },
   watch: {
@@ -183,9 +190,7 @@ export default {
         (connection) => {
           this.connected = connection;
         },
-        () => {
-          _this.$router.push({ name: "login" });
-        },
+        this.handle_auth_error,
         this.on_typing_message,
         this.handle_notifcation,
         this.clear_typing,
@@ -218,7 +223,7 @@ export default {
           msg = {
             message_type: "TEXT_MESSAGE",
             sender: this.$root.$data.token,
-            channel: this.channel_id,
+            channel: this.channel,
             message: message,
             sent_time: new Date(),
             signature: "na",
@@ -294,7 +299,7 @@ export default {
       var msg = {
         message_type: "USER_TYPING",
         sender: this.$root.$data.token,
-        channel: this.channel_id,
+        channel: this.channel,
         sent_time: new Date(),
       };
 
@@ -349,7 +354,7 @@ export default {
       let msg = {
         message_type: "FILES_MESSAGE",
         sender: this.$root.$data.token,
-        channel: this.channel_id,
+        channel: this.channel,
         message: {
           message: message,
           files: [],
@@ -435,8 +440,18 @@ export default {
     handle_api_error(error) {
       console.log(error);
 
-      if (error.response.status === 401) {
-        this.$router.push({ name: "login" });
+      if (error.response && error.response.status === 401) {
+        this.handle_auth_error();
+      }
+    },
+    handle_auth_error() {
+      // The token expired or its session was revoked: forget it, stop the
+      // socket and log in again, rather than silently losing live updates.
+      if (this.messagehandler) this.messagehandler.close();
+      localStorage.removeItem("token");
+      this.$root.$data.token = "";
+      if (this.$route.name !== "login") {
+        this.$router.push({ name: "login" }).catch(() => {});
       }
     },
   },
