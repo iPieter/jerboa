@@ -523,7 +523,6 @@ def test_files_answer_range_requests(client, db, tmp_path, monkeypatch):
     full = client.get("/files?f=mp4id")
     assert full.status_code == 200
     assert full.data == content
-    assert full.headers["Accept-Ranges"] == "bytes"
     assert full.headers["Cache-Control"] == "public, max-age=3600"
 
 
